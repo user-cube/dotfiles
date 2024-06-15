@@ -1,0 +1,26 @@
+#!/bin/bash
+
+echo "Building project..."
+# Add your build commands here
+# For example, if you're using a build tool like Maven:
+# mvn clean install
+
+# Check if the build was successful
+if [ $? -ne 0 ]; then
+  echo "Error: Build failed. Push aborted."
+  exit 1
+fi
+
+echo "Build successful. Checking for errors..."
+# Add commands to check for errors
+# For example, if you're running tests:
+# mvn test
+
+# Check if there are any errors
+if [ $? -ne 0 ]; then
+  echo "Error: Tests failed. Push aborted."
+  exit 1
+fi
+
+echo "No errors found. Push allowed."
+exit 0
