@@ -24,6 +24,7 @@ setNS() { kubectl config set-context --current --namespace="$@" ; }
 alias redis-cli="docker run --network host --rm -it redis:alpine redis-cli"
 
 alias vim="nvim"
+alias cat="bat"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
