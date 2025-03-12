@@ -5,6 +5,17 @@ autoload -Uz compinit
 compinit
 
 source <(kubectl completion zsh)
+
+# Path to your Oh My Zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+plugins=(
+    git
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+)
+
+source $ZSH/oh-my-zsh.sh
 source <(fzf --zsh)
 
 # FZF for ZSH History
@@ -29,6 +40,9 @@ eval "$(pyenv init -)"
 # Alias Kubernetes
 alias k="kubectl"
 setNS() { kubectl config set-context --current --namespace="$@" ; }
+
+# Wave Terminal
+vw() { wsh view "$@" ; }
 
 alias redis-cli="docker run --network host --rm -it redis:alpine redis-cli"
 
