@@ -1,1 +1,3 @@
 .DS_Store
+git_hooks/go/tf-commit-msg/commit-msg
+git_hooks/go/commit-msg/commit-msg
