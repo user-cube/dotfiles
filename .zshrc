@@ -5,6 +5,9 @@ autoload -Uz compinit
 compinit
 
 source <(kubectl completion zsh)
+source <(aws-cli-manager completion zsh)
+source <(kontext completion zsh)
+source <(gclone completion zsh)
 
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -41,9 +44,6 @@ eval "$(pyenv init -)"
 alias k="kubectl"
 setNS() { kubectl config set-context --current --namespace="$@" ; }
 
-# Wave Terminal
-vw() { wsh view "$@" ; }
-
 alias redis-cli="docker run --network host --rm -it redis:alpine redis-cli"
 
 alias vim="nvim"
@@ -57,5 +57,6 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 export GPG_TTY=$(tty)
 
-
-test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+# Go Environment exports
+export PATH=${PATH}:`go env GOPATH`/bin
+export GOBIN=$HOME/go/bin
