@@ -4,11 +4,6 @@
 autoload -Uz compinit
 compinit
 
-source <(kubectl completion zsh)
-source <(aws-cli-manager completion zsh)
-source <(kontext completion zsh)
-source <(gclone completion zsh)
-
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
@@ -63,3 +58,10 @@ export GPG_TTY=$(tty)
 # Go Environment exports
 export PATH=${PATH}:`go env GOPATH`/bin
 export GOBIN=$HOME/go/bin
+
+# Completions
+
+source <(kubectl completion zsh)
+source <(aws-cli-manager completion zsh)
+source <(kontext completion zsh)
+source <(gclone completion zsh)
