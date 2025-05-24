@@ -1,0 +1,61 @@
+version: '3'
+
+vars:
+  BINARY_NAME: commit-msg
+  MAIN_PKG: commit-msg.go
+
+tasks:
+  build:
+    desc: Build the binary
+    cmds:
+    - echo "Building {{.BINARY_NAME}}..."
+    - go build -o {{.BINARY_NAME}} {{.MAIN_PKG}}
+
+  run:
+    desc: Build and run the binary
+    deps: [ build ]
+    cmds:
+    - echo "Running {{.BINARY_NAME}}..."
+    - ./{{.BINARY_NAME}}
+
+  test:
+    desc: Run tests
+    cmds:
+    - echo "Running tests..."
+    - go test ./...
+
+  fmt:
+    desc: Format Go code
+    cmds:
+    - echo "Formatting code..."
+    - go fmt ./...
+
+  vet:
+    desc: Run go vet
+    cmds:
+    - echo "Running go vet..."
+    - go vet ./...
+
+  clean:
+    desc: Clean the build output
+    cmds:
+    - echo "Cleaning up..."
+    - rm -f {{.BINARY_NAME}}
+
+  lint:
+    desc: Lint code with golangci-lint
+    cmds:
+    - echo "Linting code..."
+    - golangci-lint run
+
+  mod-tidy:
+    desc: Run go mod tidy
+    cmds:
+    - echo "Tidying up Go modules..."
+    - go mod tidy
+
+  install-deps:
+    desc: Download Go module dependencies
+    cmds:
+    - echo "Installing dependencies..."
+    - go mod download
