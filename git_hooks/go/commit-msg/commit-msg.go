@@ -14,6 +14,8 @@ func main() {
 	}
 
 	commitMsgFile := os.Args[1]
+
+	// Get the current branch name
 	branchNameCmd := exec.Command("git", "symbolic-ref", "--short", "HEAD")
 	branchNameBytes, err := branchNameCmd.Output()
 	if err != nil {
@@ -21,11 +23,10 @@ func main() {
 		os.Exit(1)
 	}
 	branchName := strings.TrimSpace(string(branchNameBytes))
-
-	// Extract the last part of the branch name if it contains "/"
 	branchParts := strings.Split(branchName, "/")
 	branchName = branchParts[len(branchParts)-1]
 
+	// Disallowed branches
 	disallowedBranches := map[string]bool{
 		"main":    true,
 		"master":  true,
@@ -37,18 +38,43 @@ func main() {
 		for branch := range disallowedBranches {
 			msg += " " + branch + ","
 		}
-		// Trim the last comma and print
 		fmt.Println(msg[:len(msg)-1])
 		os.Exit(1)
 	}
 
+	// Read commit message
 	commitMsgBytes, err := os.ReadFile(commitMsgFile)
 	if err != nil {
 		fmt.Println("Error: Unable to read the commit message file.")
 		os.Exit(1)
 	}
-	commitMsg := fmt.Sprintf("%s - %s", branchName, string(commitMsgBytes))
-	err = os.WriteFile(commitMsgFile, []byte(commitMsg), 0644)
+	originalMsg := strings.TrimSpace(string(commitMsgBytes))
+
+	// Define valid prefixes
+	validPrefixes := []string{
+		"feat", "fix", "chore", "docs", "style", "refactor", "perf", "test", "build", "ci",
+	}
+
+	// Check if original message starts with a valid prefix
+	loweredMsg := strings.ToLower(originalMsg)
+	valid := false
+	for _, prefix := range validPrefixes {
+		if strings.HasPrefix(loweredMsg, prefix+":") || strings.HasPrefix(loweredMsg, prefix+"(") {
+			valid = true
+			break
+		}
+	}
+
+	// Modify the message if not valid
+	var finalMsg string
+	if valid {
+		finalMsg = originalMsg
+	} else {
+		finalMsg = fmt.Sprintf("%s feat: %s", branchName, originalMsg)
+	}
+
+	// Write back to the file
+	err = os.WriteFile(commitMsgFile, []byte(finalMsg), 0644)
 	if err != nil {
 		fmt.Println("Error: Unable to write to the commit message file.")
 		os.Exit(1)
