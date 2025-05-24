@@ -11,6 +11,17 @@ plugins=(
     git
     zsh-autosuggestions
     zsh-syntax-highlighting
+    colored-man-pages
+    docker
+    docker-compose
+    aws
+    terraform
+    kubectl
+    aliases
+    ansible
+    brew
+    autoenv
+    opentofu
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -35,8 +46,10 @@ export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
+# Zoxide
+eval "$(zoxide init zsh)"
+
 # Alias Kubernetes
-alias k="kubectl"
 setNS() { kubectl config set-context --current --namespace="$@" ; }
 
 alias redis-cli="docker run --network host --rm -it redis:alpine redis-cli"
@@ -65,3 +78,4 @@ source <(kubectl completion zsh)
 source <(aws-cli-manager completion zsh)
 source <(kontext completion zsh)
 source <(gclone completion zsh)
+source <(helm completion zsh)
