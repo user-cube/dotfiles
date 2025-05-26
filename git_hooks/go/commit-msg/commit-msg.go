@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,7 +16,7 @@ func main() {
 
 	commitMsgFile := os.Args[1]
 
-	// Get the current branch name
+	// Get branch name
 	branchNameCmd := exec.Command("git", "symbolic-ref", "--short", "HEAD")
 	branchNameBytes, err := branchNameCmd.Output()
 	if err != nil {
@@ -32,7 +33,6 @@ func main() {
 		"master":  true,
 		"develop": true,
 	}
-
 	if disallowedBranches[branchName] {
 		msg := "Branch not allowed. The disallowed branches are:"
 		for branch := range disallowedBranches {
@@ -42,39 +42,71 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Read commit message
-	commitMsgBytes, err := os.ReadFile(commitMsgFile)
+	// Read commit message and split lines
+	file, err := os.Open(commitMsgFile)
 	if err != nil {
 		fmt.Println("Error: Unable to read the commit message file.")
 		os.Exit(1)
 	}
-	originalMsg := strings.TrimSpace(string(commitMsgBytes))
+	defer file.Close()
+
+	var messageLines []string
+	var commentLines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "#") || (len(messageLines) > 0 && line == "") {
+			commentLines = append(commentLines, line)
+		} else {
+			messageLines = append(messageLines, line)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error: Failed to read commit message.")
+		os.Exit(1)
+	}
+
+	if len(messageLines) == 0 {
+		messageLines = []string{""}
+	}
+	originalMsg := strings.TrimSpace(messageLines[0])
 
 	// Define valid prefixes
 	validPrefixes := []string{
 		"feat", "fix", "chore", "docs", "style", "refactor", "perf", "test", "build", "ci",
 	}
 
-	// Check if original message starts with a valid prefix
+	// Normalize or add prefix
+	msgToUse := originalMsg
 	loweredMsg := strings.ToLower(originalMsg)
 	valid := false
 	for _, prefix := range validPrefixes {
 		if strings.HasPrefix(loweredMsg, prefix+":") || strings.HasPrefix(loweredMsg, prefix+"(") {
 			valid = true
 			break
+		} else if strings.HasPrefix(loweredMsg, prefix+" ") {
+			// Normalize it: "chore add X" → "chore: add X"
+			rest := strings.TrimSpace(originalMsg[len(prefix):])
+			msgToUse = fmt.Sprintf("%s: %s", prefix, rest)
+			valid = true
+			break
 		}
 	}
-
-	// Modify the message if not valid
-	var finalMsg string
-	if valid {
-		finalMsg = originalMsg
-	} else {
-		finalMsg = fmt.Sprintf("%s feat: %s", branchName, originalMsg)
+	if !valid {
+		// Fallback if no valid prefix
+		msgToUse = "feat: " + originalMsg
 	}
 
-	// Write back to the file
-	err = os.WriteFile(commitMsgFile, []byte(finalMsg), 0644)
+	// Final commit message
+	finalMsg := fmt.Sprintf("%s %s", branchName, msgToUse)
+
+	// Reattach comment lines
+	allLines := []string{finalMsg}
+	allLines = append(allLines, commentLines...)
+	output := strings.Join(allLines, "\n") + "\n"
+
+	// Write back to file
+	err = os.WriteFile(commitMsgFile, []byte(output), 0644)
 	if err != nil {
 		fmt.Println("Error: Unable to write to the commit message file.")
 		os.Exit(1)
