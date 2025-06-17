@@ -22,6 +22,7 @@ plugins=(
     brew
     autoenv
     opentofu
+    asdf
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -71,6 +72,9 @@ export GPG_TTY=$(tty)
 # Go Environment exports
 export PATH=${PATH}:`go env GOPATH`/bin
 export GOBIN=$HOME/go/bin
+
+# ASDF
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 
 # Completions
 
