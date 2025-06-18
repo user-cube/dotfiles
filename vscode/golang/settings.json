@@ -1,0 +1,29 @@
+{
+    "go.useLanguageServer": true,
+    "go.formatTool": "gofmt", // Or "gofmt", "gofumpt", etc.
+    "go.lintTool": "golangci-lint",
+    "go.lintOnSave": "package",
+    "go.vetOnSave": "package",
+    "go.testOnSave": true,
+    "go.coverOnSave": false,
+    "go.toolsEnvVars": {
+      "GO111MODULE": "on"
+    },
+    "go.toolsManagement.autoUpdate": true,
+    "[go]": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+      }
+    },
+    "gopls": {
+      "build.experimentalWorkspaceModule": true,
+      "ui.semanticTokens": true,
+      "ui.completion.usePlaceholders": true,
+      "analyses": {
+        "unusedparams": true,
+        "shadow": true
+      },
+      "staticcheck": true
+    }
+}
