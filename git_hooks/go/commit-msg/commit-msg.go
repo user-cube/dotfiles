@@ -35,7 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Last path element, e.g. features/PE-1234-foo → PE-1234-foo
+	// Last path element, e.g. features/PROJECT-1234-foo → PROJECT-1234-foo
 	lastSegment := branchFull[strings.LastIndex(branchFull, "/")+1:]
 
 	// Extract ABC-123 numeric key (case-insensitive)
