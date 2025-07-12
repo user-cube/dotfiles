@@ -76,3 +76,14 @@ shift + alt - right : yabai -m window --resize right:20:0 2> /dev/null || yabai 
 ctrl + alt - q : brew services stop yabai
 ctrl + alt - s : brew services start yabai
 ctrl + alt - r : brew services restart yabai
+
+
+# -- Open Applications --
+# open terminal
+ctrl + alt - return : open -a "Ghostty"
+# open browser
+ctrl + alt - b : open -a "Firefox"
+# open file manager
+ctrl + alt - f : open -a "Finder"
+# open editor
+ctrl + alt - e : open -a "Cursor"
