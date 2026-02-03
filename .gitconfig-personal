@@ -1,0 +1,9 @@
+[user]
+email = XXXXX
+name = Rui Coelho
+
+[commit]
+gpgsign = true
+
+[push]
+autoSetupRemote = true
