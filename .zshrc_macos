@@ -82,3 +82,6 @@ source <(aws-cli-manager completion zsh)
 source <(kontext completion zsh)
 source <(gclone completion zsh)
 source <(helm completion zsh)
+eval "$(task --completion zsh)"
+
+. "$HOME/.local/bin/env"
