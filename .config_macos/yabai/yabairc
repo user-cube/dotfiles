@@ -1,17 +1,3 @@
-#!/usr/bin/env sh
-
-#
-# for this to work you must configure sudo such that
-# it will be able to run the command without password
-#
-# see this wiki page for information:
-#  - https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)#configure-scripting-addition
-#
-# yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
-# sudo yabai --load-sa
-#
-
-# global settings
 yabai -m config                                 \
     external_bar                 off:40:0       \
     menubar_opacity              1.0            \
@@ -42,6 +28,11 @@ yabai -m config                                 \
     mouse_action1                move           \
     mouse_action2                resize         \
     mouse_drop_action            swap
+
+yabai -m rule --add app="^System Settings$" manage=off
+yabai -m rule --add app="^Archive Utility$" manage=off
+yabai -m rule --add app="^Finder$" manage=off
+yabai -m rule --add app="^Activity Monitor$" manage=off
 
 yabai -m signal --add app='^Ghostty$' event=window_created action='yabai -m space --layout bsp'
 yabai -m signal --add app='^Ghostty$' event=window_destroyed action='yabai -m space --layout bsp'
