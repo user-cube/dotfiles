@@ -73,12 +73,12 @@ export PATH=${PATH}:`go env GOPATH`/bin
 export GOBIN=$HOME/go/bin
 
 # Completions
-
 source <(kubectl completion zsh)
 source <(aws-cli-manager completion zsh)
 source <(kontext completion zsh)
 source <(gclone completion zsh)
 source <(helm completion zsh)
+source <(tenv completion zsh)
 eval "$(task --completion zsh)"
 
 . "$HOME/.local/bin/env"
