@@ -81,4 +81,8 @@ source <(helm completion zsh)
 source <(tenv completion zsh)
 eval "$(task --completion zsh)"
 
+# Kubernetes
+alias k=kubecolor
+compdef kubecolor=kubectl
+
 . "$HOME/.local/bin/env"
