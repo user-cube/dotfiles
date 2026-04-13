@@ -63,7 +63,6 @@ alias vim="nvim"
 alias cat="bat --pager=never"
 alias lz="lazygit"
 alias lzd="lazydocker"
-alias aur="auth-refresher"
 alias ktx="kontext"
 alias redis-cli="docker run --network host --rm -it redis:alpine redis-cli"
 
@@ -75,7 +74,6 @@ setNS() { kubectl config set-context --current --namespace="$@" ; }
 # --- Completions ---
 source <(aws-cli-manager completion zsh)
 source <(kontext completion zsh)
-source <(gclone completion zsh)
 source <(helm completion zsh)
 source <(tenv completion zsh)
 eval "$(task --completion zsh)"
