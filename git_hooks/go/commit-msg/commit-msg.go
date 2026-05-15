@@ -123,7 +123,13 @@ func main() {
 	if disableSemantic {
 		finalHeader = fmt.Sprintf("%s: %s", issueKey, msgToUse)
 	} else {
-		finalHeader = fmt.Sprintf("%s %s", issueKey, msgToUse)
+		// msgToUse is "prefix: rest" → produce "prefix ISSUE: rest"
+		parts := strings.SplitN(msgToUse, ": ", 2)
+		if len(parts) == 2 {
+			finalHeader = fmt.Sprintf("%s: %s %s", parts[0], issueKey, parts[1])
+		} else {
+			finalHeader = fmt.Sprintf("%s %s", issueKey, msgToUse)
+		}
 	}
 
 	//---------------------------------------------------------------------------
