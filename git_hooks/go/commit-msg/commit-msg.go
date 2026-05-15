@@ -75,24 +75,27 @@ func main() {
 	originalMsg := strings.TrimSpace(messageLines[0])
 
 	//---------------------------------------------------------------------------
-	// 3.  Detect “disabled” to bypass Conventional-Commit prefix
+	// 3.  Detect mode keywords
+	//      no-prefix: → issue key only, no semantic prefix  → ISSUE something
+	//      no-track:  → bypass everything                   → something
 	//---------------------------------------------------------------------------
-	disableSemantic := false
+	noPrefix := false
+	noTrack := false
 	lowered := strings.ToLower(originalMsg)
 	switch {
-	case strings.HasPrefix(lowered, "disabled:"):
-		disableSemantic = true
-		originalMsg = strings.TrimSpace(originalMsg[len("disabled:"):])
-	case strings.HasPrefix(lowered, "disabled "):
-		disableSemantic = true
-		originalMsg = strings.TrimSpace(originalMsg[len("disabled "):])
+	case strings.HasPrefix(lowered, "no-prefix:"):
+		noPrefix = true
+		originalMsg = strings.TrimSpace(originalMsg[len("no-prefix:"):])
+	case strings.HasPrefix(lowered, "no-track:"):
+		noTrack = true
+		originalMsg = strings.TrimSpace(originalMsg[len("no-track:"):])
 	}
 
 	//---------------------------------------------------------------------------
-	// 4.  Add / normalise Conventional-Commit prefix (unless disabled)
+	// 4.  Add / normalise Conventional-Commit prefix (normal mode only)
 	//---------------------------------------------------------------------------
 	msgToUse := originalMsg
-	if !disableSemantic {
+	if !noPrefix && !noTrack {
 		validPrefixes := []string{
 			"feat", "fix", "chore", "docs", "style",
 			"refactor", "perf", "test", "build", "ci",
@@ -104,7 +107,6 @@ func main() {
 				valid = true
 				break
 			} else if strings.HasPrefix(loweredMsg, p+" ") {
-				// “fix something” → “fix: something”
 				rest := strings.TrimSpace(originalMsg[len(p):])
 				msgToUse = fmt.Sprintf("%s: %s", p, rest)
 				valid = true
@@ -120,10 +122,13 @@ func main() {
 	// 5.  Assemble final header
 	//---------------------------------------------------------------------------
 	var finalHeader string
-	if disableSemantic {
-		finalHeader = fmt.Sprintf("%s: %s", issueKey, msgToUse)
-	} else {
-		// msgToUse is "prefix: rest" → produce "prefix ISSUE: rest"
+	switch {
+	case noTrack:
+		finalHeader = msgToUse
+	case noPrefix:
+		finalHeader = fmt.Sprintf("%s %s", issueKey, msgToUse)
+	default:
+		// msgToUse is "prefix: rest" → "prefix: ISSUE rest"
 		parts := strings.SplitN(msgToUse, ": ", 2)
 		if len(parts) == 2 {
 			finalHeader = fmt.Sprintf("%s: %s %s", parts[0], issueKey, parts[1])
