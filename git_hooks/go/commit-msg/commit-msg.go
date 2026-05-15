@@ -6,9 +6,38 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
+
+// loadDefaultAction reads ~/.gitconfig-hook and returns the default_action for
+// the given repo path. Falls back to "feat" if the repo is not listed.
+func loadDefaultAction(repoPath string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "feat"
+	}
+	data, err := os.ReadFile(filepath.Join(home, ".gitconfig-hook"))
+	if err != nil {
+		return "feat"
+	}
+
+	var currentPath string
+	for _, line := range strings.Split(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if after, ok := strings.CutPrefix(trimmed, "- path:"); ok {
+			currentPath = strings.TrimSpace(after)
+		} else if after, ok := strings.CutPrefix(trimmed, "path:"); ok {
+			currentPath = strings.TrimSpace(after)
+		} else if after, ok := strings.CutPrefix(trimmed, "default_action:"); ok {
+			if currentPath == repoPath {
+				return strings.TrimSpace(after)
+			}
+		}
+	}
+	return "feat"
+}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -44,6 +73,18 @@ func main() {
 	if issueKey == "" {
 		issueKey = lastSegment // fall back if no match
 	}
+
+	//---------------------------------------------------------------------------
+	// 1b. Load default action from ~/.gitconfig-hook
+	//---------------------------------------------------------------------------
+	repoPathCmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	repoPathBytes, err := repoPathCmd.Output()
+	if err != nil {
+		fmt.Println("Error: Unable to determine the repository path.")
+		os.Exit(1)
+	}
+	repoPath := strings.TrimSpace(string(repoPathBytes))
+	defaultAction := loadDefaultAction(repoPath)
 
 	//---------------------------------------------------------------------------
 	// 2.  Read the existing commit message
@@ -89,6 +130,12 @@ func main() {
 	case strings.HasPrefix(lowered, "no-track:"):
 		noTrack = true
 		originalMsg = strings.TrimSpace(originalMsg[len("no-track:"):])
+	default:
+		// Apply repo-level default_action if no explicit keyword
+		switch defaultAction {
+		case "disabled":
+			noTrack = true
+		}
 	}
 
 	//---------------------------------------------------------------------------
@@ -114,7 +161,7 @@ func main() {
 			}
 		}
 		if !valid {
-			msgToUse = "feat: " + originalMsg
+			msgToUse = fmt.Sprintf("%s: %s", defaultAction, originalMsg)
 		}
 	}
 
