@@ -19,7 +19,7 @@ plugins=(
   aliases
   ansible
   brew
-  autoenv
+  direnv
   opentofu
   gh
 )
@@ -78,4 +78,4 @@ source <(helm completion zsh)
 source <(tenv completion zsh)
 eval "$(task --completion zsh)"
 
-. "$HOME/.local/bin/env"
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"

@@ -20,7 +20,7 @@ plugins=(
   aliases
   ansible
   brew
-  autoenv
+  direnv
   opentofu
 )
 
