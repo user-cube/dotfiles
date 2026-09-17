@@ -22,6 +22,11 @@
 [includeIf "gitdir:~/personal/"]
     path = ~/.gitconfig-personal
 
+# Personal GitHub repos live under ~/work/ too, so match on the remote rather
+# than the path. Listed last so it wins over the gitdir conditions above.
+[includeIf "hasconfig:remote.*.url:*:user-cube/**"]
+    path = ~/.gitconfig-personal
+
 [hook "gitleaks"]
     event = pre-commit
     command = gitleaks protect --staged --redact

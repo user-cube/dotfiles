@@ -43,6 +43,9 @@ source ~/powerlevel10k/powerlevel10k.zsh-theme
 export GPG_TTY=$(tty)
 export GOBIN=$HOME/go/bin
 
+# Bitwarden SSH agent
+export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 
