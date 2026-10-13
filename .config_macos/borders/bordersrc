@@ -1,0 +1,13 @@
+#!/bin/bash
+# JankyBorders: highlight the focused window (useful across 3 monitors).
+# Colors: Monokai green active, inactive hidden. Format 0xAARRGGBB.
+
+options=(
+  style=round
+  width=6.0
+  hidpi=on
+  active_color=0xffa6e22e
+  inactive_color=0x00000000
+)
+
+borders "${options[@]}"
