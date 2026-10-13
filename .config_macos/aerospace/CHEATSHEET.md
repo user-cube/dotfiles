@@ -72,7 +72,9 @@ Config in `~/.config/sketchybar/`. Reload with `sketchybar --reload`.
 | ☸ kube context/namespace (red if `prod`/`prd`, see `plugins/kube.sh`) | — |
 | Colima running profiles | popup: start/stop each profile |
 | GitHub PRs / GitLab MRs to review | open the review list |
-| CPU, volume, battery | — |
+| AWS `role@account` (default profile; red `expired` → `aws sso login`) | — |
+| GCP project (red `expired` → `gcloud auth login`) | — |
+| CPU, RAM (yellow > 70%, red > 85%), volume, battery | — |
 | 📦 outdated brew packages | `brew upgrade` in a new Ghostty |
 
 The macOS menu bar stays on top (status icons can't be mirrored on macOS 27).

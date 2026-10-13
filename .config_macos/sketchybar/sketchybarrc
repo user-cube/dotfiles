@@ -1,7 +1,8 @@
 #!/bin/bash
 # SketchyBar (bottom; macOS menu bar stays on top) — floating rounded bar:
 # AeroSpace workspaces (with app icons), focused app, Spotify, dev group
-# (kube context, Colima, GitHub/GitLab reviews), CPU graph, volume/battery/brew group.
+# (kube context, Colima, GitHub/GitLab reviews), cloud group (AWS, GCP),
+# CPU graph, RAM, volume/battery/brew group.
 # Docs: https://felixkratz.github.io/SketchyBar/
 export PATH="/opt/homebrew/bin:$PATH"
 
@@ -74,12 +75,26 @@ sketchybar --add bracket status volume battery brew \
   --set status background.color=$BRACKET_BG background.corner_radius=10 \
         background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
 
+sketchybar --add item ram right \
+  --set ram update_freq=15 icon=$'\xf3\xb0\x8d\x9b' script="$PLUGIN_DIR/ram.sh"
+
 sketchybar --add graph cpu right 60 \
   --set cpu update_freq=2 padding_right=10 \
         graph.color=$BLUE graph.fill_color=0x4466d9ef \
         icon.drawing=off label.font="$TEXT_FONT:Semibold:12.0" \
         label.color=$FG background.height=26 \
         script="$PLUGIN_DIR/cpu.sh"
+
+# --- Cloud group: AWS / GCP sessions (each hidden when not configured) -----------
+sketchybar --add item gcp right \
+  --set gcp update_freq=300 icon=$'\xf3\xb1\x87\xb6' drawing=off script="$PLUGIN_DIR/gcp.sh" \
+  --add item aws right \
+  --subscribe aws system_woke \
+  --set aws update_freq=300 icon=$'\xef\x8d\xb5' drawing=off script="$PLUGIN_DIR/aws.sh"
+
+sketchybar --add bracket cloud aws gcp \
+  --set cloud background.color=$BRACKET_BG background.corner_radius=10 \
+        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
 
 # --- Dev group: kube context, Colima, PRs/MRs to review ----------------------------
 sketchybar --add item gitlab right \
