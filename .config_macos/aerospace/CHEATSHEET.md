@@ -6,13 +6,14 @@
 
 | Shortcut | Workspace | Monitor | Apps |
 |---|---|---|---|
-| `⌥ c` | 2-Code | centre | VS Code, Ghostty |
-| `⌥ a` | 3-Claude | right | Claude |
-| `⌥ b` | 4-Browser | right | Firefox |
+| `⌥ c` | 2-Code | centre | VS Code, Ghostty, Xcode, GitHub Desktop |
+| `⌥ a` | 3-Claude | right | Claude, ChatGPT |
+| `⌥ b` | 4-Browser | right | Firefox, Safari |
 | `⌥ m` | 5-Messages | laptop | Slack, WhatsApp, Discord |
 | `⌥ n` | 6-Notes | laptop | Obsidian |
 | `⌥ s` | 7-Music | laptop | Spotify |
-| `⌥ q` / `⌥ w` | 8-Q / 9-W | laptop / right | free |
+| `⌥ p` | 8-K8s | right | Freelens, Headlamp |
+| `⌥ o` | 9-Other | laptop | TradingView; free for anything else |
 | `ctrl ←/→` | previous/next non-empty workspace on the focused monitor | | |
 | `⌥ tab` | back to the previous workspace | | |
 
@@ -27,6 +28,7 @@ With fewer monitors, workspaces fall back to the remaining one (see `workspace-t
 | `⌥ ⇧ <letter>` | send window to that workspace; focus follows |
 | `⌥ ⇧ f` | toggle fullscreen (AeroSpace, not macOS native) |
 | `⌥ -` / `⌥ =` | shrink / grow |
+| `⌥ r` | resize mode (below) |
 | `⌥ enter` | new Ghostty window |
 
 ## Layout
@@ -35,6 +37,19 @@ With fewer monitors, workspaces fall back to the remaining one (see `workspace-t
 |---|---|
 | `⌥ /` | tiles (press again: horizontal ↔ vertical) |
 | `⌥ ,` | accordion (stacked) |
+
+## Resize mode (`⌥ r`, then)
+
+| Key | Action |
+|---|---|
+| `h` / `l` | narrower / wider |
+| `k` / `j` | shorter / taller |
+| `b` | balance sizes, back to main |
+| `esc` / `enter` | back to main |
+
+## Floating apps
+
+System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden, Calculator.
 
 ## Service mode (`⌥ ⇧ ;`, then)
 
