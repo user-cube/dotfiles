@@ -84,3 +84,6 @@ scrollback-limit = 25000000
 
 # -- Update Channel --
 auto-update-channel = tip
+
+# Keep fullscreen inside the window (no separate macOS Space; plays well with AeroSpace)
+macos-non-native-fullscreen = true

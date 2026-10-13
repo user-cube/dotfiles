@@ -1,0 +1,169 @@
+# Docs: https://nikitabobko.github.io/AeroSpace/guide
+# Keyboard: Portuguese layout. Avoid alt-2/3/8/9 (@ € [ ]) and alt-shift-8/9 ({ }),
+# alt-x/alt-shift-x (« »): those are typed characters on this layout.
+
+config-version = 2
+
+after-startup-command = []
+start-at-login = true
+auto-reload-config = true
+
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+accordion-padding = 30
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+automatically-unhide-macos-hidden-apps = false
+
+# Numeric prefix sets the order for ctrl-left/right; alt-<letter> jumps directly.
+# alt-c Code + Ghostty · alt-a Claude · alt-b Browser · alt-m Messages · alt-n Notes · alt-s Music · alt-q/alt-w free
+persistent-workspaces = ["2-Code", "3-Claude", "4-Browser", "5-Messages",
+                         "6-Notes", "7-Music", "8-Q", "9-W"]
+
+on-mode-changed = []
+focus-follows-mouse.enabled = false
+key-mapping.preset = 'qwerty'
+
+gaps.inner.horizontal = 0
+gaps.inner.vertical =   0
+gaps.outer.left =       0
+gaps.outer.bottom =     0
+gaps.outer.top =        0
+gaps.outer.right =      0
+
+# --- App -> workspace assignment ---------------------------------------------
+
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+# Native macOS tabs show up as separate windows; force tiling
+# See: https://ghostty.org/docs/help/macos-tiling-wms
+run = ['layout tiling', 'move-node-to-workspace 2-Code']
+
+[[on-window-detected]]
+if.app-id = 'com.anthropic.claudefordesktop'
+run = 'move-node-to-workspace 3-Claude'
+
+[[on-window-detected]]
+if.app-id = 'org.mozilla.firefox'
+run = 'move-node-to-workspace 4-Browser'
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.VSCode'
+run = 'move-node-to-workspace 2-Code'
+
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = 'move-node-to-workspace 5-Messages'
+
+[[on-window-detected]]
+if.app-id = 'net.whatsapp.WhatsApp'
+run = 'move-node-to-workspace 5-Messages'
+
+[[on-window-detected]]
+if.app-id = 'com.hnc.Discord'
+run = 'move-node-to-workspace 5-Messages'
+
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
+run = 'move-node-to-workspace 7-Music'
+
+[[on-window-detected]]
+if.app-id = 'md.obsidian'
+run = 'move-node-to-workspace 6-Notes'
+
+# --- Floating utility apps ---------------------------------------------------
+
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.finder'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.archiveutility'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.ActivityMonitor'
+run = 'layout floating'
+
+# --- Main mode ---------------------------------------------------------------
+
+[mode.main.binding]
+    alt-enter = 'exec-and-forget open -na Ghostty'
+    alt-shift-f = 'fullscreen'
+
+    alt-slash = 'layout tiles horizontal vertical'
+    alt-comma = 'layout accordion horizontal vertical'
+
+    alt-h = 'focus --boundaries all-monitors-outer-frame left'
+    alt-j = 'focus --boundaries all-monitors-outer-frame down'
+    alt-k = 'focus --boundaries all-monitors-outer-frame up'
+    alt-l = 'focus --boundaries all-monitors-outer-frame right'
+
+    alt-shift-h = 'move left'
+    alt-shift-j = 'move down'
+    alt-shift-k = 'move up'
+    alt-shift-l = 'move right'
+
+    alt-minus = 'resize smart -50'
+    alt-equal = 'resize smart +50'
+
+    alt-b = 'workspace 4-Browser'
+    alt-c = 'workspace 2-Code'
+    alt-a = 'workspace 3-Claude'
+    alt-m = 'workspace 5-Messages'
+    alt-s = 'workspace 7-Music'
+    alt-n = 'workspace 6-Notes'
+    alt-q = 'workspace 8-Q'
+    alt-w = 'workspace 9-W'
+
+    alt-shift-b = 'move-node-to-workspace --focus-follows-window 4-Browser'
+    alt-shift-c = 'move-node-to-workspace --focus-follows-window 2-Code'
+    alt-shift-a = 'move-node-to-workspace --focus-follows-window 3-Claude'
+    alt-shift-m = 'move-node-to-workspace --focus-follows-window 5-Messages'
+    alt-shift-s = 'move-node-to-workspace --focus-follows-window 7-Music'
+    alt-shift-n = 'move-node-to-workspace --focus-follows-window 6-Notes'
+    alt-shift-q = 'move-node-to-workspace --focus-follows-window 8-Q'
+    alt-shift-w = 'move-node-to-workspace --focus-follows-window 9-W'
+
+    # Cycle only through non-empty workspaces (macOS "Move left/right a space" disabled)
+    ctrl-left = 'exec-and-forget /opt/homebrew/bin/aerospace list-workspaces --monitor focused --empty no | /opt/homebrew/bin/aerospace workspace --wrap-around --stdin prev'
+    ctrl-right = 'exec-and-forget /opt/homebrew/bin/aerospace list-workspaces --monitor focused --empty no | /opt/homebrew/bin/aerospace workspace --wrap-around --stdin next'
+
+    alt-tab = 'workspace-back-and-forth'
+    alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+
+    alt-shift-semicolon = 'mode service'
+
+# --- Service mode ------------------------------------------------------------
+
+[mode.service.binding]
+    esc = ['reload-config', 'mode main']
+    r = ['flatten-workspace-tree', 'mode main'] # reset layout
+    f = ['layout floating tiling', 'mode main'] # toggle floating/tiling
+    backspace = ['close-all-windows-but-current', 'mode main']
+
+    alt-shift-h = ['join-with left', 'mode main']
+    alt-shift-j = ['join-with down', 'mode main']
+    alt-shift-k = ['join-with up', 'mode main']
+    alt-shift-l = ['join-with right', 'mode main']
+
+# --- Workspace -> monitor -----------------------------------------------------
+# Monitors are numbered left to right: 1 laptop | 2 M27Q (1) | 3 M27Q (2).
+# Fallbacks keep everything usable with one external monitor or none.
+
+[workspace-to-monitor-force-assignment]
+    '2-Code'     = [2, 'built-in']
+    '3-Claude'   = [3, 2, 'built-in']
+    '4-Browser'  = [3, 2, 'built-in']
+    '9-W'        = [3, 2, 'built-in']
+    '5-Messages' = 'built-in'
+    '6-Notes'    = 'built-in'
+    '7-Music'    = 'built-in'
+    '8-Q'        = 'built-in'
