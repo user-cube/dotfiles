@@ -1,6 +1,6 @@
 #!/bin/bash
 # SketchyBar (bottom; macOS menu bar stays on top) — floating rounded bar:
-# AeroSpace workspaces (with app icons), focused app, Spotify, Slack, dev group
+# AeroSpace workspaces (with app icons), focused app, Spotify, Slack/Discord badges, dev group
 # (kube context, Colima, GitHub/GitLab reviews), cloud group (AWS, GCP),
 # CPU graph, RAM, weather, brew updates.
 # Docs: https://felixkratz.github.io/SketchyBar/
@@ -86,12 +86,15 @@ sketchybar --add graph cpu right 60 \
         label.color=$FG background.height=26 \
         script="$PLUGIN_DIR/cpu.sh"
 
-# --- Slack badge ----------------------------------------------------------------
-sketchybar --add item slack right \
-  --subscribe slack mouse.clicked front_app_switched \
-  --set slack update_freq=10 updates=on drawing=off \
-        icon=":slack:" icon.font="$APP_FONT" padding_right=8 \
-        script="$PLUGIN_DIR/slack.sh"
+# --- Messaging badges (Dock badge via Accessibility; hidden when app closed) -------
+for app in Discord Slack; do
+  item=$(echo "$app" | tr '[:upper:]' '[:lower:]')
+  sketchybar --add item "$item" right \
+    --subscribe "$item" mouse.clicked front_app_switched \
+    --set "$item" update_freq=10 updates=on drawing=off \
+          icon=":$item:" icon.font="$APP_FONT" padding_right=6 \
+          script="$PLUGIN_DIR/dock_badge.sh $app"
+done
 
 # --- Cloud group: AWS / GCP sessions (each hidden when not configured) -----------
 sketchybar --add item gcp right \

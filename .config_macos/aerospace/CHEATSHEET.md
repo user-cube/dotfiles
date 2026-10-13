@@ -69,7 +69,7 @@ Config in `~/.config/sketchybar/`. Reload with `sketchybar --reload`.
 |---|---|
 | Workspaces (with app icons) | go to that workspace |
 | Spotify (dim with ▶ while paused, hidden when closed) | play / pause |
-| Slack badge (red count = mentions/DMs, yellow • = unread) | open Slack |
+| Slack / Discord badges (red count = mentions/DMs, yellow • = unread; hidden when closed) | open the app |
 | ☸ kube context/namespace (red if `prod`/`prd`, see `plugins/kube.sh`) | — |
 | Colima running profiles | popup: start/stop each profile |
 | GitHub PRs / GitLab MRs to review | open the review list |
@@ -84,6 +84,19 @@ The macOS menu bar stays on top (status icons can't be mirrored on macOS 27). Ba
 ## Keyboard (PT layout)
 
 Avoid binding `⌥ 2/3/8/9` (`@ € [ ]`), `⌥ ⇧ 8/9` (`{ }`) and `⌥ x` (`« »`).
+
+## Permissions (System Settings → Privacy & Security)
+
+| Where | App | Why |
+|---|---|---|
+| Accessibility | AeroSpace | move and tile windows |
+| Accessibility | sketchybar (`/opt/homebrew/Cellar/sketchybar/<version>/bin/sketchybar`) | Slack/Discord Dock badges |
+| Automation → System Events | sketchybar (prompted) | Dock badges |
+| Automation → Spotify | sketchybar (prompted) | play/pause |
+
+Guided setup: `ansible-playbook daily-driver.yml --tags permissions`.
+After `brew upgrade sketchybar` the badges turn grey: the grant is tied to the old
+Cellar path — remove it and run the permissions tag again.
 
 ## macOS prerequisites
 
