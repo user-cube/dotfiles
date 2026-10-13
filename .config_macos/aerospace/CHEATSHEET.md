@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `⌥ c` | 2-Code | centre | VS Code, Ghostty, Xcode, GitHub Desktop |
 | `⌥ a` | 3-Claude | right | Claude, ChatGPT |
-| `⌥ b` | 4-Browser | right | Firefox, Safari |
+| `⌥ b` | 4-Browser | right | Firefox, Chrome, Safari |
 | `⌥ m` | 5-Messages | laptop | Slack, WhatsApp, Discord |
 | `⌥ n` | 6-Notes | laptop | Obsidian |
 | `⌥ s` | 7-Music | laptop | Spotify |

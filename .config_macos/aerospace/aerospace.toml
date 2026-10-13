@@ -91,6 +91,10 @@ if.app-id = 'com.apple.Safari'
 run = 'move-node-to-workspace 4-Browser'
 
 [[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+run = 'move-node-to-workspace 4-Browser'
+
+[[on-window-detected]]
 if.app-id = 'app.freelens.Freelens'
 run = 'move-node-to-workspace 8-K8s'
 
