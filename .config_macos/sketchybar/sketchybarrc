@@ -1,8 +1,8 @@
 #!/bin/bash
 # SketchyBar (bottom; macOS menu bar stays on top) — floating rounded bar:
-# AeroSpace workspaces (with app icons), focused app, Spotify, dev group
+# AeroSpace workspaces (with app icons), focused app, Spotify, Slack, dev group
 # (kube context, Colima, GitHub/GitLab reviews), cloud group (AWS, GCP),
-# CPU graph, RAM, volume/battery/brew group.
+# CPU graph, RAM, weather, brew updates.
 # Docs: https://felixkratz.github.io/SketchyBar/
 export PATH="/opt/homebrew/bin:$PATH"
 
@@ -18,6 +18,8 @@ sketchybar --bar position=bottom height=40 y_offset=4 margin=8 corner_radius=12 
            display=all sticky=on topmost=off padding_left=8 padding_right=12 \
            notch_width=0
 
+# Hidden items don't run scripts with updates=when_shown; items that hide
+# themselves (Spotify, GitLab, AWS, GCP) set updates=on to be able to reappear.
 sketchybar --default updates=when_shown \
            icon.font="$ICON_FONT:Bold:14.0" label.font="$TEXT_FONT:Semibold:13.0" \
            icon.color=$FG label.color=$FG \
@@ -63,17 +65,16 @@ sketchybar --add event brew_update \
   --add item brew right \
   --subscribe brew brew_update \
   --set brew update_freq=3600 updates=on icon=$'\xf3\xb0\x8f\x97' icon.color=$ORANGE \
-        script="$PLUGIN_DIR/brew.sh" click_script="$PLUGIN_DIR/brew_upgrade.sh" \
-  --add item battery right \
-  --subscribe battery system_woke power_source_change \
-  --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
-  --add item volume right \
-  --subscribe volume volume_change \
-  --set volume icon.color=$PURPLE script="$PLUGIN_DIR/volume.sh"
+        script="$PLUGIN_DIR/brew.sh" click_script="$PLUGIN_DIR/brew_upgrade.sh"
 
-sketchybar --add bracket status volume battery brew \
+sketchybar --add bracket status brew \
   --set status background.color=$BRACKET_BG background.corner_radius=10 \
         background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+
+sketchybar --add item weather right \
+  --subscribe weather mouse.clicked system_woke \
+  --set weather update_freq=1800 icon.font="$TEXT_FONT:Regular:14.0" \
+        script="$PLUGIN_DIR/weather.sh"
 
 sketchybar --add item ram right \
   --set ram update_freq=15 icon=$'\xf3\xb0\x8d\x9b' script="$PLUGIN_DIR/ram.sh"
@@ -85,12 +86,19 @@ sketchybar --add graph cpu right 60 \
         label.color=$FG background.height=26 \
         script="$PLUGIN_DIR/cpu.sh"
 
+# --- Slack badge ----------------------------------------------------------------
+sketchybar --add item slack right \
+  --subscribe slack mouse.clicked front_app_switched \
+  --set slack update_freq=10 updates=on drawing=off \
+        icon=":slack:" icon.font="$APP_FONT" padding_right=8 \
+        script="$PLUGIN_DIR/slack.sh"
+
 # --- Cloud group: AWS / GCP sessions (each hidden when not configured) -----------
 sketchybar --add item gcp right \
-  --set gcp update_freq=300 icon=$'\xf3\xb1\x87\xb6' drawing=off script="$PLUGIN_DIR/gcp.sh" \
+  --set gcp update_freq=300 icon=$'\xf3\xb1\x87\xb6' drawing=off updates=on script="$PLUGIN_DIR/gcp.sh" \
   --add item aws right \
   --subscribe aws system_woke \
-  --set aws update_freq=300 icon=$'\xef\x8d\xb5' drawing=off script="$PLUGIN_DIR/aws.sh"
+  --set aws update_freq=300 icon=$'\xef\x8d\xb5' drawing=off updates=on script="$PLUGIN_DIR/aws.sh"
 
 sketchybar --add bracket cloud aws gcp \
   --set cloud background.color=$BRACKET_BG background.corner_radius=10 \
@@ -99,7 +107,7 @@ sketchybar --add bracket cloud aws gcp \
 # --- Dev group: kube context, Colima, PRs/MRs to review ----------------------------
 sketchybar --add item gitlab right \
   --subscribe gitlab mouse.clicked \
-  --set gitlab update_freq=300 icon=$'\xef\x8a\x96' drawing=off \
+  --set gitlab update_freq=300 icon=$'\xef\x8a\x96' drawing=off updates=on \
         script="$PLUGIN_DIR/gitlab.sh" \
   --add item github right \
   --set github update_freq=300 icon=$'\xef\x90\x87' \
@@ -116,12 +124,12 @@ sketchybar --add bracket dev kube colima github gitlab \
   --set dev background.color=$BRACKET_BG background.corner_radius=10 \
         background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
 
-# --- Spotify (hidden unless playing) ---------------------------------------------
+# --- Spotify (hidden unless running; dim while paused) --------------------------------------
 sketchybar --add event spotify_change com.spotify.client.PlaybackStateChanged \
   --add item spotify right \
   --subscribe spotify spotify_change mouse.clicked \
   --set spotify icon=":spotify:" icon.font="$APP_FONT" icon.color=$GREEN \
-        label.max_chars=40 padding_right=10 drawing=off \
+        label.max_chars=40 padding_right=10 drawing=off updates=on \
         script="$PLUGIN_DIR/spotify.sh"
 
 # Rebuild when monitors are plugged or unplugged (workspaces move between them)

@@ -68,16 +68,18 @@ Config in `~/.config/sketchybar/`. Reload with `sketchybar --reload`.
 | Item | Click |
 |---|---|
 | Workspaces (with app icons) | go to that workspace |
-| Spotify (only while playing) | play / pause |
+| Spotify (dim with ▶ while paused, hidden when closed) | play / pause |
+| Slack badge (red count = mentions/DMs, yellow • = unread) | open Slack |
 | ☸ kube context/namespace (red if `prod`/`prd`, see `plugins/kube.sh`) | — |
 | Colima running profiles | popup: start/stop each profile |
 | GitHub PRs / GitLab MRs to review | open the review list |
 | AWS `role@account` (default profile; red `expired` → `aws sso login`) | — |
 | GCP project (red `expired` → `gcloud auth login`) | — |
-| CPU, RAM (yellow > 70%, red > 85%), volume, battery | — |
+| CPU, RAM (yellow > 70%, red > 85%) | — |
+| Weather (wttr.in, location from IP) | open forecast |
 | 📦 outdated brew packages | `brew upgrade` in a new Ghostty |
 
-The macOS menu bar stays on top (status icons can't be mirrored on macOS 27).
+The macOS menu bar stays on top (status icons can't be mirrored on macOS 27). Battery, sound and clock live there.
 
 ## Keyboard (PT layout)
 
