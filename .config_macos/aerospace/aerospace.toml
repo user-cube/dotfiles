@@ -16,7 +16,11 @@ default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
 
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
-automatically-unhide-macos-hidden-apps = true
+
+# Tell SketchyBar which workspace is focused (highlights it in the bar)
+exec-on-workspace-change = ['/bin/bash', '-c',
+  '/opt/homebrew/bin/sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE']
+automatically-unhide-macos-hidden-apps = false
 
 # Numeric prefix sets the order for ctrl-left/right; alt-<letter> jumps directly.
 # alt-c Code · alt-a Claude · alt-b Browser · alt-m Messages · alt-n Notes · alt-s Music · alt-p K8s · alt-o Other (free)
@@ -30,7 +34,7 @@ key-mapping.preset = 'qwerty'
 gaps.inner.horizontal = 8
 gaps.inner.vertical =   8
 gaps.outer.left =       8
-gaps.outer.bottom =     8
+gaps.outer.bottom =     52 # 40px SketchyBar + 4px offset + 8px gap
 gaps.outer.top =        8
 gaps.outer.right =      8
 

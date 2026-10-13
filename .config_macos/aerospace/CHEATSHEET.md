@@ -61,6 +61,22 @@ System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden
 | `backspace` | close all windows but current |
 | `⌥ ⇧ h/j/k/l` | join with neighbour |
 
+## SketchyBar (bottom bar)
+
+Config in `~/.config/sketchybar/`. Reload with `sketchybar --reload`.
+
+| Item | Click |
+|---|---|
+| Workspaces (with app icons) | go to that workspace |
+| Spotify (only while playing) | play / pause |
+| ☸ kube context/namespace (red if `prod`/`prd`, see `plugins/kube.sh`) | — |
+| Colima running profiles | popup: start/stop each profile |
+| GitHub PRs / GitLab MRs to review | open the review list |
+| CPU, volume, battery | — |
+| 📦 outdated brew packages | `brew upgrade` in a new Ghostty |
+
+The macOS menu bar stays on top (status icons can't be mirrored on macOS 27).
+
 ## Keyboard (PT layout)
 
 Avoid binding `⌥ 2/3/8/9` (`@ € [ ]`), `⌥ ⇧ 8/9` (`{ }`) and `⌥ x` (`« »`).

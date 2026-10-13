@@ -1,0 +1,117 @@
+#!/bin/bash
+# SketchyBar (bottom; macOS menu bar stays on top) — floating rounded bar:
+# AeroSpace workspaces (with app icons), focused app, Spotify, dev group
+# (kube context, Colima, GitHub/GitLab reviews), CPU graph, volume/battery/brew group.
+# Docs: https://felixkratz.github.io/SketchyBar/
+export PATH="/opt/homebrew/bin:$PATH"
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+source "$CONFIG_DIR/colors.sh"
+
+TEXT_FONT="SF Pro"
+ICON_FONT="Hack Nerd Font"
+APP_FONT="sketchybar-app-font:Regular:15.0"
+
+sketchybar --bar position=bottom height=40 y_offset=4 margin=8 corner_radius=12 \
+           color=$BAR_BG border_width=1 border_color=$ITEM_BORDER blur_radius=20 \
+           display=all sticky=on topmost=off padding_left=8 padding_right=12 \
+           notch_width=0
+
+sketchybar --default updates=when_shown \
+           icon.font="$ICON_FONT:Bold:14.0" label.font="$TEXT_FONT:Semibold:13.0" \
+           icon.color=$FG label.color=$FG \
+           icon.padding_left=6 icon.padding_right=4 \
+           label.padding_left=4 label.padding_right=6 \
+           padding_left=2 padding_right=2 \
+           popup.background.color=$POPUP_BG popup.background.corner_radius=10 \
+           popup.background.border_width=2 popup.background.border_color=$FG \
+           popup.blur_radius=20
+
+# --- AeroSpace workspaces: name + pill with its app icons, on its own monitor ---
+sketchybar --add event aerospace_workspace_change
+
+for mid in $(aerospace list-monitors --format '%{monitor-appkit-nsscreen-screens-id}'); do
+  for ws in $(aerospace list-workspaces --monitor "$mid"); do
+    sketchybar --add item "space.$ws" left \
+      --subscribe "space.$ws" aerospace_workspace_change front_app_switched space_windows_change \
+      --set "space.$ws" display="$mid" \
+            icon="${ws#*-}" icon.font="$TEXT_FONT:Bold:13.0" icon.padding_left=10 \
+            label.font="$APP_FONT" label.y_offset=-1 \
+            label.padding_left=8 label.padding_right=8 \
+            label.background.color=$PILL_BG label.background.corner_radius=7 \
+            label.background.height=24 \
+            click_script="aerospace workspace $ws" \
+            script="$PLUGIN_DIR/aerospace.sh $ws"
+  done
+done
+
+sketchybar --add bracket spaces '/space\..*/' \
+  --set spaces background.color=$BRACKET_BG background.corner_radius=10 \
+        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+
+# --- Focused app ---------------------------------------------------------------
+sketchybar --add item chevron left \
+  --set chevron icon=$'\xef\x81\x94' icon.color=$FG label.drawing=off padding_left=10 \
+  --add item front_app left \
+  --subscribe front_app front_app_switched \
+  --set front_app icon.font="$APP_FONT" icon.color=$ORANGE \
+        script="$PLUGIN_DIR/front_app.sh"
+
+# --- Right side (added rightmost first) ------------------------------------------
+sketchybar --add event brew_update \
+  --add item brew right \
+  --subscribe brew brew_update \
+  --set brew update_freq=3600 updates=on icon=$'\xf3\xb0\x8f\x97' icon.color=$ORANGE \
+        script="$PLUGIN_DIR/brew.sh" click_script="$PLUGIN_DIR/brew_upgrade.sh" \
+  --add item battery right \
+  --subscribe battery system_woke power_source_change \
+  --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
+  --add item volume right \
+  --subscribe volume volume_change \
+  --set volume icon.color=$PURPLE script="$PLUGIN_DIR/volume.sh"
+
+sketchybar --add bracket status volume battery brew \
+  --set status background.color=$BRACKET_BG background.corner_radius=10 \
+        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+
+sketchybar --add graph cpu right 60 \
+  --set cpu update_freq=2 padding_right=10 \
+        graph.color=$BLUE graph.fill_color=0x4466d9ef \
+        icon.drawing=off label.font="$TEXT_FONT:Semibold:12.0" \
+        label.color=$FG background.height=26 \
+        script="$PLUGIN_DIR/cpu.sh"
+
+# --- Dev group: kube context, Colima, PRs/MRs to review ----------------------------
+sketchybar --add item gitlab right \
+  --subscribe gitlab mouse.clicked \
+  --set gitlab update_freq=300 icon=$'\xef\x8a\x96' drawing=off \
+        script="$PLUGIN_DIR/gitlab.sh" \
+  --add item github right \
+  --set github update_freq=300 icon=$'\xef\x90\x87' \
+        script="$PLUGIN_DIR/github.sh" \
+        click_script="open https://github.com/pulls/review-requested" \
+  --add event colima_update \
+  --add item colima right \
+  --subscribe colima colima_update mouse.clicked mouse.exited.global \
+  --set colima update_freq=30 icon=$'\xef\x8c\x88' script="$PLUGIN_DIR/colima.sh" \
+  --add item kube right \
+  --set kube update_freq=5 icon=$'\xf3\xb1\x83\xbe' script="$PLUGIN_DIR/kube.sh"
+
+sketchybar --add bracket dev kube colima github gitlab \
+  --set dev background.color=$BRACKET_BG background.corner_radius=10 \
+        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+
+# --- Spotify (hidden unless playing) ---------------------------------------------
+sketchybar --add event spotify_change com.spotify.client.PlaybackStateChanged \
+  --add item spotify right \
+  --subscribe spotify spotify_change mouse.clicked \
+  --set spotify icon=":spotify:" icon.font="$APP_FONT" icon.color=$GREEN \
+        label.max_chars=40 padding_right=10 drawing=off \
+        script="$PLUGIN_DIR/spotify.sh"
+
+# Rebuild when monitors are plugged or unplugged (workspaces move between them)
+sketchybar --add item display_watch left \
+  --set display_watch drawing=off script="$PLUGIN_DIR/display.sh" \
+  --subscribe display_watch display_change
+
+sketchybar --update
