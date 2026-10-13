@@ -1,6 +1,8 @@
 #!/bin/bash
 # Spotify: green while playing, dim with a play symbol while paused, hidden when
 # Spotify isn't running. Click toggles play/pause.
+# Never `tell application "Spotify"` unguarded: that relaunches it, e.g. right
+# after ⌘Q when the quit event arrives. Prefer the event payload ($INFO).
 source "$CONFIG_DIR/colors.sh"
 
 if [ "$SENDER" = "mouse.clicked" ]; then
@@ -8,18 +10,23 @@ if [ "$SENDER" = "mouse.clicked" ]; then
   exit 0
 fi
 
-# Spotify quit (or never opened): hide, without launching it via osascript
-if ! pgrep -xq Spotify; then
-  sketchybar --set "$NAME" drawing=off
-  exit 0
+if [ -n "$INFO" ]; then
+  # Event payload: {"Player State": "Playing|Paused|Stopped", "Artist": ..., "Name": ...}
+  OUT=$(echo "$INFO" | python3 -c 'import sys,json
+try:
+    d=json.load(sys.stdin)
+    print(d.get("Player State","").lower() + "|" + d.get("Artist","") + " — " + d.get("Name",""))
+except Exception:
+    print("")')
+else
+  # Startup / periodic: ask Spotify only if it is already running
+  OUT=$(osascript -e 'if application "Spotify" is running then
+    tell application "Spotify" to return (player state as string) & "|" & (artist of current track) & " — " & (name of current track)
+  end if' 2>/dev/null)
 fi
 
-STATE=$(echo "$INFO" | python3 -c 'import sys,json
-try: print(json.load(sys.stdin).get("Player State","").lower())
-except Exception: print("")')
-[ -z "$STATE" ] && STATE=$(osascript -e 'tell application "Spotify" to player state as string' 2>/dev/null)
-
-TRACK=$(osascript -e 'tell application "Spotify" to (artist of current track) & " — " & (name of current track)' 2>/dev/null)
+STATE="${OUT%%|*}"
+TRACK="${OUT#*|}"
 
 case "$STATE" in
   playing)
