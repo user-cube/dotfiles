@@ -92,6 +92,8 @@ keybind = cmd+shift+f=text:\x02z
 keybind = cmd+shift+s=text:\x02s
 # Open a repo as a session (fuzzy finder over ~/work)
 keybind = cmd+o=text:\x02f
+# lazygit for the current folder, in a popup
+keybind = cmd+g=text:\x02g
 
 # Font size
 keybind = cmd+plus=increase_font_size:1

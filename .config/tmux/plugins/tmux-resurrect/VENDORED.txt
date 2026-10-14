@@ -1,0 +1,2 @@
+Vendored from https://github.com/tmux-plugins/tmux-resurrect at commit cff343cf9e81983d3da0c8562b01616f12e8d548 (no TPM).
+Update: re-copy that repo at a newer commit and change this line.
