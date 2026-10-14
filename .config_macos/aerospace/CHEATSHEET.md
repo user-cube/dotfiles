@@ -31,6 +31,7 @@ With fewer monitors, workspaces fall back to the remaining one (see `workspace-t
 | `⌥ -` / `⌥ =` | shrink / grow |
 | `⌥ r` | resize mode (below) |
 | `⌥ enter` | new Ghostty window |
+| `⌥ i` | this cheat sheet, filling the monitor (`q` closes, `/` searches) |
 
 ## Layout
 
