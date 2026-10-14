@@ -66,7 +66,7 @@ System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden
 ## Ghostty + tmux (tabs, splits, sessions)
 
 Every Ghostty window runs inside tmux. First window = persistent `main` session.
-Repos listed in `~/.config/tmux/sessions.local` (one path per line, per machine) are
+Sessions listed in `~/.config/tmux/sessions.local` (`name=path` per line, repeat a name for more windows; per machine) are
 preloaded as sessions when tmux starts.
 Sessions (tabs, splits, folders) are auto-saved every 15 min and restored after a
 reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
