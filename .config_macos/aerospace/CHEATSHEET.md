@@ -49,7 +49,7 @@ With fewer monitors, workspaces fall back to the remaining one (see `workspace-t
 
 ## Floating apps
 
-System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden, Calculator.
+System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden, Calculator, Zoom (opens over the current workspace; move it with `⌥ ⇧ tab`).
 
 ## Service mode (`⌥ ⇧ ;`, then)
 
@@ -78,6 +78,10 @@ Config in `~/.config/sketchybar/`. Reload with `sketchybar --reload`.
 | CPU, RAM (yellow > 70%, red > 85%) | — |
 | Weather (wttr.in, location from IP) | open forecast |
 | 📦 outdated brew packages | `brew upgrade` in a new Ghostty |
+
+On narrow displays (< 1800 pt, e.g. the 14" laptop) only the essentials show: workspaces,
+focused app, Slack/Discord, kube, AWS/GCP. Spotify, weather, CPU, RAM, Colima, GitHub,
+GitLab and brew only appear on the wide monitors (`LOW_PRIORITY` in `sketchybarrc`).
 
 The macOS menu bar stays on top (status icons can't be mirrored on macOS 27). Battery, sound and clock live there.
 

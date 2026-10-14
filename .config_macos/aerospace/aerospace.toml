@@ -140,6 +140,12 @@ run = 'layout floating'
 if.app-id = 'com.apple.calculator'
 run = 'layout floating'
 
+# Zoom spawns many small transient windows (share toolbar, chat, controls) that
+# would each split the screen if tiled
+[[on-window-detected]]
+if.app-id = 'us.zoom.xos'
+run = 'layout floating'
+
 # --- Main mode ---------------------------------------------------------------
 
 [mode.main.binding]

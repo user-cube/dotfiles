@@ -147,6 +147,23 @@ sketchybar --add event spotify_change com.spotify.client.PlaybackStateChanged \
         label.max_chars=40 padding_right=10 drawing=off updates=on \
         script="$PLUGIN_DIR/spotify.sh"
 
+# --- Narrow displays (e.g. the 14" laptop) ----------------------------------------
+# Low-priority items only go on displays at least MIN_WIDE_WIDTH points wide; with
+# no such display (laptop alone) they are removed. Edit LOW_PRIORITY to taste.
+MIN_WIDE_WIDTH=1800
+LOW_PRIORITY="spotify weather cpu ram colima github gitlab brew"
+
+WIDE_DISPLAYS=$(sketchybar --query displays | python3 -c "import sys,json
+print(','.join(str(d['arrangement-id']) for d in json.load(sys.stdin) if d['frame']['w'] >= $MIN_WIDE_WIDTH))")
+
+for item in $LOW_PRIORITY; do
+  if [ -n "$WIDE_DISPLAYS" ]; then
+    sketchybar --set "$item" display="$WIDE_DISPLAYS"
+  else
+    sketchybar --remove "$item"
+  fi
+done
+
 # Rebuild when monitors are plugged or unplugged (workspaces move between them)
 sketchybar --add item display_watch left \
   --set display_watch drawing=off script="$PLUGIN_DIR/display.sh" \
