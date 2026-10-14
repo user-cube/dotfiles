@@ -23,7 +23,7 @@ exec-on-workspace-change = ['/bin/bash', '-c',
 automatically-unhide-macos-hidden-apps = false
 
 # Numeric prefix sets the order for ctrl-left/right; alt-<letter> jumps directly.
-# alt-c Code · alt-a Claude · alt-b Browser · alt-m Messages · alt-n Notes · alt-s Music · alt-p K8s · alt-o Other (free)
+# alt-c Code · alt-a Claude · alt-b Browser · alt-m Messages · alt-n Notes · alt-u Music · alt-p K8s · alt-o Other (free)
 persistent-workspaces = ["2-Code", "3-Claude", "4-Browser", "5-Messages",
                          "6-Notes", "7-Music", "8-K8s", "9-Other"]
 
@@ -166,7 +166,7 @@ run = 'layout floating'
     alt-c = 'workspace 2-Code'
     alt-a = 'workspace 3-Claude'
     alt-m = 'workspace 5-Messages'
-    alt-s = 'workspace 7-Music'
+    alt-u = 'workspace 7-Music'
     alt-n = 'workspace 6-Notes'
     alt-p = 'workspace 8-K8s'
     alt-o = 'workspace 9-Other'
@@ -175,7 +175,7 @@ run = 'layout floating'
     alt-shift-c = 'move-node-to-workspace --focus-follows-window 2-Code'
     alt-shift-a = 'move-node-to-workspace --focus-follows-window 3-Claude'
     alt-shift-m = 'move-node-to-workspace --focus-follows-window 5-Messages'
-    alt-shift-s = 'move-node-to-workspace --focus-follows-window 7-Music'
+    alt-shift-u = 'move-node-to-workspace --focus-follows-window 7-Music'
     alt-shift-n = 'move-node-to-workspace --focus-follows-window 6-Notes'
     alt-shift-p = 'move-node-to-workspace --focus-follows-window 8-K8s'
     alt-shift-o = 'move-node-to-workspace --focus-follows-window 9-Other'

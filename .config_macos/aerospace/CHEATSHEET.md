@@ -11,7 +11,7 @@
 | `⌥ b` | 4-Browser | right | Firefox, Chrome, Safari |
 | `⌥ m` | 5-Messages | laptop | Slack, WhatsApp, Discord |
 | `⌥ n` | 6-Notes | laptop | Obsidian |
-| `⌥ s` | 7-Music | laptop | Spotify |
+| `⌥ u` | 7-Music | laptop | Spotify (`⌥ s` is grabbed by another app on the company Mac) |
 | `⌥ p` | 8-K8s | right | Freelens, Headlamp |
 | `⌥ o` | 9-Other | laptop | TradingView; free for anything else |
 | `ctrl ←/→` | previous/next non-empty workspace on the focused monitor | | |
