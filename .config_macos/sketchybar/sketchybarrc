@@ -101,7 +101,8 @@ sketchybar --add item gcp right \
   --set gcp update_freq=300 icon=$'\xf3\xb1\x87\xb6' drawing=off updates=on script="$PLUGIN_DIR/gcp.sh"
 
 # AWS: one item per profile (see plugins/aws_profiles.sh). Added right-to-left,
-# so iterate in reverse; only the leftmost item shows the AWS icon.
+# so iterate in reverse; only the leftmost item shows the "AWS" tag (text, not a
+# Nerd Font glyph: U+F375 renders as a different symbol in some font versions).
 AWS_PROFILES=$("$PLUGIN_DIR/aws_profiles.sh" | tail -r)
 last=$(echo "$AWS_PROFILES" | tail -1)
 CLOUD_ITEMS="gcp"
@@ -109,7 +110,7 @@ for profile in $AWS_PROFILES; do
   CLOUD_ITEMS="$CLOUD_ITEMS aws.$profile"
   sketchybar --add item "aws.$profile" right \
     --subscribe "aws.$profile" system_woke \
-    --set "aws.$profile" update_freq=300 icon=$'\xef\x8d\xb5' \
+    --set "aws.$profile" update_freq=300 icon="AWS" icon.font="$TEXT_FONT:Heavy:11.0" \
           icon.drawing=$([ "$profile" = "$last" ] && echo on || echo off) \
           script="$PLUGIN_DIR/aws.sh $profile"
 done
