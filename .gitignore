@@ -5,3 +5,4 @@ git_hooks/go/commit-msg/commit-msg
 .config/tmux/sessions.local
 .config_macos/sketchybar/aws_profiles
 .config_macos/sketchybar/aws_profile
+.config/tmux/plugins/
