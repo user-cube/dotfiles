@@ -98,12 +98,23 @@ done
 
 # --- Cloud group: AWS / GCP sessions (each hidden when not configured) -----------
 sketchybar --add item gcp right \
-  --set gcp update_freq=300 icon=$'\xf3\xb1\x87\xb6' drawing=off updates=on script="$PLUGIN_DIR/gcp.sh" \
-  --add item aws right \
-  --subscribe aws system_woke \
-  --set aws update_freq=300 icon=$'\xef\x8d\xb5' drawing=off updates=on script="$PLUGIN_DIR/aws.sh"
+  --set gcp update_freq=300 icon=$'\xf3\xb1\x87\xb6' drawing=off updates=on script="$PLUGIN_DIR/gcp.sh"
 
-sketchybar --add bracket cloud aws gcp \
+# AWS: one item per profile (see plugins/aws_profiles.sh). Added right-to-left,
+# so iterate in reverse; only the leftmost item shows the AWS icon.
+AWS_PROFILES=$("$PLUGIN_DIR/aws_profiles.sh" | tail -r)
+last=$(echo "$AWS_PROFILES" | tail -1)
+CLOUD_ITEMS="gcp"
+for profile in $AWS_PROFILES; do
+  CLOUD_ITEMS="$CLOUD_ITEMS aws.$profile"
+  sketchybar --add item "aws.$profile" right \
+    --subscribe "aws.$profile" system_woke \
+    --set "aws.$profile" update_freq=300 icon=$'\xef\x8d\xb5' \
+          icon.drawing=$([ "$profile" = "$last" ] && echo on || echo off) \
+          script="$PLUGIN_DIR/aws.sh $profile"
+done
+
+sketchybar --add bracket cloud $CLOUD_ITEMS \
   --set cloud background.color=$BRACKET_BG background.corner_radius=10 \
         background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
 
