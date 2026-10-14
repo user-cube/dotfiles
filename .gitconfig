@@ -29,4 +29,4 @@
 
 [hook "gitleaks"]
     event = pre-commit
-    command = gitleaks protect --staged --redact
+    command = gitleaks protect --staged --redact --verbose
