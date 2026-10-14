@@ -81,6 +81,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `⌘ o` | open a repo under `~/work` as a session (fuzzy search; reuses it if open) |
 | `⌘ ⇧ s` | session picker (enter switches, `x` kills) |
 | `⌘ g` | lazygit for the current folder (popup; `q` closes) |
+| `⌘ a` | select the whole pane history (`y`/`enter` copies, `esc` cancels) |
 | `ctrl b d` | detach (session keeps running; reopen Ghostty to come back) |
 | mouse drag | copies to clipboard; `⇧`+drag uses Ghostty's own selection |
 
