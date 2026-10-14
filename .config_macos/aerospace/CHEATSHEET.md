@@ -6,6 +6,7 @@
 
 | Shortcut | Workspace | Monitor | Apps |
 |---|---|---|---|
+| `⌥ z` | 1-Meet | right | Zoom (main/meeting window; its popups float where you are) |
 | `⌥ c` | 2-Code | centre | VS Code, Ghostty, Xcode, GitHub Desktop |
 | `⌥ a` | 3-Claude | right | Claude, ChatGPT |
 | `⌥ b` | 4-Browser | right | Firefox, Chrome, Safari |
@@ -49,7 +50,7 @@ With fewer monitors, workspaces fall back to the remaining one (see `workspace-t
 
 ## Floating apps
 
-System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden, Calculator, Zoom (opens over the current workspace; move it with `⌥ ⇧ tab`).
+System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden, Calculator, Zoom popups (share toolbar, chat, controls).
 
 ## Service mode (`⌥ ⇧ ;`, then)
 

@@ -23,8 +23,8 @@ exec-on-workspace-change = ['/bin/bash', '-c',
 automatically-unhide-macos-hidden-apps = false
 
 # Numeric prefix sets the order for ctrl-left/right; alt-<letter> jumps directly.
-# alt-c Code · alt-a Claude · alt-b Browser · alt-m Messages · alt-n Notes · alt-u Music · alt-p K8s · alt-o Other (free)
-persistent-workspaces = ["2-Code", "3-Claude", "4-Browser", "5-Messages",
+# alt-z Meet (Zoom) · alt-c Code · alt-a Claude · alt-b Browser · alt-m Messages · alt-n Notes · alt-u Music · alt-p K8s · alt-o Other (free)
+persistent-workspaces = ["1-Meet", "2-Code", "3-Claude", "4-Browser", "5-Messages",
                          "6-Notes", "7-Music", "8-K8s", "9-Other"]
 
 on-mode-changed = []
@@ -140,8 +140,14 @@ run = 'layout floating'
 if.app-id = 'com.apple.calculator'
 run = 'layout floating'
 
-# Zoom spawns many small transient windows (share toolbar, chat, controls) that
-# would each split the screen if tiled
+# Zoom: the main windows go to the Meet workspace; everything else it spawns
+# (share toolbar, chat, controls) floats where it is, so it isn't hidden away in
+# 1-Meet or splitting the screen. First matching rule wins, so order matters.
+[[on-window-detected]]
+if.app-id = 'us.zoom.xos'
+if.window-title-regex-substring = 'Zoom Meeting|Zoom Workplace'
+run = 'move-node-to-workspace 1-Meet'
+
 [[on-window-detected]]
 if.app-id = 'us.zoom.xos'
 run = 'layout floating'
@@ -169,6 +175,7 @@ run = 'layout floating'
     alt-equal = 'resize smart +50'
 
     alt-b = 'workspace 4-Browser'
+    alt-z = 'workspace 1-Meet'
     alt-c = 'workspace 2-Code'
     alt-a = 'workspace 3-Claude'
     alt-m = 'workspace 5-Messages'
@@ -178,6 +185,7 @@ run = 'layout floating'
     alt-o = 'workspace 9-Other'
 
     alt-shift-b = 'move-node-to-workspace --focus-follows-window 4-Browser'
+    alt-shift-z = 'move-node-to-workspace --focus-follows-window 1-Meet'
     alt-shift-c = 'move-node-to-workspace --focus-follows-window 2-Code'
     alt-shift-a = 'move-node-to-workspace --focus-follows-window 3-Claude'
     alt-shift-m = 'move-node-to-workspace --focus-follows-window 5-Messages'
@@ -225,6 +233,7 @@ run = 'layout floating'
 # Fallbacks keep everything usable with one external monitor or none.
 
 [workspace-to-monitor-force-assignment]
+    '1-Meet'     = [3, 2, 'built-in']
     '2-Code'     = [2, 'built-in']
     '3-Claude'   = [3, 2, 'built-in']
     '4-Browser'  = [3, 2, 'built-in']
