@@ -49,15 +49,25 @@ export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 
+# nvm is loaded on first use; the newest installed node is on PATH meanwhile
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+_nvm_bin=($NVM_DIR/versions/node/*/bin(Nn[-1]))
+(( $#_nvm_bin )) && export PATH="$_nvm_bin:$PATH"
+unset _nvm_bin
+if [[ -s $NVM_DIR/nvm.sh ]]; then
+  nvm() {
+    unset -f nvm
+    . "$NVM_DIR/nvm.sh"
+    [[ -s $NVM_DIR/bash_completion ]] && . "$NVM_DIR/bash_completion"
+    nvm "$@"
+  }
+fi
 
 # --- PATH ---
-export PATH=${PATH}:$(go env GOPATH)/bin
+export PATH=${PATH}:$GOBIN
 
 # --- Evals ---
-eval "$(pyenv init -)"
+eval "$(pyenv init - --no-rehash zsh)"
 eval "$(zoxide init zsh)"
 source <(fzf --zsh)
 
@@ -75,10 +85,28 @@ compdef kubecolor=kubectl
 setNS() { kubectl config set-context --current --namespace="$@" ; }
 
 # --- Completions ---
-source <(aws-cli-manager completion zsh)
-source <(kontext completion zsh)
-source <(helm completion zsh)
-source <(tenv completion zsh)
-eval "$(task --completion zsh)"
+# Cached in ~/.cache/zsh; regenerated when the binary is newer than the cache
+_cached_completion() {
+  (( $+commands[$1] )) || return
+  local f="$HOME/.cache/zsh/$1.zsh"
+  if [[ ! -s $f || ${commands[$1]} -nt $f ]]; then
+    mkdir -p ${f:h}
+    eval "$2" >| $f
+  fi
+  source $f
+}
+_cached_completion aws-cli-manager 'aws-cli-manager completion zsh'
+_cached_completion kontext         'kontext completion zsh'
+_cached_completion helm            'helm completion zsh'
+_cached_completion tenv            'tenv completion zsh'
+_cached_completion task            'task --completion zsh'
+unfunction _cached_completion
 
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
+
+# Shared functions (dotfiles .config/zsh)
+for f in ~/.config/zsh/*.zsh(N); do source $f; done
+unset f
+
+# Per-machine extras (not in dotfiles): tokens, work-only tools, etc.
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

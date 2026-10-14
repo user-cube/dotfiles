@@ -1,39 +1,53 @@
 # Dotfiles
 
-This repo contains configuration files and scripts for various tools and environments.
+macOS configuration files. Installed by the
+[devops-daily-driver](https://github.com/user-cube/devops-daily-driver) Ansible
+playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
+`~/.config/` and copies `.zshrc`, `.p10k.zsh` and the git configs to `~`.
 
 ## Directory Structure
 
-- `.config/`: Contains configuration files for Neovim and other tools.
-- `.warp/`: Contains theme files.
-- `iTerm2/`: Contains configuration for iTerm2.
-- `.p10k.zsh`: Configuration file for Powerlevel10k, a theme for Zsh.
+- `.config/`: tool configs, synced to `~/.config/`
+  - `aerospace/`: tiling window manager, plus `CHEATSHEET.md` (`⌥ i`)
+  - `borders/`: JankyBorders (focused window border)
+  - `sketchybar/`: bottom status bar
+  - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
+  - `nvim/`, `yazi/`, `cmux/`: editor, file manager, cmux
+  - `zsh/`: shell functions sourced by `.zshrc`
+- `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
+- `.gitconfig*`: git config, with personal/work identities
+- `git_hooks/`: commit-msg hooks (bash, go)
+- `vscode/`: VS Code snippets/settings (golang, helmchart, terraform)
+- `.warp/themes/`: Warp themes
 
-## Configuration Details
+## Zsh
 
-### Neovim
+`.zshrc` is copied to `~/.zshrc`, overwriting it.
+Never edit `~/.zshrc` by hand: put anything specific to one machine (work-only
+tools, tokens, aliases) in `~/.zshrc.local`, which is sourced at the end and
+never committed.
 
-Configuration files for Neovim are located in `.config/nvim/`. The main configuration file is `init.lua`.
+Shared shell functions live in `.config/zsh/*.zsh` and are all sourced before
+`~/.zshrc.local`, e.g. `bw.zsh` (Bitwarden CLI session wrapper; needs
+`export BW_USER=<email>` in `~/.zshrc.local`).
 
-### iTerm2
+Startup is kept fast: nvm loads on first use, `pyenv init` skips the rehash
+(run `pyenv rehash` after installing a package with commands), and completions
+are cached in `~/.cache/zsh` (regenerated when the tool is upgraded; delete the
+folder to force it). Measure with `time zsh -i -c exit`.
 
-Configuration for iTerm2 is located in `iTerm2/iTerm2Profile.json`.
+## Per-machine files (never committed)
 
-### Powerlevel10k
+| File | Purpose |
+|---|---|
+| `~/.zshrc.local` | machine-specific shell config and secrets |
+| `~/.config/tmux/sessions.local` | repos preloaded as tmux sessions |
+| `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |
 
-Configuration for Powerlevel10k is located in `.p10k.zsh`.
+## Updating without Ansible
 
-## Themes
-
-Theme files for various tools are located in `.warp/themes/`.
-
-## Other Files
-
-- `.gitignore`: Specifies which files and directories to ignore in Git.
-- `.zshrc`: Configuration file for Zsh.
-
-## Automated Configuration
-
-This workspace uses an automated method to place these files and configurations using Ansible. The Ansible playbooks for this automation can be found at [this GitHub repository](https://github.com/user-cube/ansible-playbooks/tree/main/macos).
-
-These playbooks handle the setup and configuration of the tools and environments mentioned above, ensuring a consistent and reproducible configuration across different machines.
+```sh
+git -C ~/dotfiles pull
+rsync -a ~/dotfiles/.config/ ~/.config/
+cp ~/dotfiles/.zshrc ~/.zshrc
+```
