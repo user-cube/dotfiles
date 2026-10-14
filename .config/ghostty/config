@@ -90,6 +90,8 @@ keybind = cmd+shift+f=text:\x02z
 
 # Sessions: pick / switch (tmux tree)
 keybind = cmd+shift+s=text:\x02s
+# Open a repo as a session (fuzzy finder over ~/work)
+keybind = cmd+o=text:\x02f
 
 # Font size
 keybind = cmd+plus=increase_font_size:1

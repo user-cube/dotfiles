@@ -66,6 +66,8 @@ System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden
 ## Ghostty + tmux (tabs, splits, sessions)
 
 Every Ghostty window runs inside tmux. First window = persistent `main` session.
+Repos listed in `~/.config/tmux/sessions.local` (one path per line, per machine) are
+preloaded as sessions when tmux starts.
 
 | Shortcut | Action |
 |---|---|
@@ -74,6 +76,7 @@ Every Ghostty window runs inside tmux. First window = persistent `main` session.
 | `⌘ d` / `⌘ ⇧ d` | split right / down |
 | `⌘ ⌥ arrows` | move between splits |
 | `⌘ ⇧ f` / `⌘ ⇧ e` | zoom split / equalize |
+| `⌘ o` | open a repo under `~/work` as a session (fuzzy search; reuses it if open) |
 | `⌘ ⇧ s` | session picker (enter switches, `x` kills) |
 | `ctrl b d` | detach (session keeps running; reopen Ghostty to come back) |
 | mouse drag | copies to clipboard; `⇧`+drag uses Ghostty's own selection |
