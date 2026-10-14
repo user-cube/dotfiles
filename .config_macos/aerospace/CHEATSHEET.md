@@ -63,6 +63,21 @@ System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden
 | `backspace` | close all windows but current |
 | `⌥ ⇧ h/j/k/l` | join with neighbour |
 
+## Ghostty + tmux (tabs, splits, sessions)
+
+Every Ghostty window runs inside tmux. First window = persistent `main` session.
+
+| Shortcut | Action |
+|---|---|
+| `⌘ t` / `⌘ w` | new tab / close pane (tab if last) |
+| `⌘ ⇧ ←/→`, `⌘ 1…9` | previous/next tab, go to tab N |
+| `⌘ d` / `⌘ ⇧ d` | split right / down |
+| `⌘ ⌥ arrows` | move between splits |
+| `⌘ ⇧ f` / `⌘ ⇧ e` | zoom split / equalize |
+| `⌘ ⇧ s` | session picker (enter switches, `x` kills) |
+| `ctrl b d` | detach (session keeps running; reopen Ghostty to come back) |
+| mouse drag | copies to clipboard; `⇧`+drag uses Ghostty's own selection |
+
 ## SketchyBar (bottom bar)
 
 Config in `~/.config/sketchybar/`. Reload with `sketchybar --reload`.
