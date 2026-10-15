@@ -1,0 +1,47 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: shellcheck + bash 3.2 + zsh syntax + gitleaks
+    # macOS on purpose: scripts run with /bin/bash 3.2, which only macOS ships
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # gitleaks scans the whole history
+
+      - name: Install tooling
+        run: brew install shellcheck gitleaks
+
+      - name: List shell scripts
+        run: git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' > "$RUNNER_TEMP/scripts.txt"
+
+      # Catches syntax that only newer bash accepts (e.g. `case` inside `$( )`)
+      - name: bash 3.2 syntax
+        run: |
+          rc=0
+          while read -r f; do /bin/bash -n "$f" || rc=1; done < "$RUNNER_TEMP/scripts.txt"
+          exit $rc
+
+      - name: shellcheck
+        run: xargs shellcheck -x -S warning < "$RUNNER_TEMP/scripts.txt"
+
+      - name: zsh syntax
+        run: |
+          rc=0
+          for f in .zshrc .config/zsh/*.zsh; do zsh -n "$f" || rc=1; done
+          exit $rc
+
+      - name: gitleaks
+        run: gitleaks git --redact --no-banner .

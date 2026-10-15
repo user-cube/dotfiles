@@ -13,16 +13,16 @@ else
   DISALLOWED_BRANCHES=("main" "master" "develop")
 
   # Check if the branch is in the list of disallowed branches
-  if [[ " ${DISALLOWED_BRANCHES[@]} " =~ " ${BRANCH_NAME} " ]]; then
-    echo "Branch not allowed. The disallowed branches are: ${DISALLOWED_BRANCHES[@]}"
-    exit 1
-  fi
+  for branch in "${DISALLOWED_BRANCHES[@]}"; do
+    if [ "$BRANCH_NAME" = "$branch" ]; then
+      echo "Branch not allowed. The disallowed branches are: ${DISALLOWED_BRANCHES[*]}"
+      exit 1
+    fi
+  done
 
-  # Add the branch name to the beginning of the commit message
-  sed -i.bak -e "1s/^/$BRANCH_NAME: /" "$1"
-
-  # Remove the backup file created by sed
-  rm "$1.bak"
+  # Add the branch name to the beginning of the commit message (no sed: branch
+  # names like feat/x contain the substitution delimiter)
+  { printf '%s: ' "$BRANCH_NAME"; cat "$1"; } > "$1.tmp" && mv "$1.tmp" "$1"
 fi
 
 # Allow push after processing the commit (whether modifying the message or allowing a merge)

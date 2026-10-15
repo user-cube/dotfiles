@@ -111,7 +111,7 @@ for profile in $AWS_PROFILES; do
   sketchybar --add item "aws.$profile" right \
     --subscribe "aws.$profile" system_woke \
     --set "aws.$profile" update_freq=300 icon=$'\xf3\xb0\xb8\x8f' icon.font="$ICON_FONT:Bold:16.0" \
-          icon.drawing=$([ "$profile" = "$last" ] && echo on || echo off) \
+          icon.drawing="$([ "$profile" = "$last" ] && echo on || echo off)" \
           script="$PLUGIN_DIR/aws.sh $profile"
 done
 

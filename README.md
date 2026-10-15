@@ -13,7 +13,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `sketchybar/`: bottom status bar
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`, `cmux/`: editor, file manager, cmux
-  - `zsh/`: shell functions sourced by `.zshrc`
+  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`)
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
 - `git_hooks/`: commit-msg hooks (bash, go)
@@ -82,7 +82,21 @@ before committing (gitleaks also runs as a pre-commit hook).
 ## Updating without Ansible
 
 ```sh
-git -C ~/dotfiles pull
-rsync -a ~/dotfiles/.config/ ~/.config/
-cp ~/dotfiles/.zshrc ~/.zshrc
+dotfiles-sync
+```
+
+Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
+syncs `.config/` and `git_hooks/`, copies `.zshrc`, `.p10k.zsh` and the git configs
+(`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
+borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
+
+## CI
+
+`.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
+`shellcheck` on every shell script, `zsh -n` on the zsh files, and `gitleaks` over
+the whole history. Run the same checks locally before pushing:
+
+```sh
+git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
+gitleaks git --redact --no-banner .
 ```

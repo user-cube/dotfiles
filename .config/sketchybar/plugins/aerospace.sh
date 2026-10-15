@@ -4,6 +4,7 @@
 # Has windows: dim. Empty: hidden.
 export PATH="/opt/homebrew/bin:$PATH"
 source "$CONFIG_DIR/colors.sh"
+# shellcheck source=SCRIPTDIR/icon_map.sh
 source "$CONFIG_DIR/plugins/icon_map.sh"
 
 WS="$1"
@@ -19,11 +20,11 @@ done < <(aerospace list-windows --workspace "$WS" --format '%{app-name}' | sort 
 ICONS="${ICONS% }"
 
 if [ "$WS" = "$FOCUSED" ]; then
-  sketchybar --set "$NAME" drawing=on label="$ICONS" label.drawing=$([ -n "$ICONS" ] && echo on || echo off) \
+  sketchybar --set "$NAME" drawing=on label="$ICONS" label.drawing="$([ -n "$ICONS" ] && echo on || echo off)" \
     icon.color=$GREEN label.color=$DARK label.background.color=$GREEN
 elif [ -n "$ICONS" ] || echo "$VISIBLE" | grep -qx "$WS"; then
   if echo "$VISIBLE" | grep -qx "$WS"; then COLOR=$FG; else COLOR=$DIM; fi
-  sketchybar --set "$NAME" drawing=on label="$ICONS" label.drawing=$([ -n "$ICONS" ] && echo on || echo off) \
+  sketchybar --set "$NAME" drawing=on label="$ICONS" label.drawing="$([ -n "$ICONS" ] && echo on || echo off)" \
     icon.color=$COLOR label.color=$COLOR label.background.color=$PILL_BG
 else
   sketchybar --set "$NAME" drawing=off
