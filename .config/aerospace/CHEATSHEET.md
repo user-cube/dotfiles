@@ -91,6 +91,28 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `ctrl b d` | detach (session keeps running; reopen Ghostty to come back) |
 | mouse drag | copies to clipboard; `⇧`+drag uses Ghostty's own selection |
 
+## Neovim (`nvim`)
+
+Leader is `Space`: press it and wait for a menu of every command (which-key);
+`Space ?` lists the ones for the current file. Modes: `esc` back to normal,
+`i` insert before the cursor, `a` after, `v` select, `V` select lines.
+
+| Shortcut | Action |
+|---|---|
+| `Space f f` / `Space f g` | find file / search text in the project (Telescope) |
+| `Space f b` / `Space f r` | open buffers / recent files |
+| `Space e` / `Space o` | toggle / focus the file tree (Neo-tree) |
+| `g d` / `g r` / `K` | go to definition / references / hover docs |
+| `Space r n` / `Space c a` | rename symbol / code action |
+| `Space d` / `Space l f` | show diagnostic / format file |
+| `w` / `b` / `0` / `$` | next word / previous word / line start / line end |
+| `g g` / `G` / `ctrl d` / `ctrl u` | top / bottom / half page down / up |
+| `/text` then `n` / `N` | search, next / previous match |
+| `d d` / `y y` / `p` | cut line / copy line / paste |
+| `c i w` / `d i w` | change / delete the word under the cursor |
+| `u` / `ctrl r` / `.` | undo / redo / repeat the last change |
+| `:w` / `:q` / `:wq` / `:q!` | save / quit / save and quit / quit without saving |
+
 ## SketchyBar (bottom bar)
 
 Config in `~/.config/sketchybar/`. Reload with `sketchybar --reload`.

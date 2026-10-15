@@ -13,6 +13,7 @@ Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nv
 - [mason-lspconfig.nvim](https://github.com/mason-org/mason-lspconfig.nvim) — LSP auto-setup
 - [telescope-ui-select.nvim](https://github.com/nvim-telescope/telescope-ui-select.nvim) — Telescope dropdown for `vim.ui.select`
 - [none-ls.nvim](https://github.com/nvimtools/none-ls.nvim) — linters and formatters via LSP
+- [which-key.nvim](https://github.com/folke/which-key.nvim) — press `Space` and wait for a menu of keymaps
 
 ---
 
