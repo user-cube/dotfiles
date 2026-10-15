@@ -159,6 +159,7 @@ run = 'layout floating'
     alt-shift-f = 'fullscreen'
     # Cheat sheet (glow) filling the focused monitor; q closes it
     alt-i = 'exec-and-forget ~/.config/aerospace/cheatsheet.sh'
+    # alt-f is left free for Raycast: AeroSpace extension, Switch Apps in Workspace
 
     alt-slash = 'layout tiles horizontal vertical'
     alt-comma = 'layout accordion horizontal vertical'

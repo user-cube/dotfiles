@@ -32,6 +32,7 @@ With fewer monitors, workspaces fall back to the remaining one (see `workspace-t
 | `⌥ r` | resize mode (below) |
 | `⌥ enter` | new Ghostty window |
 | `⌥ i` | this cheat sheet, filling the monitor (`q` closes, `/` searches) |
+| `⌥ f` | find any window (Raycast, AeroSpace extension): `⇧ enter` brings it here, `enter` jumps to it |
 
 ## Layout
 
