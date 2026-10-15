@@ -28,12 +28,13 @@ source $ZSH/oh-my-zsh.sh
 
 # --- History ---
 HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=100000
+SAVEHIST=100000
 setopt APPEND_HISTORY
-setopt SHARE_HISTORY
-setopt HIST_IGNORE_DUPS
+setopt SHARE_HISTORY          # every tmux pane sees the others' commands
+setopt HIST_IGNORE_ALL_DUPS   # a repeated command keeps only its latest entry
 setopt HIST_IGNORE_SPACE
+setopt HIST_REDUCE_BLANKS
 
 # --- Powerlevel10k ---
 source ~/powerlevel10k/powerlevel10k.zsh-theme

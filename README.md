@@ -20,7 +20,6 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
 - `.gitconfig*`: git config, with personal/work identities
 - `git_hooks/`: commit-msg hooks (bash, go)
 - `vscode/`: VS Code snippets/settings (golang, helmchart, terraform)
-- `.warp/themes/`: Warp themes
 
 ## Zsh
 
