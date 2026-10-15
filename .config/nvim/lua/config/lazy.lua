@@ -30,6 +30,9 @@ require("lazy").setup({
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
   install = { colorscheme = { "habamax" } },
-  -- automatically check for plugin updates
-  checker = { enabled = true },
+  -- check for plugin updates in the background, without the "Plugin Updates"
+  -- list that blocks startup behind "Press ENTER"; see them with :Lazy
+  checker = { enabled = true, notify = false },
+  -- don't announce config file changes either
+  change_detection = { notify = false },
 })

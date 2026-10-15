@@ -10,8 +10,8 @@ return {
           -- Lua
           null_ls.builtins.formatting.stylua,
 
-          -- Bash
-          null_ls.builtins.diagnostics.shellcheck,
+          -- Bash (diagnostics: shellcheck runs through bashls, see mason.lua;
+          -- none-ls no longer ships a shellcheck builtin)
           null_ls.builtins.formatting.shfmt,
 
           -- Python
