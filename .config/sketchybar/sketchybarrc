@@ -19,7 +19,7 @@ sketchybar --bar position=bottom height=40 y_offset=4 margin=8 corner_radius=12 
            notch_width=0
 
 # Hidden items don't run scripts with updates=when_shown; items that hide
-# themselves (Spotify, GitLab, AWS, GCP) set updates=on to be able to reappear.
+# themselves (Spotify, GitLab, AWS, GCP, checks) set updates=on to be able to reappear.
 sketchybar --default updates=when_shown \
            icon.font="$ICON_FONT:Bold:14.0" label.font="$TEXT_FONT:Semibold:13.0" \
            icon.color=$FG label.color=$FG \
@@ -135,20 +135,17 @@ sketchybar --add item gitlab right \
   --add item kube right \
   --set kube update_freq=5 icon=$'\xf3\xb1\x83\xbe' script="$PLUGIN_DIR/kube.sh"
 
-# Per-machine checks (see plugins/check.sh), left of kube: one item with
-# passed/total and a popup per check; only when $CONFIG_DIR/checks has any.
-CHECK_ITEMS=""
-if grep -qvE '^\s*(#|$)' "$CONFIG_DIR/checks" 2>/dev/null; then
-  CHECK_ITEMS="checks"
-  sketchybar --add item checks right \
-    --subscribe checks system_woke mouse.clicked mouse.exited.global \
-    --set checks update_freq=300 icon=$'\xf3\xb1\x83\xbe' icon.color=$BLUE \
-          label.color=$DIM script="$PLUGIN_DIR/check.sh" \
-          popup.align=center popup.y_offset=4 popup.background.corner_radius=12 \
-          popup.background.border_width=1 popup.background.border_color=$ITEM_BORDER
-fi
+# Connectivity checks (see plugins/check.sh), left of kube: passed/total and a
+# popup per check. $CONFIG_DIR/checks or, without it, every kube context;
+# the item hides itself when there is nothing to check.
+sketchybar --add item checks right \
+  --subscribe checks system_woke mouse.clicked mouse.exited.global \
+  --set checks update_freq=300 updates=on icon=$'\xf3\xb1\x83\xbe' icon.color=$BLUE \
+        label.color=$DIM script="$PLUGIN_DIR/check.sh" \
+        popup.align=center popup.y_offset=4 popup.background.corner_radius=12 \
+        popup.background.border_width=1 popup.background.border_color=$ITEM_BORDER
 
-sketchybar --add bracket dev kube colima github gitlab $CHECK_ITEMS \
+sketchybar --add bracket dev kube colima github gitlab checks \
   --set dev background.color=$BRACKET_BG background.corner_radius=10 \
         background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
 

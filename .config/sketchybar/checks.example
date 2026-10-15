@@ -1,6 +1,8 @@
-# Copy to ~/.config/sketchybar/checks (per machine, never committed) and reload
-# SketchyBar. One check per line: `name | command`. Green when the command exits
-# 0 within 10 s. The bar shows passed/total; click it for each check.
+# Optional. Without ~/.config/sketchybar/checks the bar checks every kube context
+# in the kubeconfig. Copy this there (per machine, never committed)
+# to pick the checks yourself, then reload SketchyBar. One check per line:
+# `name | command`, green when the command exits 0 within 10 s. The bar shows
+# passed/total; click it for each check.
 #
 # `kube <context>` checks that the context's token/credentials are still valid.
 rancher | kube rancher-prod
