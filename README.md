@@ -79,6 +79,7 @@ before committing (gitleaks also runs as a pre-commit hook).
 | `~/.zshrc.local` | machine-specific shell config (secrets: see [Secrets](#secrets-tokens-api-keys)) |
 | `~/.config/tmux/sessions.local` | repos preloaded as tmux sessions |
 | `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |
+| `~/.config/sketchybar/checks` | connectivity checks shown in the bar (see `checks.example`) |
 
 ## Updating without Ansible
 

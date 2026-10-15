@@ -1,7 +1,7 @@
 #!/bin/bash
 # SketchyBar (bottom; macOS menu bar stays on top) — floating rounded bar:
 # AeroSpace workspaces (with app icons), focused app, Spotify, Slack/Discord badges, dev group
-# (kube context, Colima, GitHub/GitLab reviews), cloud group (AWS, GCP),
+# (kube context, per-machine checks, Colima, GitHub/GitLab reviews), cloud group (AWS, GCP),
 # CPU graph, RAM, weather, brew updates.
 # Docs: https://felixkratz.github.io/SketchyBar/
 export PATH="/opt/homebrew/bin:$PATH"
@@ -135,7 +135,21 @@ sketchybar --add item gitlab right \
   --add item kube right \
   --set kube update_freq=5 icon=$'\xf3\xb1\x83\xbe' script="$PLUGIN_DIR/kube.sh"
 
-sketchybar --add bracket dev kube colima github gitlab \
+# Per-machine checks (see plugins/check.sh), left of kube: one item per line of
+# $CONFIG_DIR/checks, none without the file. Added right-to-left, so iterate in
+# reverse; only the leftmost item shows the k8s icon, labels go green/red.
+CHECK_ITEMS=""
+last=$("$PLUGIN_DIR/checks.sh" | head -1)
+for check in $("$PLUGIN_DIR/checks.sh" | tail -r); do
+  CHECK_ITEMS="$CHECK_ITEMS check.$check"
+  sketchybar --add item "check.$check" right \
+    --subscribe "check.$check" system_woke mouse.clicked \
+    --set "check.$check" update_freq=300 icon=$'\xf3\xb1\x83\xbe' icon.color=$BLUE \
+          icon.drawing="$([ "$check" = "$last" ] && echo on || echo off)" \
+          label="$check" label.color=$DIM script="$PLUGIN_DIR/check.sh $check"
+done
+
+sketchybar --add bracket dev kube colima github gitlab $CHECK_ITEMS \
   --set dev background.color=$BRACKET_BG background.corner_radius=10 \
         background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
 
