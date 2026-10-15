@@ -1,0 +1,9 @@
+# Linked from ~/Library/Application Support/lazygit/config.yml (lazygit's macOS
+# default) by the playbook and dotfiles-sync.
+git:
+  # Same renderer as `git diff` (delta, configured in .gitconfig); side by side
+  # when the popup is wide. `|` cycles to git's plain diff.
+  diffRenderers:
+    - command: delta --{{colorScheme}} --paging=never {{if gt .width 160}}--side-by-side{{end}}
+    - type: rawGit
+      name: default

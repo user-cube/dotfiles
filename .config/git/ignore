@@ -1,0 +1,3 @@
+# Global gitignore (git reads ~/.config/git/ignore when core.excludesFile is unset)
+.DS_Store
+**/.claude/settings.local.json
