@@ -76,7 +76,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 |---|---|
 | `⌘ t` / `⌘ w` | new tab / close pane (tab if last) |
 | `⌘ ⇧ ←/→`, `⌘ 1…9` | previous/next tab, go to tab N |
-| `⌘ d` / `⌘ ⇧ d` | split right / down |
+| `⌘ d` / `⌘ ⇧ d` | split right / down (in an `ssh host` pane, the new pane opens the same ssh) |
 | `⌘ ⌥ arrows` | move between splits |
 | `⌘ ⇧ f` / `⌘ ⇧ e` | zoom split / equalize |
 | `⌘ o` | open a repo under `~/work` as a session (fuzzy search; reuses it if open) |
