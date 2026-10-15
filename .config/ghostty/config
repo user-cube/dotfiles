@@ -103,6 +103,8 @@ keybind = cmd+shift+l=text:\x02D
 # k9s on the current kube context, in a popup (replaces Ghostty's clear screen;
 # inside tmux use `clear` or ctrl+l)
 keybind = cmd+k=text:\x02K
+# scratch terminal popup (persistent); press again to close
+keybind = cmd+j=text:\x02J
 # select all (tmux copy mode over the whole pane history; y / enter copies)
 keybind = cmd+a=text:\x02a
 

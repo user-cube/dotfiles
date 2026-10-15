@@ -85,6 +85,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `⌘ e` | yazi file manager in the current folder (popup; `q` closes) |
 | `⌘ ⇧ l` | lazydocker: containers, logs, restarts (popup; `q` closes) |
 | `⌘ k` | k9s on the current kube context (popup; `:q` or `ctrl c` closes) |
+| `⌘ j` | scratch terminal (popup; keeps its history; `⌘ j` again closes) |
 | `⌘ a` | select the whole pane history (`y`/`enter` copies, `esc` cancels) |
 | `ctrl b d` | detach (session keeps running; reopen Ghostty to come back) |
 | mouse drag | copies to clipboard; `⇧`+drag uses Ghostty's own selection |
