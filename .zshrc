@@ -108,5 +108,5 @@ unfunction _cached_completion
 for f in ~/.config/zsh/*.zsh(N); do source $f; done
 unset f
 
-# Per-machine extras (not in dotfiles): tokens, work-only tools, etc.
+# Per-machine extras (not in dotfiles): work-only tools, aliases; secrets: see README
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
