@@ -1,6 +1,6 @@
 # Copy to ~/.config/sketchybar/checks (per machine, never committed) and reload
 # SketchyBar. One check per line: `name | command`. Green when the command exits
-# 0 within 10 s, red otherwise; click a check to re-run it.
+# 0 within 10 s. The bar shows passed/total; click it for each check.
 #
 # `kube <context>` checks that the context's token/credentials are still valid.
 rancher | kube rancher-prod

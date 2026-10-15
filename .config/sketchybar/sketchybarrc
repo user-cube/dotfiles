@@ -135,19 +135,18 @@ sketchybar --add item gitlab right \
   --add item kube right \
   --set kube update_freq=5 icon=$'\xf3\xb1\x83\xbe' script="$PLUGIN_DIR/kube.sh"
 
-# Per-machine checks (see plugins/check.sh), left of kube: one item per line of
-# $CONFIG_DIR/checks, none without the file. Added right-to-left, so iterate in
-# reverse; only the leftmost item shows the k8s icon, labels go green/red.
+# Per-machine checks (see plugins/check.sh), left of kube: one item with
+# passed/total and a popup per check; only when $CONFIG_DIR/checks has any.
 CHECK_ITEMS=""
-last=$("$PLUGIN_DIR/checks.sh" | head -1)
-for check in $("$PLUGIN_DIR/checks.sh" | tail -r); do
-  CHECK_ITEMS="$CHECK_ITEMS check.$check"
-  sketchybar --add item "check.$check" right \
-    --subscribe "check.$check" system_woke mouse.clicked \
-    --set "check.$check" update_freq=300 icon=$'\xf3\xb1\x83\xbe' icon.color=$BLUE \
-          icon.drawing="$([ "$check" = "$last" ] && echo on || echo off)" \
-          label="$check" label.color=$DIM script="$PLUGIN_DIR/check.sh $check"
-done
+if grep -qvE '^\s*(#|$)' "$CONFIG_DIR/checks" 2>/dev/null; then
+  CHECK_ITEMS="checks"
+  sketchybar --add item checks right \
+    --subscribe checks system_woke mouse.clicked mouse.exited.global \
+    --set checks update_freq=300 icon=$'\xf3\xb1\x83\xbe' icon.color=$BLUE \
+          label.color=$DIM script="$PLUGIN_DIR/check.sh" \
+          popup.align=center popup.y_offset=4 popup.background.corner_radius=12 \
+          popup.background.border_width=1 popup.background.border_color=$ITEM_BORDER
+fi
 
 sketchybar --add bracket dev kube colima github gitlab $CHECK_ITEMS \
   --set dev background.color=$BRACKET_BG background.corner_radius=10 \
