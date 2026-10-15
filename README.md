@@ -81,6 +81,21 @@ before committing (gitleaks also runs as a pre-commit hook).
 | `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |
 | `~/.config/sketchybar/checks` | optional: connectivity checks shown in the bar, instead of every kube context (see `checks.example`) |
 
+### Backup in Bitwarden
+
+These files, plus `~/.gitconfig-work` and `~/.kube/config`, are backed up as one
+`.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
+(`.config/dotfiles/local-files.sh`; uses the `bw` wrapper's session):
+
+```sh
+local-backup                 # this machine -> Bitwarden (replaces the previous copy)
+local-restore                # Bitwarden -> this machine; existing files are kept
+local-restore other-mac      # restore another machine's backup (e.g. a new Mac)
+local-restore --force        # overwrite existing files
+```
+
+On a new Mac the playbook does the same with `--tags local-restore`.
+
 ## Updating without Ansible
 
 ```sh
