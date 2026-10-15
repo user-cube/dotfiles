@@ -11,9 +11,6 @@ dotfiles-sync() {
   cp "$repo/.zshrc" "$repo/.p10k.zsh" "$repo/.gitconfig" "$repo/.gitconfig-personal" "$HOME/" || return
   # .gitconfig-work holds a placeholder in the repo: only seed it, never overwrite
   [[ -f $HOME/.gitconfig-work ]] || cp "$repo/.gitconfig-work" "$HOME/"
-  # lazygit's macOS config path points at the synced copy
-  mkdir -p "$HOME/Library/Application Support/lazygit"
-  ln -sfn "$HOME/.config/lazygit/config.yml" "$HOME/Library/Application Support/lazygit/config.yml"
 
   tmux source-file "$HOME/.config/tmux/tmux.conf" 2>/dev/null && echo "tmux: reloaded"
   pgrep -xq AeroSpace && aerospace reload-config && echo "AeroSpace: reloaded"

@@ -14,7 +14,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`, `cmux/`: editor, file manager, cmux
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`)
-  - `git/ignore`: global gitignore; `lazygit/`: delta diffs (linked from lazygit's macOS path)
+  - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
 - `git_hooks/`: commit-msg hooks (bash, go)

@@ -94,6 +94,15 @@ keybind = cmd+shift+s=text:\x02s
 keybind = cmd+o=text:\x02f
 # lazygit for the current folder, in a popup
 keybind = cmd+g=text:\x02g
+# side-by-side diff of the working tree (lumen), in a popup
+keybind = cmd+shift+g=text:\x02G
+# yazi file manager in the current folder, in a popup
+keybind = cmd+e=text:\x02e
+# lazydocker, in a popup
+keybind = cmd+shift+l=text:\x02D
+# k9s on the current kube context, in a popup (replaces Ghostty's clear screen;
+# inside tmux use `clear` or ctrl+l)
+keybind = cmd+k=text:\x02K
 # select all (tmux copy mode over the whole pane history; y / enter copies)
 keybind = cmd+a=text:\x02a
 

@@ -3,16 +3,6 @@
     smudge = git-lfs smudge -- %f
     process = git-lfs filter-process
     required = true
-[core]
-    pager = delta
-
-[delta]
-    navigate = true
-    side-by-side = true
-
-[interactive]
-    diffFilter = delta --color-only
-
 [user]
     name = Rui Coelho
 
