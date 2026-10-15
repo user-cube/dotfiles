@@ -20,3 +20,5 @@
 [hook "gitleaks"]
     event = pre-commit
     command = gitleaks protect --staged --redact --verbose
+[push]
+    autoSetupRemote = true

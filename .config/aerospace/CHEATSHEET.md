@@ -80,6 +80,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `⌘ ⌥ arrows` | move between splits |
 | `⌘ ⇧ f` / `⌘ ⇧ e` | zoom split / equalize |
 | `⌘ o` | open a repo under `~/work` as a session (fuzzy search; reuses it if open) |
+| `⌘ ⇧ o` | open an ssh host (from the ssh config) in a new tab named after it |
 | `⌘ ⇧ s` | session picker (enter switches, `x` kills) |
 | `⌘ g` | lazygit for the current folder (popup; `q` closes) |
 | `⌘ ⇧ g` | side-by-side diff of uncommitted changes (lumen popup; `q` closes) |
@@ -89,6 +90,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `⌘ j` | scratch terminal (popup; keeps its history; `⌘ j` again closes) |
 | `⌘ a` | select the whole pane history (`y`/`enter` copies, `esc` cancels) |
 | `ctrl b d` | detach (session keeps running; reopen Ghostty to come back) |
+| `F12` | tmux inside tmux (ssh to a server with tmux): keys go to the inner one, bar shows OFF; `F12` again returns |
 | mouse drag | copies to clipboard; `⇧`+drag uses Ghostty's own selection |
 
 ## Neovim (`nvim`)

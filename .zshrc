@@ -43,6 +43,9 @@ source ~/powerlevel10k/powerlevel10k.zsh-theme
 # --- Exports ---
 export GPG_TTY=$(tty)
 export GOBIN=$HOME/go/bin
+# git commit, kubectl edit, crontab -e, lazygit/k9s `e` open nvim
+export EDITOR=nvim
+export VISUAL=nvim
 
 # Bitwarden SSH agent
 export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
