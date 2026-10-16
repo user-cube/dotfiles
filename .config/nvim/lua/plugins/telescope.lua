@@ -26,6 +26,13 @@ return {
             treesitter = false,
           },
         },
+        pickers = {
+          -- dotfiles (.envrc, .github/, .sops.yaml) too; .git/ itself stays out
+          find_files = {
+            hidden = true,
+            file_ignore_patterns = { "^.git/" },
+          },
+        },
         extensions = {
           fzf = {},
           ["ui-select"] = {
@@ -39,6 +46,9 @@ return {
 
       -- Keymaps
       vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Find files" })
+      vim.keymap.set("n", "<leader>fa", function()
+        builtin.find_files({ no_ignore = true })
+      end, { desc = "Find all files (gitignored too)" })
       vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Live grep" })
       vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Buffers" })
       vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Help tags" })

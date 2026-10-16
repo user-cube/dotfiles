@@ -112,7 +112,8 @@ Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nv
 
 | Keymap | Action |
 |--------|--------|
-| `<Space>ff` | Find files |
+| `<Space>ff` | Find files (hidden ones included; gitignored ones not) |
+| `<Space>fa` | Find all files, gitignored ones too |
 | `<Space>fg` | Live grep (search in files) |
 | `<Space>fb` | List open buffers |
 | `<Space>fh` | Search help tags |
