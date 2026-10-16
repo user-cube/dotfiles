@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   lint:
-    name: shellcheck + bash 3.2 + zsh syntax + gitleaks
+    name: shellcheck + bash 3.2 + zsh syntax + go hook + gitleaks
     # macOS on purpose: scripts run with /bin/bash 3.2, which only macOS ships
     runs-on: macos-latest
 
@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0 # gitleaks scans the whole history
 
       - name: Install tooling
-        run: brew install shellcheck gitleaks
+        run: brew install shellcheck gitleaks go
 
       - name: List shell scripts
         run: git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' > "$RUNNER_TEMP/scripts.txt"
@@ -42,6 +42,11 @@ jobs:
           rc=0
           for f in .zshrc .config/zsh/*.zsh; do zsh -n "$f" || rc=1; done
           exit $rc
+
+      # Every work commit runs this hook: a broken build blocks them all
+      - name: commit-msg hook (go vet + test)
+        working-directory: git_hooks/go/commit-msg
+        run: go vet ./... && go test ./...
 
       - name: gitleaks
         run: gitleaks git --redact --no-banner .

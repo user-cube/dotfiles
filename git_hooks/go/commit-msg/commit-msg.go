@@ -2,7 +2,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +9,18 @@ import (
 	"regexp"
 	"strings"
 )
+
+var (
+	validPrefixes = "feat|fix|chore|docs|style|refactor|perf|test|build|ci"
+	// "fix(api)!: rest" → type, scope, bang, rest
+	prefixedRe = regexp.MustCompile(`(?i)^(` + validPrefixes + `)(\([^)]*\))?(!)?:\s*(.*)$`)
+	// "fix rest" → "fix: rest"
+	bareRe  = regexp.MustCompile(`(?i)^(` + validPrefixes + `)\s+(.*)$`)
+	issueRe = regexp.MustCompile(`(?i)[A-Z]+-\d+`)
+)
+
+// Messages git writes itself (or autosquash relies on): left as they are
+var passthroughPrefixes = []string{"fixup!", "squash!", "amend!", "merge ", "revert \""}
 
 // loadDefaultAction reads ~/.gitconfig-hook and returns the default_action for
 // the given repo path. Falls back to "feat" if the repo is not listed.
@@ -39,6 +50,98 @@ func loadDefaultAction(repoPath string) string {
 	return "feat"
 }
 
+func git(args ...string) (string, error) {
+	out, err := exec.Command("git", args...).Output()
+	return strings.TrimSpace(string(out)), err
+}
+
+// gitPathExists reports whether a file inside $GIT_DIR exists (works in worktrees)
+func gitPathExists(name string) bool {
+	p, err := git("rev-parse", "--git-path", name)
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(p)
+	return err == nil
+}
+
+// currentBranch returns the checked-out branch, or the branch being rebased
+// (HEAD is detached during `rebase -i` reword/squash). ok is false when there
+// is no branch at all (plain detached HEAD).
+func currentBranch() (branch string, ok bool) {
+	if b, err := git("symbolic-ref", "--short", "HEAD"); err == nil {
+		return b, true
+	}
+	for _, name := range []string{"rebase-merge/head-name", "rebase-apply/head-name"} {
+		p, err := git("rev-parse", "--git-path", name)
+		if err != nil {
+			continue
+		}
+		if data, err := os.ReadFile(p); err == nil {
+			return strings.TrimPrefix(strings.TrimSpace(string(data)), "refs/heads/"), true
+		}
+	}
+	return "", false
+}
+
+// issueKey extracts ABC-123 from the last path element of the branch
+// (features/PROJECT-1234-foo → PROJECT-1234), or falls back to that element.
+func issueKey(branch string) string {
+	lastSegment := branch[strings.LastIndex(branch, "/")+1:]
+	if key := issueRe.FindString(lastSegment); key != "" {
+		return strings.ToUpper(key)
+	}
+	return lastSegment
+}
+
+// tagged reports whether s already starts with the issue key (amend, reword)
+func tagged(s, key string) bool {
+	s, key = strings.ToUpper(s), strings.ToUpper(key)
+	return s == key || strings.HasPrefix(s, key+" ")
+}
+
+// formatHeader rewrites the first line of the commit message:
+//
+//	fix something        → fix: ISSUE something
+//	something            → <defaultAction>: ISSUE something
+//	no-prefix: something → ISSUE something
+//	no-track: something  → something
+//
+// Headers that already carry the key, and fixup!/squash!/Merge/Revert
+// messages, are returned unchanged.
+func formatHeader(header, key, defaultAction string) string {
+	lowered := strings.ToLower(header)
+	if rest, ok := strings.CutPrefix(lowered, "no-track:"); ok {
+		return strings.TrimSpace(header[len(header)-len(rest):])
+	}
+	if rest, ok := strings.CutPrefix(lowered, "no-prefix:"); ok {
+		rest = strings.TrimSpace(header[len(header)-len(rest):])
+		if tagged(rest, key) {
+			return rest
+		}
+		return key + " " + rest
+	}
+	for _, p := range passthroughPrefixes {
+		if strings.HasPrefix(lowered, p) {
+			return header
+		}
+	}
+	if defaultAction == "disabled" || tagged(header, key) {
+		return header
+	}
+
+	if m := prefixedRe.FindStringSubmatch(header); m != nil {
+		if tagged(m[4], key) {
+			return header
+		}
+		return fmt.Sprintf("%s%s%s: %s %s", m[1], m[2], m[3], key, m[4])
+	}
+	if m := bareRe.FindStringSubmatch(header); m != nil {
+		return fmt.Sprintf("%s: %s %s", strings.ToLower(m[1]), key, m[2])
+	}
+	return fmt.Sprintf("%s: %s %s", defaultAction, key, header)
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Error: Commit message file not found.")
@@ -46,150 +149,51 @@ func main() {
 	}
 	commitMsgFile := os.Args[1]
 
-	//---------------------------------------------------------------------------
-	// 1.  Current branch
-	//---------------------------------------------------------------------------
-	branchCmd := exec.Command("git", "symbolic-ref", "--short", "HEAD")
-	branchBytes, err := branchCmd.Output()
-	if err != nil {
-		fmt.Println("Error: Unable to determine the branch name.")
-		os.Exit(1)
+	// Merges, conflicted cherry-picks and reverts keep the message git wrote
+	for _, name := range []string{"MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD"} {
+		if gitPathExists(name) {
+			return
+		}
 	}
-	branchFull := strings.TrimSpace(string(branchBytes))
+
+	branch, ok := currentBranch()
+	if !ok {
+		return // detached HEAD outside a rebase: nothing to take the key from
+	}
 
 	// Block commits on protected branches
 	disallowed := map[string]bool{"main": true, "master": true, "develop": true}
-	if disallowed[strings.ToLower(branchFull)] {
+	if disallowed[strings.ToLower(branch)] {
 		fmt.Println("Branch not allowed. The disallowed branches are: main, master, develop")
 		os.Exit(1)
 	}
 
-	// Last path element, e.g. features/PROJECT-1234-foo → PROJECT-1234-foo
-	lastSegment := branchFull[strings.LastIndex(branchFull, "/")+1:]
-
-	// Extract ABC-123 numeric key (case-insensitive)
-	issueRe := regexp.MustCompile(`(?i)[A-Z]+-\d+`)
-	issueKey := strings.ToUpper(issueRe.FindString(lastSegment))
-	if issueKey == "" {
-		issueKey = lastSegment // fall back if no match
-	}
-
-	//---------------------------------------------------------------------------
-	// 1b. Load default action from ~/.gitconfig-hook
-	//---------------------------------------------------------------------------
-	repoPathCmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	repoPathBytes, err := repoPathCmd.Output()
+	repoPath, err := git("rev-parse", "--show-toplevel")
 	if err != nil {
 		fmt.Println("Error: Unable to determine the repository path.")
 		os.Exit(1)
 	}
-	repoPath := strings.TrimSpace(string(repoPathBytes))
 	defaultAction := loadDefaultAction(repoPath)
 
-	//---------------------------------------------------------------------------
-	// 2.  Read the existing commit message
-	//---------------------------------------------------------------------------
-	file, err := os.Open(commitMsgFile)
+	data, err := os.ReadFile(commitMsgFile)
 	if err != nil {
 		fmt.Println("Error: Unable to read the commit message file.")
 		os.Exit(1)
 	}
-	defer file.Close()
 
-	var messageLines, commentLines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "#") || (len(messageLines) > 0 && line == "") {
-			commentLines = append(commentLines, line)
-		} else {
-			messageLines = append(messageLines, line)
+	// Only the header changes; the body and git's comments are kept as they are
+	lines := strings.Split(string(data), "\n")
+	for i, line := range lines {
+		header := strings.TrimSpace(line)
+		if header == "" || strings.HasPrefix(header, "#") {
+			continue
 		}
+		lines[i] = formatHeader(header, issueKey(branch), defaultAction)
+		break
 	}
-	if err := scanner.Err(); err != nil {
-		fmt.Println("Error: Failed to read commit message.")
-		os.Exit(1)
-	}
-	if len(messageLines) == 0 {
-		messageLines = []string{""}
-	}
-	originalMsg := strings.TrimSpace(messageLines[0])
+	// No header: the message stays empty and git aborts the commit as usual
 
-	//---------------------------------------------------------------------------
-	// 3.  Detect mode keywords
-	//      no-prefix: → issue key only, no semantic prefix  → ISSUE something
-	//      no-track:  → bypass everything                   → something
-	//---------------------------------------------------------------------------
-	noPrefix := false
-	noTrack := false
-	lowered := strings.ToLower(originalMsg)
-	switch {
-	case strings.HasPrefix(lowered, "no-prefix:"):
-		noPrefix = true
-		originalMsg = strings.TrimSpace(originalMsg[len("no-prefix:"):])
-	case strings.HasPrefix(lowered, "no-track:"):
-		noTrack = true
-		originalMsg = strings.TrimSpace(originalMsg[len("no-track:"):])
-	default:
-		// Apply repo-level default_action if no explicit keyword
-		switch defaultAction {
-		case "disabled":
-			noTrack = true
-		}
-	}
-
-	//---------------------------------------------------------------------------
-	// 4.  Add / normalise Conventional-Commit prefix (normal mode only)
-	//---------------------------------------------------------------------------
-	msgToUse := originalMsg
-	if !noPrefix && !noTrack {
-		validPrefixes := []string{
-			"feat", "fix", "chore", "docs", "style",
-			"refactor", "perf", "test", "build", "ci",
-		}
-		loweredMsg := strings.ToLower(originalMsg)
-		valid := false
-		for _, p := range validPrefixes {
-			if strings.HasPrefix(loweredMsg, p+":") || strings.HasPrefix(loweredMsg, p+"(") {
-				valid = true
-				break
-			} else if strings.HasPrefix(loweredMsg, p+" ") {
-				rest := strings.TrimSpace(originalMsg[len(p):])
-				msgToUse = fmt.Sprintf("%s: %s", p, rest)
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			msgToUse = fmt.Sprintf("%s: %s", defaultAction, originalMsg)
-		}
-	}
-
-	//---------------------------------------------------------------------------
-	// 5.  Assemble final header
-	//---------------------------------------------------------------------------
-	var finalHeader string
-	switch {
-	case noTrack:
-		finalHeader = msgToUse
-	case noPrefix:
-		finalHeader = fmt.Sprintf("%s %s", issueKey, msgToUse)
-	default:
-		// msgToUse is "prefix: rest" → "prefix: ISSUE rest"
-		parts := strings.SplitN(msgToUse, ": ", 2)
-		if len(parts) == 2 {
-			finalHeader = fmt.Sprintf("%s: %s %s", parts[0], issueKey, parts[1])
-		} else {
-			finalHeader = fmt.Sprintf("%s %s", issueKey, msgToUse)
-		}
-	}
-
-	//---------------------------------------------------------------------------
-	// 6.  Write back to the commit message file
-	//---------------------------------------------------------------------------
-	allLines := append([]string{finalHeader}, commentLines...)
-	output := strings.Join(allLines, "\n") + "\n"
-	if err := os.WriteFile(commitMsgFile, []byte(output), 0644); err != nil {
+	if err := os.WriteFile(commitMsgFile, []byte(strings.Join(lines, "\n")), 0644); err != nil {
 		fmt.Println("Error: Unable to write to the commit message file.")
 		os.Exit(1)
 	}

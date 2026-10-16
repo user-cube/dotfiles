@@ -28,6 +28,15 @@ The issue key is extracted from the branch name (e.g. `features/PROJECT-123-foo`
 
 Commits on protected branches (`main`, `master`, `develop`) are blocked.
 
+Only the first line is rewritten; the body is kept. Left unchanged:
+
+- headers that already carry the issue key (`--amend`, rebase reword)
+- `fixup!` / `squash!` / `amend!` (so `rebase --autosquash` still matches), `Merge …`, `Revert "…"`
+- merges, conflicted cherry-picks and reverts (`MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`), also on protected branches
+- detached HEAD outside a rebase (during a rebase the key comes from the branch being rebased)
+
+`go test ./...` covers these cases.
+
 ### Output formats
 
 | Input | Output |

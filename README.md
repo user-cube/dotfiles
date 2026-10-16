@@ -111,10 +111,12 @@ borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 ## CI
 
 `.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
-`shellcheck` on every shell script, `zsh -n` on the zsh files, and `gitleaks` over
+`shellcheck` on every shell script, `zsh -n` on the zsh files, `go vet` and `go test`
+on the commit-msg hook, and `gitleaks` over
 the whole history. Run the same checks locally before pushing:
 
 ```sh
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
+(cd git_hooks/go/commit-msg && go vet ./... && go test ./...)
 gitleaks git --redact --no-banner .
 ```
