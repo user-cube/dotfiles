@@ -6,7 +6,7 @@ Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nv
 
 - [monokai-pro.nvim](https://github.com/loctvl842/monokai-pro.nvim) — colorscheme
 - [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) — fuzzy finder
-- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) — syntax highlighting
+- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) (`main` branch) — syntax highlighting and indent; parsers are compiled with `tree-sitter-cli`
 - [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim) — file explorer
 - [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) — status line
 - [mason.nvim](https://github.com/mason-org/mason.nvim) — LSP/tool installer
@@ -14,6 +14,7 @@ Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nv
 - [telescope-ui-select.nvim](https://github.com/nvim-telescope/telescope-ui-select.nvim) — Telescope dropdown for `vim.ui.select`
 - [none-ls.nvim](https://github.com/nvimtools/none-ls.nvim) — linters and formatters via LSP
 - [which-key.nvim](https://github.com/folke/which-key.nvim) — press `Space` and wait for a menu of keymaps
+- [SchemaStore.nvim](https://github.com/b0o/SchemaStore.nvim) — YAML schemas for yamlls, picked by file name
 
 ---
 
@@ -131,6 +132,22 @@ Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nv
 
 ---
 
+## Filetypes (Helm, Ansible)
+
+Helm templates and Ansible files are plain `.yaml`, so `init.lua` picks the
+filetype from where the file lives; each gets its own LSP instead of yamlls:
+
+| Filetype | Files | LSP |
+|----------|-------|-----|
+| `helm` | `templates/*` and `*.tpl` under a `Chart.yaml` | `helm_ls` |
+| `yaml.helm-values` | `values*.yaml` next to a `Chart.yaml` | `helm_ls`, `yamlls` |
+| `yaml.ansible` | `tasks/`, `handlers/`, `playbooks/`, `group_vars/`, `host_vars/`, `roles/*/{defaults,vars,meta}/`, or any yaml with a `hosts:` play | `ansiblels` |
+| `yaml` | everything else | `yamlls` |
+
+Check a file with `:set ft?`.
+
+---
+
 ## Linters & Formatters
 
 Installed via Homebrew (see [devops-daily-driver](https://github.com/ruicoelho/devops-daily-driver) playbook):
@@ -138,19 +155,26 @@ Installed via Homebrew (see [devops-daily-driver](https://github.com/ruicoelho/d
 | Tool | Type | Language |
 |------|------|----------|
 | `stylua` | Formatter | Lua |
-| `shellcheck` | Linter | Bash |
+| `shellcheck` | Linter (via `bashls`) | Bash |
 | `shfmt` | Formatter | Bash |
 | `pylint` | Linter | Python |
 | `black` | Formatter | Python |
-| `ansible-lint` | Linter | Ansible |
+| `ansible-lint` | Linter (via `ansiblels`) | Ansible |
 | `hadolint` | Linter | Dockerfile |
-| `gofmt` | Formatter | Go |
-| `yamllint` | Linter | YAML |
-| `tflint` | Linter | Terraform / OpenTofu |
-| `terraform_fmt` | Formatter | Terraform / OpenTofu |
+| `golangci-lint` | Linter (on save) | Go |
+| `yamllint` | Linter | YAML (not Ansible: ansible-lint runs its rules) |
+| `terraform validate` | Linter | Terraform / OpenTofu |
+| `terraform fmt` | Formatter | Terraform / OpenTofu |
 | `prettier` | Formatter | YAML, JSON, Markdown |
 
-> Format on save is enabled automatically.
+Format on save. One formatter per file: the none-ls one when the filetype has
+one, else the LSP's. Go is formatted by `gopls` (gofumpt) and gets its imports
+organized (missing added, unused removed) on save.
+
+`yamllint` follows the project's `.yamllint` when there is one; otherwise the
+defaults without `document-start` and the `truthy` check on keys (GitHub's
+`on:`), with line length as a warning at 120 and lists indented or not under
+their key.
 
 ---
 
@@ -163,21 +187,23 @@ Installed automatically via Mason:
 | `lua_ls` | Lua |
 | `pyright` | Python |
 | `terraformls` | Terraform |
+| `tofu_ls` | OpenTofu (`tofu-ls` from Homebrew) |
 | `ansiblels` | Ansible |
 | `dockerls` | Dockerfile |
-| `yamlls` | YAML (Kubernetes, Helm, Docker Compose, GitHub Actions) |
+| `yamlls` | YAML |
+| `helm_ls` | Helm templates and values |
 | `bashls` | Bash |
-| `gopls` | Go |
+| `gopls` | Go (gofumpt, staticcheck) |
 
 ### YAML Schemas (yamlls)
 
 | Schema | Files |
 |--------|-------|
-| GitHub Actions | `.github/workflows/*.yml` |
-| Kubernetes | `*.k8s.yaml`, `templates/*.yaml` |
-| Helm Chart | `Chart.yaml` |
-| Helmfile | `helmfile.yaml` |
-| Docker Compose | `docker-compose*.yml` |
+| [SchemaStore](https://www.schemastore.org) catalog | by file name: GitHub Actions, Docker Compose, `kustomization.yaml`, `Chart.yaml`, `helmfile.yaml`, ... |
+| Kubernetes (yamlls built-in) | `*.k8s.yaml`, `k8s/**`, `manifests/**` |
+
+Another file can pick a schema with a comment on its first line:
+`# yaml-language-server: $schema=<url>`.
 
 ---
 

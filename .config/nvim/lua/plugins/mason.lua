@@ -18,6 +18,7 @@ return {
     dependencies = {
       "mason-org/mason.nvim",
       "neovim/nvim-lspconfig",
+      "b0o/SchemaStore.nvim", -- yaml schemas (GitHub Actions, compose, kustomize, ...)
     },
     config = function()
       require("mason-lspconfig").setup({
@@ -30,8 +31,8 @@ return {
           "yamlls",
           "bashls",
           "gopls",
+          "helm_ls",
         },
-        automatic_installation = true,
       })
 
       vim.lsp.config("terraformls", {
@@ -41,7 +42,7 @@ return {
       vim.lsp.config("tofu_ls", {
         cmd = { "tofu-ls", "serve" },
         filetypes = { "opentofu", "opentofu-vars" },
-        root_dir = vim.fs.dirname(vim.fs.find({ ".terraform", ".git" }, { upward = true })[1]),
+        root_markers = { ".terraform", ".git" },
       })
 
       vim.lsp.config("lua_ls", {
@@ -61,31 +62,34 @@ return {
         },
       })
 
+      -- yamlls: plain yaml only. Helm templates (ft helm) go to helm_ls, Ansible
+      -- (ft yaml.ansible) to ansiblels, see init.lua
       vim.lsp.config("yamlls", {
         settings = {
           yaml = {
-            schemaStore = {
-              enable = false,
-              url = "",
-            },
-            schemas = {
-              ["https://json.schemastore.org/github-workflow.json"] = "/.github/workflows/*.yml",
-              ["https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.0-standalone-strict/all.json"] = {
-                "/*.k8s.yaml",
-                "/*.k8s.yml",
-                "/templates/*.yaml",
-                "/templates/*.yml",
+            -- SchemaStore.nvim picks the schema from the file name; its catalog
+            -- has no Kubernetes entry, so manifests get yamlls' built-in one
+            schemaStore = { enable = false, url = "" },
+            schemas = vim.tbl_extend("force", require("schemastore").yaml.schemas(), {
+              kubernetes = {
+                "*.k8s.yaml", "*.k8s.yml",
+                "k8s/**/*.yaml", "k8s/**/*.yml",
+                "manifests/**/*.yaml", "manifests/**/*.yml",
               },
-              ["https://json.schemastore.org/helmfile.json"] = "helmfile.yaml",
-              ["https://json.schemastore.org/chart.json"] = "Chart.yaml",
-              ["https://json.schemastore.org/docker-compose.json"] = {
-                "docker-compose*.yml",
-                "docker-compose*.yaml",
-              },
-            },
+            }),
             validate = true,
             completion = true,
             hover = true,
+          },
+        },
+      })
+
+      vim.lsp.config("gopls", {
+        settings = {
+          gopls = {
+            gofumpt = true, -- stricter gofmt, built into gopls
+            staticcheck = true,
+            analyses = { unusedparams = true },
           },
         },
       })
@@ -100,6 +104,7 @@ return {
         "yamlls",
         "bashls",
         "gopls",
+        "helm_ls",
       })
 
       -- Keymaps LSP
