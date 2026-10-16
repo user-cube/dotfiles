@@ -15,6 +15,7 @@ Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nv
 - [none-ls.nvim](https://github.com/nvimtools/none-ls.nvim) — linters and formatters via LSP
 - [which-key.nvim](https://github.com/folke/which-key.nvim) — press `Space` and wait for a menu of keymaps
 - [SchemaStore.nvim](https://github.com/b0o/SchemaStore.nvim) — YAML schemas for yamlls, picked by file name
+- [sops.nvim](https://github.com/RMTT/sops.nvim) — SOPS files open decrypted and `:w` re-encrypts them (needs `sops` and the key, e.g. `SOPS_AGE_KEY_FILE` from the repo's `.envrc`); undo history and swap are off for them, so the plaintext stays off disk
 
 ---
 
