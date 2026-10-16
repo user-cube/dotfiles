@@ -5,3 +5,4 @@ git_hooks/go/commit-msg/commit-msg
 .config/sketchybar/aws_profiles
 .config/sketchybar/checks
 .config/tmux/plugins/
+.config/nvim/lua/plugins_local/

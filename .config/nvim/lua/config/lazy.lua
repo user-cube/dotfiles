@@ -26,6 +26,8 @@ require("lazy").setup({
   spec = {
     -- import your plugins
     { import = "plugins" },
+    -- per-machine plugins, never committed (lua/plugins_local/*.lua)
+    vim.uv.fs_stat(vim.fn.stdpath("config") .. "/lua/plugins_local") and { import = "plugins_local" } or nil,
   },
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
