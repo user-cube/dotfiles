@@ -1,3 +1,8 @@
+# direnv loads a folder's .envrc (and prints its "direnv: loading" lines) here,
+# before instant prompt, so p10k doesn't warn about console output. The hook
+# itself is set later by the oh-my-zsh direnv plugin.
+(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv export zsh)"
+
 # Enable Powerlevel10k instant prompt. Must stay at the top of ~/.zshrc.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
