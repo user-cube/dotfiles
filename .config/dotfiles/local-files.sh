@@ -19,6 +19,8 @@ FILES=(
   .config/sketchybar/checks
   .config/sketchybar/aws_profiles
   .kube/config
+  .terraformrc
+  .terraform.d/credentials.tfrc.json
 )
 PREFIX="Local files"
 ATTACHMENT="local-files.tar.gz"

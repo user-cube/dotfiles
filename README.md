@@ -86,7 +86,7 @@ before committing (gitleaks also runs as a pre-commit hook).
 
 ### Backup in Bitwarden
 
-These files, plus `~/.gitconfig-work`, `~/.kube/config` and `~/.terraformrc`, are backed up as one
+These files, plus `~/.gitconfig-work`, `~/.kube/config`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
 `.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
 (`.config/dotfiles/local-files.sh`; uses the `bw` wrapper's session):
 
