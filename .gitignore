@@ -3,6 +3,5 @@ git_hooks/go/commit-msg/commit-msg
 # Per-machine files (never committed)
 .config/tmux/sessions.local
 .config/sketchybar/aws_profiles
-.config/sketchybar/aws_profile
 .config/sketchybar/checks
 .config/tmux/plugins/

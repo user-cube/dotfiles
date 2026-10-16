@@ -18,7 +18,6 @@ FILES=(
   .config/tmux/sessions.local
   .config/sketchybar/checks
   .config/sketchybar/aws_profiles
-  .config/sketchybar/aws_profile
   .kube/config
 )
 PREFIX="Local files"
