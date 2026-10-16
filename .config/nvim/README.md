@@ -18,6 +18,19 @@ Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nv
 
 ---
 
+## Options
+
+`lua/config/options.lua`, loaded before the plugins:
+
+- relative line numbers (absolute on the cursor line), sign column always on
+- 2-space indent; Go and Make use tabs (4 wide), Python 4 spaces
+- tabs and trailing spaces shown (`»`, `·`)
+- `y` / `p` use the macOS clipboard; mouse on
+- search ignores case unless it has a capital; `<Esc>` clears the highlight
+- persistent undo; files reopen where they were left; yanks flash
+
+---
+
 ## Keymaps
 
 > Leader key is `Space`

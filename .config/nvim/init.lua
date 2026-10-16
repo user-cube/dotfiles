@@ -42,4 +42,5 @@ vim.filetype.add({
   },
 })
 
+require("config.options")
 require("config.lazy")
