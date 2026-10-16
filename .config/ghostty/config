@@ -115,6 +115,9 @@ keybind = cmd+j=text:\x02J
 # select all (tmux copy mode over the whole pane history; y / enter copies)
 keybind = cmd+a=text:\x02a
 
+# Cheat sheet of all these shortcuts, in a popup
+keybind = cmd+shift+h=text:\x02?
+
 # Font size
 keybind = cmd+plus=increase_font_size:1
 keybind = cmd+minus=decrease_font_size:1
