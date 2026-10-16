@@ -82,6 +82,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `⌘ o` | open a repo under `~/work` as a session (fuzzy search; reuses it if open) |
 | `⌘ ⇧ o` | open an ssh host (from the ssh config) in a new tab named after it |
 | `⌘ ⇧ s` | session picker (enter switches, `x` kills) |
+| `ctrl b S` | manage sessions: enter switches, `ctrl-x` kills, `ctrl-r` renames, `ctrl-n` new (also in `⌘ ⇧ h`) |
 | `⌘ g` | lazygit for the current folder (popup; `q` closes) |
 | `⌘ ⇧ g` | side-by-side diff of uncommitted changes (lumen popup; `q` closes) |
 | `⌘ e` | yazi file manager in the current folder (popup; `q` closes) |

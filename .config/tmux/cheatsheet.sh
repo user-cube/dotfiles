@@ -24,6 +24,7 @@ entries=(
   'C-b f	sessions	⌘O	open repo'
   'C-b O	sessions	⌘⇧O	open ssh host'
   'C-b s	sessions	⌘⇧S	switch session'
+  'C-b S	sessions	C-b S	manage sessions (kill, rename, new)'
   'C-b g	popups	⌘G	lazygit'
   'C-b G	popups	⌘⇧G	diff'
   'C-b e	popups	⌘E	files (yazi)'
