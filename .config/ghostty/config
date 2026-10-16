@@ -58,6 +58,7 @@ keybind = cmd+t=text:\x02c
 keybind = cmd+shift+left=text:\x02p
 keybind = cmd+shift+right=text:\x02n
 keybind = cmd+w=text:\x02X
+keybind = cmd+shift+r=text:\x02,
 # Both forms: Ghostty's defaults bind super+N and super+digit_N to goto_tab
 keybind = cmd+digit_1=text:\x021
 keybind = cmd+1=text:\x021
