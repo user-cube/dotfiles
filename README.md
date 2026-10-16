@@ -18,7 +18,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
-- `git_hooks/`: commit-msg hooks (bash, go)
+- `git_hooks/`: global commit-msg hook (Go), wired in `.gitconfig` as `hook.commit-msg-go`
 - `vscode/`: VS Code snippets/settings (golang, helmchart, terraform)
 
 ## Zsh
@@ -103,7 +103,7 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/` and `git_hooks/`, copies `.zshrc`, `.p10k.zsh` and the git configs
+syncs `.config/` and `git_hooks/` (building the commit-msg hook), copies `.zshrc`, `.p10k.zsh` and the git configs
 (`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
 borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 

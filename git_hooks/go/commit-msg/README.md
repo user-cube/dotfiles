@@ -2,11 +2,25 @@
 
 Git hook that automatically formats commit messages with a Conventional Commit prefix and the issue key extracted from the branch name.
 
-## Build
+## Install
+
+`dotfiles-sync` (and the playbook) copy this folder to `~/git_hooks` and build it:
 
 ```bash
 go build -o commit-msg commit-msg.go
 ```
+
+`.gitconfig` runs it in every repo as a config-based hook (git 2.54+), next to
+each repo's own `.git/hooks`:
+
+```ini
+[hook "commit-msg-go"]
+    event = commit-msg
+    command = ~/git_hooks/go/commit-msg/commit-msg
+```
+
+`.gitconfig-personal` sets `enabled = false` for personal repos. To skip it in
+another repo: `git config hook.commit-msg-go.enabled false`.
 
 ## Behavior
 

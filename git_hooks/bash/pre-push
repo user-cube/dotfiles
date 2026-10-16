@@ -1,8 +1,0 @@
-#!/bin/bash
-# Template: runs before every push; a failing command aborts it.
-# Replace the examples with the project's build and test commands, e.g.:
-#   mvn clean install || { echo "Error: Build failed. Push aborted."; exit 1; }
-#   mvn test          || { echo "Error: Tests failed. Push aborted."; exit 1; }
-
-echo "No errors found. Push allowed."
-exit 0

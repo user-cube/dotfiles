@@ -11,3 +11,7 @@ gpgsign = true
 
 [push]
 autoSetupRemote = true
+
+# Personal repos commit straight to main: skip the work commit-msg hook
+[hook "commit-msg-go"]
+enabled = false

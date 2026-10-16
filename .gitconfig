@@ -20,5 +20,11 @@
 [hook "gitleaks"]
     event = pre-commit
     command = gitleaks protect --staged --redact --verbose
+
+# Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
+# Built by dotfiles-sync / the playbook; disabled for personal repos (.gitconfig-personal)
+[hook "commit-msg-go"]
+    event = commit-msg
+    command = ~/git_hooks/go/commit-msg/commit-msg
 [push]
     autoSetupRemote = true
