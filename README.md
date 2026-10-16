@@ -19,6 +19,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
 - `git_hooks/`: global commit-msg hook (Go), wired in `.gitconfig` as `hook.commit-msg-go`
+- `claude/`: Claude Code config, synced to `~/.claude/`: `settings.json` (no co-author trailer, deny rules, hooks, plugins), global `CLAUDE.md`, and `hooks/deny-sensitive-reads.sh` (blocks Bash commands that touch cleartext credentials). Not `.claude/`: Claude Code would read that as this repo's project settings. Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
 - `vscode/`: reference VS Code workspace settings (golang, helmchart, terraform), copied by hand; not installed
 
 ## Zsh
@@ -85,7 +86,7 @@ before committing (gitleaks also runs as a pre-commit hook).
 
 ### Backup in Bitwarden
 
-These files, plus `~/.gitconfig-work` and `~/.kube/config`, are backed up as one
+These files, plus `~/.gitconfig-work`, `~/.kube/config` and `~/.terraformrc`, are backed up as one
 `.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
 (`.config/dotfiles/local-files.sh`; uses the `bw` wrapper's session):
 
@@ -105,7 +106,7 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/` and `git_hooks/` (building the commit-msg hook), copies `.zshrc`, `.p10k.zsh` and the git configs
+syncs `.config/`, `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`), copies `.zshrc`, `.p10k.zsh` and the git configs
 (`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
 borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
