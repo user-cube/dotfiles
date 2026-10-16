@@ -77,6 +77,7 @@ before committing (gitleaks also runs as a pre-commit hook).
 | File | Purpose |
 |---|---|
 | `~/.zshrc.local` | machine-specific shell config (secrets: see [Secrets](#secrets-tokens-api-keys)) |
+| `~/.gitconfig-hook` | optional: per-repo `default_action` of the commit-msg hook (see `git_hooks/go/commit-msg/README.md`) |
 | `~/.config/tmux/sessions.local` | repos preloaded as tmux sessions |
 | `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |
 | `~/.config/sketchybar/checks` | optional: connectivity checks shown in the bar, instead of every kube context (see `checks.example`) |

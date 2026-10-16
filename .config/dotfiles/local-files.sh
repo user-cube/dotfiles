@@ -14,6 +14,7 @@ export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
 FILES=(
   .zshrc.local
   .gitconfig-work
+  .gitconfig-hook
   .config/tmux/sessions.local
   .config/sketchybar/checks
   .config/sketchybar/aws_profiles
