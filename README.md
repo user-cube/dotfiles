@@ -70,6 +70,14 @@ it is started, so it never sits in a file or in every shell's environment.
 Touch ID/sudo to read the session key, later calls reuse it. Never fetch secrets
 at the top level of `.zshrc*`: every new shell would block on the vault.
 
+A token needed once on the command line (`claude mcp add --header ...`,
+`gh auth login --with-token`): `secret T` asks for it without echoing it
+(`secret T <item>` takes it from Bitwarden), then use `"$T"` in the next command;
+it is cleared right after and never exported (`.config/zsh/secrets.zsh`). Lines
+that look like they hold a token (GitHub/GitLab/Slack/OpenAI keys, AWS access
+keys, JWTs, a long `Bearer`, `--password=...`) are not saved to the history, and
+a leading space keeps any command out of it.
+
 Check nothing leaked: `git grep -nIE '(token|secret|password|api_?key)\s*='`
 before committing (gitleaks also runs as a pre-commit hook).
 
