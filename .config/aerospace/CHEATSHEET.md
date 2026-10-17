@@ -67,8 +67,11 @@ System Settings, Finder, Archive Utility, Activity Monitor, Passwords, Bitwarden
 ## Ghostty + tmux (tabs, splits, sessions)
 
 Every Ghostty window runs inside tmux. First window = persistent `main` session.
-Sessions listed in `~/.config/tmux/sessions.local` (`name=path` per line, repeat a name for more windows; per machine) are
-preloaded as sessions when tmux starts.
+Sessions listed in `~/.config/tmux/sessions.local` (per machine; start from
+`~/.config/tmux/sessions.local.example`) are created when tmux starts:
+`name=path` per line, the same name again adds a tab, a bare path makes a session
+named after the folder. Closing Ghostty doesn't stop tmux, so after editing the
+file run `tmux-sessions` (or `ctrl-l` in `ctrl b S`). For a one-off repo session: `⌘ o`.
 Sessions (tabs, splits, folders) are auto-saved every 15 min and restored after a
 reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 
@@ -82,7 +85,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `⌘ o` | open a repo under `~/work` as a session (fuzzy search; reuses it if open) |
 | `⌘ ⇧ o` | open an ssh host (from the ssh config) in a new tab named after it |
 | `⌘ ⇧ s` | session picker (enter switches, `x` kills) |
-| `ctrl b S` | manage sessions: enter switches, `ctrl-x` kills, `ctrl-r` renames, `ctrl-n` new (also in `⌘ ⇧ h`) |
+| `ctrl b S` | manage sessions: enter switches, `ctrl-x` kills, `ctrl-r` renames, `ctrl-n` new, `ctrl-l` loads `sessions.local` (also in `⌘ ⇧ h`) |
 | `⌘ g` | lazygit for the current folder (popup; `q` closes) |
 | `⌘ ⇧ g` | side-by-side diff of uncommitted changes (lumen popup; `q` closes) |
 | `⌘ e` | yazi file manager in the current folder (popup; `q` closes) |

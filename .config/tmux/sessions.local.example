@@ -1,0 +1,16 @@
+# Copy to ~/.config/tmux/sessions.local (per machine, not in dotfiles; backed up
+# by local-backup). These sessions are created when tmux starts; after editing
+# the file run `tmux-sessions` (closing Ghostty doesn't stop tmux, so the file
+# isn't read again until a reboot). Existing sessions and tabs are left alone.
+# For a one-off repo session use ⌘O instead.
+#
+#   name=path            session <name>
+#   same name again      one more tab in that session
+#   path                 session named after the folder
+
+# One "setup" session with two tabs
+setup=~/work/github/dotfiles
+setup=~/work/github/devops-daily-driver
+
+# One session per repo, named after its folder
+~/work/github/homelab-k8s-manifests

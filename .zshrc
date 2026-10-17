@@ -85,8 +85,8 @@ alias vim="nvim"
 alias cat="bat --pager=never"
 alias lz="lazygit"
 alias lzd="lazydocker"
+alias tmux-sessions="~/.config/tmux/preload-sessions.sh" # after editing ~/.config/tmux/sessions.local
 alias ktx="kontext"
-alias redis-cli="docker run --network host --rm -it redis:alpine redis-cli"
 
 # Kubernetes
 alias k=kubecolor
