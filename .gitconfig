@@ -26,6 +26,11 @@
     event = pre-commit
     command = ~/git_hooks/actionlint/pre-commit
 
+# Staged .gitlab-ci.yml through the GitLab API, glab ci lint (git_hooks/gitlab-ci-lint)
+[hook "gitlab-ci-lint"]
+    event = pre-commit
+    command = ~/git_hooks/gitlab-ci-lint/pre-commit
+
 # Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
 # Built by dotfiles-sync / the playbook; disabled for personal repos (.gitconfig-personal)
 [hook "commit-msg-go"]

@@ -1,0 +1,33 @@
+#!/bin/bash
+# Global pre-commit hook (hook.gitlab-ci-lint in .gitconfig): validates the
+# staged .gitlab-ci.yml with the GitLab API (`glab ci lint`), which resolves
+# include:, extends: and templates. The staged version is checked, not the
+# working tree. Does nothing when the file isn't staged, glab isn't installed, or
+# glab has no login for origin's host (GitHub repos, a GitLab not set up with
+# `glab auth login --hostname <host>`). GitLab unreachable (offline, VPN off)
+# only warns. Skip once with `git commit --no-verify`.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+git diff --cached --name-only --diff-filter=ACMR -- .gitlab-ci.yml | grep -q . || exit 0
+command -v glab >/dev/null || exit 0
+
+# origin's host: git@host:group/repo.git, ssh://git@host:22/..., https://host/...
+url=$(git remote get-url origin 2>/dev/null) || exit 0
+host=${url#*://}
+host=${host#*@}
+host=${host%%[:/]*}
+glab auth status --hostname "$host" >/dev/null 2>&1 || exit 0
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+git show :.gitlab-ci.yml > "$tmp/.gitlab-ci.yml"
+
+out=$(glab ci lint "$tmp/.gitlab-ci.yml" -R "$url" 2>&1) && exit 0
+if grep -q "is invalid" <<< "$out"; then
+  grep -v "^Validating" <<< "$out" | sed "s#$tmp/##" >&2
+  echo "gitlab-ci-lint: fix .gitlab-ci.yml, or commit with --no-verify" >&2
+  exit 1
+fi
+echo "gitlab-ci-lint: GitLab didn't answer, .gitlab-ci.yml not checked:" >&2
+tail -2 <<< "$out" >&2
+exit 0
