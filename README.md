@@ -88,7 +88,8 @@ before committing (gitleaks also runs as a pre-commit hook).
 
 These files, plus `~/.gitconfig-work`, `~/.kube/config`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
 `.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
-(`.config/dotfiles/local-files.sh`; uses the `bw` wrapper's session).
+(`.config/dotfiles/local-files/`, a Go tool built by `dotfiles-sync` and the
+playbook; uses the `bw` wrapper's session).
 Claude Code's MCP servers (their tokens sit in `env`) go too: only the
 `mcpServers` key of `~/.claude.json`, which also holds the login and per-project
 state. Restore merges them back; a server already set up on the machine is kept
@@ -110,7 +111,7 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/`, `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`), copies `.zshrc`, `.p10k.zsh` and the git configs
+syncs `.config/` (building `local-files`), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`), copies `.zshrc`, `.p10k.zsh` and the git configs
 (`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
 borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
@@ -118,11 +119,12 @@ borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
 `.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
 `shellcheck` on every shell script, `zsh -n` on the zsh files, `go vet` and `go test`
-on the commit-msg hook, and `gitleaks` over
+on the commit-msg hook and on `local-files`, and `gitleaks` over
 the whole history. Run the same checks locally before pushing:
 
 ```sh
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
 (cd git_hooks/go/commit-msg && go vet ./... && go test ./...)
+(cd .config/dotfiles/local-files && go vet ./... && go test ./...)
 gitleaks git --redact --no-banner .
 ```

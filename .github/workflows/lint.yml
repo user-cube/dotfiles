@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   lint:
-    name: shellcheck + bash 3.2 + zsh syntax + go hook + gitleaks
+    name: shellcheck + bash 3.2 + zsh syntax + go tools + gitleaks
     # macOS on purpose: scripts run with /bin/bash 3.2, which only macOS ships
     runs-on: macos-latest
 
@@ -46,6 +46,10 @@ jobs:
       # Every work commit runs this hook: a broken build blocks them all
       - name: commit-msg hook (go vet + test)
         working-directory: git_hooks/go/commit-msg
+        run: go vet ./... && go test ./...
+
+      - name: local-files (go vet + test)
+        working-directory: .config/dotfiles/local-files
         run: go vet ./... && go test ./...
 
       - name: gitleaks
