@@ -1,18 +1,18 @@
 {
   "permissions": {
     "deny": [
-      "Read(**/age-key.txt*)",
-      "Read(**/*.agekey)",
-      "Read(**/.env*)",
-      "Read(**/env.php*)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Read(**/secrets/**)",
-      "Read(**/credentials/**)",
-      "Read(**/.aws/**)",
-      "Read(**/.ssh/**)",
-      "Read(**/docker-compose*.yml)",
-      "Read(**/config/database.yml)"
+      "Read(//**/age-key.txt*)",
+      "Read(//**/*.agekey)",
+      "Read(//**/.env*)",
+      "Read(//**/env.php*)",
+      "Read(//**/*.pem)",
+      "Read(//**/*.key)",
+      "Read(//**/secrets/**)",
+      "Read(//**/credentials/**)",
+      "Read(//**/.aws/**)",
+      "Read(//**/.ssh/**)",
+      "Read(//**/docker-compose*.yml)",
+      "Read(//**/config/database.yml)"
     ]
   },
   "model": "opus",
@@ -56,5 +56,7 @@
     }
   },
   "theme": "dark",
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "verbose": true,
+  "viewMode": "verbose"
 }
