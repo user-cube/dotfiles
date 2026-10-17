@@ -79,6 +79,9 @@ export PATH=${PATH}:$GOBIN
 eval "$(pyenv init - --no-rehash zsh)"
 eval "$(zoxide init zsh)"
 source <(fzf --zsh)
+# atuin takes ctrl-r over from fzf (history with folder, time, exit code); fzf
+# keeps ctrl-t and alt-c, and the up arrow stays plain zsh history
+(( ${+commands[atuin]} )) && eval "$(atuin init zsh --disable-up-arrow)"
 
 # --- Aliases ---
 alias vim="nvim"

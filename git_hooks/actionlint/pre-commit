@@ -1,0 +1,15 @@
+#!/bin/bash
+# Global pre-commit hook (hook.actionlint in .gitconfig): runs actionlint on the
+# staged GitHub Actions workflows, as staged (not as in the working tree); their
+# `run:` steps go through shellcheck too. Does nothing when no workflow is staged or
+# actionlint isn't installed. Skip once with `git commit --no-verify`.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+command -v actionlint >/dev/null || exit 0
+
+rc=0
+while IFS= read -r f; do
+  git show ":$f" | actionlint -stdin-filename "$f" - || rc=1
+done < <(git diff --cached --name-only --diff-filter=ACMR -- '.github/workflows/*.yml' '.github/workflows/*.yaml')
+
+[ $rc -eq 0 ] || echo "actionlint: fix the workflows above, or commit with --no-verify" >&2
+exit $rc

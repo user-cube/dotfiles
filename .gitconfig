@@ -21,6 +21,11 @@
     event = pre-commit
     command = gitleaks protect --staged --redact --verbose
 
+# Staged GitHub Actions workflows through actionlint (git_hooks/actionlint)
+[hook "actionlint"]
+    event = pre-commit
+    command = ~/git_hooks/actionlint/pre-commit
+
 # Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
 # Built by dotfiles-sync / the playbook; disabled for personal repos (.gitconfig-personal)
 [hook "commit-msg-go"]
