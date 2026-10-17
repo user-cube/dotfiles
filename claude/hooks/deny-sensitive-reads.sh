@@ -5,21 +5,25 @@
 # `cat file` still goes through. This hook inspects the command line and
 # blocks it when it touches sensitive paths.
 #
-# Read: secrets/ and credentials/ directories are guarded here instead of
-# with Read(...) deny rules, because a permission rule can't say "except
-# encrypted files" (a `!` exception can't carve into a `//`-anchored rule).
-# Files there are readable only when they are SOPS-encrypted: the name says
-# so (.enc. / .encrypted. / .sops.) AND the content carries SOPS metadata.
+# secrets/ and credentials/ directories: files there may be read only when
+# they ARE encrypted, judged by content with `sops filestatus` (which also
+# rejects a hand-written fake `sops:` block), not by file name. They are
+# guarded here rather than with Read(...) deny rules because a permission
+# rule can't say "except encrypted files".
 #
-# LIMIT: for Bash this is a text match over the command line. It catches
-# accidents (cat, grep, less, cp). It does NOT catch deliberate obfuscation --
-# variables, base64, globs that only expand at runtime. It is a safety net,
-# not a sandbox.
+# LIMIT: for Bash the paths are taken from the command text. Paths built at
+# runtime (variables, cd then a relative path, base64) are not resolved; when
+# a secrets/ path can't be resolved to a file, the old name rule applies
+# (.enc. / .encrypted. / .sops. in the command). A safety net, not a sandbox.
 
 set -uo pipefail
 
 input=$(cat)
 tool=$(jq -r '.tool_name // ""' <<<"$input" 2>/dev/null) || exit 0
+cwd=$(jq -r '.cwd // ""' <<<"$input" 2>/dev/null)
+# Relative paths in commands resolve from the session's directory. If that
+# fails they don't resolve, and the stricter name rule applies.
+if [ -n "$cwd" ]; then cd "$cwd" 2>/dev/null || true; fi
 
 deny () {
   jq -nc --arg r "$1" \
@@ -27,14 +31,19 @@ deny () {
   exit 0
 }
 
-ENCRYPTED_NAME='\.(enc|encrypted|sops)\.(ya?ml|json|hcl|env)'
 SECRET_DIRS='(^|[^a-z0-9_-])(secrets|credentials)/'
+ENCRYPTED_NAME='\.(enc|encrypted|sops)\.(ya?ml|json|hcl|env|ini)'
 
-# A file is SOPS-encrypted when it carries the sops metadata block:
-# a top-level `sops:` key (YAML) or a "sops" object (JSON).
-is_sops_file () {
+# True only when sops itself reports the file as encrypted. A cleartext file
+# returns false; a fake or broken sops block makes sops error out: both deny.
+is_encrypted () {
   [ -f "$1" ] || return 1
-  grep -Eq '^sops:|"sops"[[:space:]]*:' "$1" 2>/dev/null
+  if command -v sops >/dev/null 2>&1; then
+    sops filestatus "$1" 2>/dev/null | jq -e '.encrypted == true' >/dev/null 2>&1
+  else
+    # Without sops: require the metadata block and at least one ENC[ value.
+    grep -Eq '^sops:|"sops"[[:space:]]*:' "$1" && grep -q 'ENC\[' "$1"
+  fi
 }
 
 if [ "$tool" = "Read" ]; then
@@ -43,25 +52,13 @@ if [ "$tool" = "Read" ]; then
   if printf '%s' "$path" | grep -Eiq "$SECRET_DIRS"; then
     # Nothing to leak from a missing file: let Read report "not found".
     [ -e "$path" ] || exit 0
-    if ! printf '%s' "$path" | grep -Eiq "${ENCRYPTED_NAME}\$"; then
-      deny "Read of a file under secrets/ or credentials/ that isn't named as SOPS-encrypted (local rule in ~/.claude/hooks/deny-sensitive-reads.sh)."
-    fi
-    if ! is_sops_file "$path"; then
-      deny "File under secrets/ or credentials/ is named as encrypted but has no SOPS metadata (local rule). Ask the user to check it."
-    fi
+    is_encrypted "$path" || deny "File under secrets/ or credentials/ is not SOPS-encrypted (sops filestatus; local rule in ~/.claude/hooks/deny-sensitive-reads.sh)."
   fi
   exit 0
 fi
 
 cmd=$(jq -r '.tool_input.command // ""' <<<"$input" 2>/dev/null) || exit 0
 [ -z "$cmd" ] && exit 0
-
-# Already-encrypted SOPS files are safe to read, and the workflow depends on
-# it (sops -d secrets/<name>.enc.yaml, common/secrets/<name>.encrypted.yaml).
-is_encrypted_only=0
-if printf '%s' "$cmd" | grep -Eq "$ENCRYPTED_NAME"; then
-  is_encrypted_only=1
-fi
 
 # Cleartext credentials: blocked unconditionally.
 # `.key` must look like a path, not an expression: `each.key` and `local.key`
@@ -70,11 +67,31 @@ if printf '%s' "$cmd" | grep -Eiq 'age-key|\.agekey|AGE-SECRET-KEY|\.pem([^a-z]|
   deny "Command touches a cleartext credential file (local rule in ~/.claude/hooks/deny-sensitive-reads.sh). Ask the user to do it themselves."
 fi
 
-# Secret directories: only blocked when not referring to an encrypted file.
-if [ "$is_encrypted_only" -eq 0 ]; then
-  if printf '%s' "$cmd" | grep -Eiq "${SECRET_DIRS}|docker-compose[^ ]*\.ya?ml"; then
-    deny "Command touches secrets/ or credentials/ without naming an encrypted (.enc. / .encrypted.) file (local rule). Encrypted files are allowed."
-  fi
+if printf '%s' "$cmd" | grep -Eiq 'docker-compose[^ ]*\.ya?ml'; then
+  deny "Command touches a docker-compose file (local rule). Ask the user to do it themselves."
 fi
+
+# secrets/ and credentials/: check every path the command names. Each one
+# must resolve to files that are all encrypted; a path that resolves to no
+# file falls back to the name rule.
+while IFS= read -r token; do
+  [ -z "$token" ] && continue
+  p=${token/#\~/$HOME}
+  shopt -s nullglob
+  # Unquoted on purpose: expands globs such as github*.encrypted.yaml.
+  # shellcheck disable=SC2206
+  files=( $p )
+  shopt -u nullglob
+  existing=()
+  for f in "${files[@]}"; do [ -f "$f" ] && existing+=("$f"); done
+  if [ ${#existing[@]} -gt 0 ]; then
+    for f in "${existing[@]}"; do
+      is_encrypted "$f" || deny "Command touches $f, which is not SOPS-encrypted (sops filestatus; local rule)."
+    done
+  elif ! printf '%s' "$token" | grep -Eq "$ENCRYPTED_NAME"; then
+    deny "Command touches secrets/ or credentials/ ($token) and it can't be checked as an encrypted file (local rule)."
+  fi
+done < <(printf '%s' "$cmd" | grep -Eoi "[^[:space:]\"'=<>|;&()]*(secrets|credentials)/[^[:space:]\"'<>|;&()]*" \
+  | grep -Ei '(^|[/~])(secrets|credentials)/')   # a whole path segment: not external-secrets/
 
 exit 0
