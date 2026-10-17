@@ -88,7 +88,11 @@ before committing (gitleaks also runs as a pre-commit hook).
 
 These files, plus `~/.gitconfig-work`, `~/.kube/config`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
 `.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
-(`.config/dotfiles/local-files.sh`; uses the `bw` wrapper's session):
+(`.config/dotfiles/local-files.sh`; uses the `bw` wrapper's session).
+Claude Code's MCP servers (their tokens sit in `env`) go too: only the
+`mcpServers` key of `~/.claude.json`, which also holds the login and per-project
+state. Restore merges them back; a server already set up on the machine is kept
+unless `--force`:
 
 ```sh
 local-backup                 # this machine -> Bitwarden (replaces the previous copy)

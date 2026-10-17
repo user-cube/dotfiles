@@ -22,6 +22,11 @@ FILES=(
   .terraformrc
   .terraform.d/credentials.tfrc.json
 )
+# Claude Code's MCP servers (tokens in their env). They live in ~/.claude.json
+# next to the login and per-project state, so only the mcpServers key is saved
+# (as this path inside the archive) and merged back on restore.
+CLAUDE_JSON="$HOME/.claude.json"
+MCP=".claude/mcp-servers.json"
 PREFIX="Local files"
 ATTACHMENT="local-files.tar.gz"
 MACHINE=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
@@ -48,7 +53,15 @@ backup() {
   local name="$PREFIX ($MACHINE)" present=() f id
   for f in "${FILES[@]}"; do [ -f "$HOME/$f" ] && present+=("$f"); done
   [ ${#present[@]} -gt 0 ] || die "none of the files exist on this machine"
-  tar czf "$WORK/$ATTACHMENT" -C "$HOME" "${present[@]}"
+  # The export is written under $WORK only (removed on exit), never in ~/.claude
+  if [ -f "$CLAUDE_JSON" ] && jq -e '(.mcpServers // {}) | length > 0' "$CLAUDE_JSON" >/dev/null; then
+    mkdir -p "$WORK/mcp/.claude"
+    (umask 077 && jq '{mcpServers}' "$CLAUDE_JSON" > "$WORK/mcp/$MCP")
+    tar czf "$WORK/$ATTACHMENT" -C "$HOME" "${present[@]}" -C "$WORK/mcp" "$MCP"
+    present+=(".claude.json  (MCP servers only: $(jq -r '.mcpServers | keys | join(", ")' "$WORK/mcp/$MCP"))")
+  else
+    tar czf "$WORK/$ATTACHMENT" -C "$HOME" "${present[@]}"
+  fi
 
   bw sync >/dev/null
   id=$(item_id "$name")
@@ -73,6 +86,26 @@ list() {
     '.[] | select(.name | startswith($p)) | .name | ltrimstr($p) | rtrimstr(")")'
 }
 
+restore_mcp() { # merge the saved MCP servers into ~/.claude.json, the rest untouched
+  local force="$1" saved="$WORK/mcp/$MCP" tmp kept
+  mkdir -p "$WORK/mcp"
+  tar xzf "$WORK/$ATTACHMENT" -C "$WORK/mcp" "$MCP"
+  [ -f "$CLAUDE_JSON" ] || (umask 077 && echo '{}' > "$CLAUDE_JSON")
+  # Without --force a server already set up here wins over the saved one
+  kept=$(jq -r --slurpfile s "$saved" --arg force "$force" \
+    '(.mcpServers // {}) as $here
+     | [$s[0].mcpServers | keys[] | select(. as $k | $force != "--force" and ($here | has($k)))] | join(", ")' \
+    "$CLAUDE_JSON")
+  tmp=$(mktemp "$CLAUDE_JSON.XXXXXX")
+  jq --slurpfile s "$saved" --arg force "$force" \
+    '.mcpServers = (if $force == "--force" then (.mcpServers // {}) + $s[0].mcpServers
+                    else $s[0].mcpServers + (.mcpServers // {}) end)' \
+    "$CLAUDE_JSON" > "$tmp"
+  chmod 600 "$tmp" && mv "$tmp" "$CLAUDE_JSON"
+  echo "  ~/.claude.json  (MCP servers: $(jq -r '.mcpServers | keys | join(", ")' "$saved"))"
+  [ -z "$kept" ] || echo "    already here, kept: $kept (--force to overwrite)"
+}
+
 restore() {
   local machine="${1:-$MACHINE}" force="${2:-}" name id f
   name="$PREFIX ($machine)"
@@ -82,7 +115,9 @@ restore() {
   bw get attachment "$ATTACHMENT" --itemid "$id" --output "$WORK/$ATTACHMENT" >/dev/null
   echo "restoring \"$name\":"
   for f in $(tar tzf "$WORK/$ATTACHMENT"); do
-    if [ -e "$HOME/$f" ] && [ "$force" != --force ]; then
+    if [ "$f" = "$MCP" ]; then
+      restore_mcp "$force"
+    elif [ -e "$HOME/$f" ] && [ "$force" != --force ]; then
       echo "  ~/$f  (exists, kept; --force to overwrite)"
     else
       tar xzf "$WORK/$ATTACHMENT" -C "$HOME" "$f"
