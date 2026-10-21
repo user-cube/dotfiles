@@ -90,6 +90,7 @@ before committing (gitleaks also runs as a pre-commit hook).
 | `~/.config/nvim/lua/plugins_local/*.lua` | optional: nvim plugins only for this machine (lazy.nvim specs, e.g. vim-be-good) |
 | `~/.config/tmux/sessions.local` | repos preloaded as tmux sessions (see `.config/tmux/sessions.local.example`; `tmux-sessions` after editing) |
 | `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |
+| `~/workspaces/*.code-workspace` | VS Code workspaces, created and opened with `ws` |
 | `~/.config/sketchybar/checks` | optional: connectivity checks shown in the bar, instead of every kube context (see `checks.example`) |
 
 ### Backup in Bitwarden

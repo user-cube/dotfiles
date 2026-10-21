@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-// Paths relative to $HOME; missing ones are skipped
+// Paths relative to $HOME, globs allowed; missing ones are skipped
 var files = []string{
 	".zshrc.local",
 	".gitconfig-work",
@@ -31,6 +31,7 @@ var files = []string{
 	".kube/config",
 	".terraformrc",
 	".terraform.d/credentials.tfrc.json",
+	"workspaces/*.code-workspace", // VS Code workspaces, see `ws`
 }
 
 const (
@@ -149,9 +150,13 @@ func noteName(machine string) string { return notePrefix + " (" + machine + ")" 
 
 func backup(v vault, home, machine string, out io.Writer) error {
 	var present []string
-	for _, f := range files {
-		if fi, err := os.Stat(filepath.Join(home, f)); err == nil && fi.Mode().IsRegular() {
-			present = append(present, f)
+	for _, pattern := range files {
+		matches, _ := filepath.Glob(filepath.Join(home, pattern))
+		for _, m := range matches {
+			if fi, err := os.Stat(m); err == nil && fi.Mode().IsRegular() {
+				rel, _ := filepath.Rel(home, m)
+				present = append(present, rel)
+			}
 		}
 	}
 	if len(present) == 0 {

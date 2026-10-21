@@ -95,6 +95,7 @@ func TestBackupThenRestore(t *testing.T) {
 	homeA, homeB := t.TempDir(), t.TempDir()
 	write(t, filepath.Join(homeA, ".kube/config"), "kube-A", 0o600)
 	write(t, filepath.Join(homeA, ".terraformrc"), "tf-A", 0o644)
+	write(t, filepath.Join(homeA, "workspaces/homelab.code-workspace"), "ws-A", 0o644)
 	write(t, filepath.Join(homeA, claudeJSON),
 		`{"oauthAccount":{"a":1},"mcpServers":{"grafana":{"env":{"T":"A"}},"bookstack":{"env":{"T":"A"}}}}`, 0o600)
 
@@ -102,7 +103,7 @@ func TestBackupThenRestore(t *testing.T) {
 	if err := backup(v, homeA, "A", &out); err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"created Bitwarden item: Local files (A)", "  ~/.kube/config\n", "  ~/.terraformrc\n",
+	for _, want := range []string{"created Bitwarden item: Local files (A)", "  ~/.kube/config\n", "  ~/.terraformrc\n", "  ~/workspaces/homelab.code-workspace\n",
 		"  ~/.claude.json  (MCP servers only: bookstack, grafana)"} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("backup output lacks %q:\n%s", want, out.String())
@@ -117,6 +118,9 @@ func TestBackupThenRestore(t *testing.T) {
 	out.Reset()
 	if err := restore(v, homeB, "A", false, &out); err != nil {
 		t.Fatal(err)
+	}
+	if got := read(t, filepath.Join(homeB, "workspaces/homelab.code-workspace")); got != "ws-A" {
+		t.Errorf("workspace = %q, want ws-A", got)
 	}
 	if got := read(t, filepath.Join(homeB, ".kube/config")); got != "kube-A" {
 		t.Errorf(".kube/config = %q, want kube-A", got)
