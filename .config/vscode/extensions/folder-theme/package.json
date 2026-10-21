@@ -2,7 +2,7 @@
   "name": "folder-theme",
   "displayName": "Folder Theme",
   "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -29,6 +29,14 @@
       {
         "command": "folderTheme.openTerminal",
         "title": "Folder Theme: Open Terminal in Folder"
+      },
+      {
+        "command": "folderTheme.goToFolder",
+        "title": "Folder Theme: Go to Folder"
+      },
+      {
+        "command": "folderTheme.clear",
+        "title": "Folder Theme: Clear (remove colors and turn off)"
       }
     ],
     "configuration": {
@@ -105,6 +113,11 @@
             "master"
           ],
           "description": "The status bar turns amber while the active folder's repository is on one of these branches. Empty to turn it off."
+        },
+        "folderTheme.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Turn the whole extension off for this workspace: its colors are removed."
         }
       }
     },

@@ -141,7 +141,19 @@ function activate(context) {
     return rel.startsWith('..') || path.isAbsolute(rel) ? undefined : rel.split(path.sep).join('/');
   }
 
+  // Set by Go to Folder when the folder has no file to open; cleared by the next editor change
+  let forced;
+  const lastFiles = () => context.workspaceState.get('lastFiles') || {};
+  function rememberFile() {
+    const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
+    const folder = doc && doc.uri.scheme === 'file' && vscode.workspace.getWorkspaceFolder(doc.uri);
+    if (!folder) return;
+    const files = lastFiles();
+    if (files[folder.name] !== doc.uri.toString()) context.workspaceState.update('lastFiles', { ...files, [folder.name]: doc.uri.toString() });
+  }
+
   function activeFolderName() {
+    if (forced) return forced;
     const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
     const active = doc && vscode.workspace.getWorkspaceFolder(doc.uri);
     if (active) return active.name;
@@ -196,16 +208,18 @@ function activate(context) {
     const settings = vscode.workspace.getConfiguration('folderTheme');
     const colors = colorsSetting();
     const map = settings.get('folders') || {};
+    const enabled = settings.get('enabled') !== false;
     let hue = map[name] === undefined ? undefined : hueOf(map[name], colors);
     if (hue === undefined && map[name] === undefined && settings.get('auto')) hue = autoHue(name, colors);
+    if (!enabled) hue = undefined;
     const kind = vscode.window.activeColorTheme.kind;
     const light = kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight;
     const k = STRENGTH[settings.get('strength')] || 1;
     const parts = new Set(settings.get('parts') || PARTS);
-    const dangerEntry = isDanger(settings.get('danger') || [], name, activeRelPath(folder));
+    const dangerEntry = enabled ? isDanger(settings.get('danger') || [], name, activeRelPath(folder)) : undefined;
     const danger = dangerEntry !== undefined;
     const protectedBranches = settings.get('protectedBranches') || [];
-    const branch = folder && protectedBranches.length ? await branchOf(folder) : undefined;
+    const branch = enabled && folder && protectedBranches.length ? await branchOf(folder) : undefined;
     const onProtected = !!branch && protectedBranches.includes(branch);
     const theme = light ? 'light' : 'dark';
 
@@ -301,24 +315,61 @@ function activate(context) {
     await settings.update('danger', next, vscode.ConfigurationTarget.Workspace);
   }
 
-  // A terminal in the folder, its tab in the folder's color
+  // A terminal in the folder, its tab in the folder's color (red with a warning in a danger place)
   async function openTerminal() {
     const folder = await commandFolder();
     if (!folder) return;
-    const map = vscode.workspace.getConfiguration('folderTheme').get('folders') || {};
+    const settings = vscode.workspace.getConfiguration('folderTheme');
+    const map = settings.get('folders') || {};
     const colors = colorsSetting();
     let hue = map[folder.name] === undefined ? undefined : hueOf(map[folder.name], colors);
     if (hue === undefined && map[folder.name] === undefined) hue = autoHue(folder.name, colors);
+    const danger = isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder)) !== undefined;
+    const red = new vscode.ThemeColor('terminal.ansiRed');
     vscode.window.createTerminal({
-      name: folder.name,
+      name: danger ? `⚠ ${folder.name}` : folder.name,
       cwd: folder.uri,
-      color: hue === undefined ? undefined : new vscode.ThemeColor(ansiFor(hue)),
-      iconPath: new vscode.ThemeIcon('terminal'),
+      color: danger ? red : hue === undefined ? undefined : new vscode.ThemeColor(ansiFor(hue)),
+      iconPath: danger ? new vscode.ThemeIcon('warning', red) : new vscode.ThemeIcon('terminal'),
     }).show();
   }
 
+  // Quick pick of the workspace folders: opens the last file you had there, or reveals the folder
+  async function goToFolder() {
+    const folders = vscode.workspace.workspaceFolders || [];
+    if (!vscode.workspace.workspaceFile || !folders.length) {
+      vscode.window.showInformationMessage('Folder Theme: open a .code-workspace first.');
+      return;
+    }
+    const files = lastFiles();
+    const current = activeFolderName();
+    const items = folders.map((f) => ({
+      label: `${f.name === current ? '$(arrow-right)' : '$(folder)'} ${f.name}`,
+      detail: files[f.name] ? vscode.workspace.asRelativePath(vscode.Uri.parse(files[f.name]), false) : undefined,
+      folder: f,
+    }));
+    const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Go to folder', matchOnDetail: true });
+    if (!pick) return;
+    if (files[pick.folder.name]) {
+      try {
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(files[pick.folder.name]));
+        await vscode.window.showTextDocument(doc);
+        return;
+      } catch (e) { /* the file is gone: reveal the folder instead */ }
+    }
+    forced = pick.folder.name;
+    await vscode.commands.executeCommand('revealInExplorer', pick.folder.uri);
+    apply();
+  }
+
+  // Take the colors out of the workspace and keep the extension off here
+  async function clear() {
+    await vscode.workspace.getConfiguration('folderTheme').update('enabled', false, vscode.ConfigurationTarget.Workspace);
+    vscode.window.showInformationMessage('Folder Theme: colors removed. Set folderTheme.enabled to true to turn it back on.');
+  }
+
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(apply),
+    vscode.window.onDidChangeActiveTextEditor(() => { forced = undefined; rememberFile(); apply(); }),
     vscode.window.onDidChangeActiveColorTheme(apply),
     vscode.workspace.onDidChangeWorkspaceFolders(apply),
     vscode.workspace.onDidChangeConfiguration((e) => {
@@ -327,8 +378,11 @@ function activate(context) {
     vscode.commands.registerCommand('folderTheme.setColor', setColor),
     vscode.commands.registerCommand('folderTheme.toggleDanger', toggleDanger),
     vscode.commands.registerCommand('folderTheme.openTerminal', openTerminal),
+    vscode.commands.registerCommand('folderTheme.goToFolder', goToFolder),
+    vscode.commands.registerCommand('folderTheme.clear', clear),
     vscode.commands.registerCommand('folderTheme.refresh', apply),
   );
+  rememberFile();
   apply();
 }
 
