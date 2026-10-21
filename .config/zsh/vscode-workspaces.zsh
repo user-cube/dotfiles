@@ -1,7 +1,9 @@
 # ws: open a VS Code workspace from ~/workspaces (VSCODE_WORKSPACES overrides).
 #   ws                              pick one with fzf
 #   ws NAME                         open NAME.code-workspace
-#   ws -n NAME [-t TPL]... DIR...   create NAME.code-workspace with DIR(s) as folders, then open it
+#   ws -n NAME [-t TPL]... DIR[:TAG]...   create NAME.code-workspace with DIR(s) as folders, then open it
+# TAG marks a folder in the Explorer: red, orange, yellow, green, blue, purple, brown,
+# black or white give a colored square, anything else (an emoji, "TF") is used as is.
 # -t merges settings and recommended extensions from ~/.config/vscode/templates/TPL.json
 # (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
 # In VS Code, ⌘R switches between recent workspaces.
@@ -11,7 +13,7 @@ ws() {
   mkdir -p "$dir"
   if [[ $1 == -n ]]; then
     name=$2
-    [[ -n $name && $# -ge 3 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR..."; return 1; }
+    [[ -n $name && $# -ge 3 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR[:TAG]..."; return 1; }
     [[ -e $dir/$name.code-workspace ]] && { echo "ws: $name already exists"; return 1; }
     shift 2
     local tpls=()
@@ -19,7 +21,7 @@ ws() {
       [[ -f $tpldir/$2.json ]] || { echo "ws: no template '$2' (have: ${(j:, :)${(@)${(f)"$(print -rl -- $tpldir/*.json(N:t:r))"}}})"; return 1; }
       tpls+=("$tpldir/$2.json"); shift 2
     done
-    [[ $# -ge 1 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR..."; return 1; }
+    [[ $# -ge 1 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR[:TAG]..."; return 1; }
     # Folder paths are relative to the workspace file, so the file stays portable
     python3 - "$dir" "${#tpls}" "${tpls[@]}" "$@" > "$dir/$name.code-workspace" <<'PY' || { rm -f "$dir/$name.code-workspace"; return 1; }
 import json, os, sys
@@ -39,7 +41,20 @@ for t in tpls:
     merge(settings, doc.get("settings", {}))
     recs += [r for r in doc.get("extensions", {}).get("recommendations", []) if r not in recs]
 
-ws = {"folders": [{"path": os.path.relpath(os.path.realpath(f), dir)} for f in folders]}
+colors = {"red": "🟥", "orange": "🟧", "yellow": "🟨", "green": "🟩", "blue": "🟦",
+          "purple": "🟪", "brown": "🟫", "black": "⬛", "white": "⬜"}
+
+def folder(arg):
+    path, _, tag = arg.rpartition(":")
+    if not path or os.path.exists(arg):
+        path, tag = arg, ""
+    real = os.path.realpath(path)
+    entry = {"path": os.path.relpath(real, dir)}
+    if tag:
+        entry["name"] = colors.get(tag, tag) + " " + os.path.basename(real)
+    return entry
+
+ws = {"folders": [folder(f) for f in folders]}
 if settings:
     ws["settings"] = settings
 if recs:
