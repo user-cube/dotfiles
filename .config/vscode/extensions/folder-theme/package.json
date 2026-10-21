@@ -2,22 +2,42 @@
   "name": "folder-theme",
   "displayName": "Folder Theme",
   "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "rui",
   "license": "MIT",
-  "engines": { "vscode": "^1.80.0" },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
   "main": "./extension.js",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
-    "commands": [{ "command": "folderTheme.refresh", "title": "Folder Theme: Refresh" }],
+    "commands": [
+      {
+        "command": "folderTheme.setColor",
+        "title": "Folder Theme: Set Color"
+      },
+      {
+        "command": "folderTheme.refresh",
+        "title": "Folder Theme: Refresh"
+      }
+    ],
     "configuration": {
       "title": "Folder Theme",
       "properties": {
         "folderTheme.folders": {
           "type": "object",
           "default": {},
-          "additionalProperties": { "type": "string" },
+          "additionalProperties": {
+            "type": "string"
+          },
           "markdownDescription": "Workspace folder name → color: `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink` or `#rrggbb`. Only applies in a `.code-workspace`, which is where the colors are written."
+        },
+        "folderTheme.auto": {
+          "type": "boolean",
+          "default": true,
+          "description": "Give a folder with no color of its own a stable one picked from its name."
         }
       }
     }

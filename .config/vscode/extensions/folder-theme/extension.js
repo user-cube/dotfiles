@@ -1,5 +1,6 @@
 // Folder Theme: tints the window (title bar, activity bar, sidebar, status bar) with the
-// color of the workspace folder of the active editor. Window colors cannot be set per
+// color of the workspace folder of the active editor. A folder with no color of its own
+// gets a stable one from its name (folderTheme.auto). Window colors cannot be set per
 // folder, so the colors are written to the workspace's workbench.colorCustomizations
 // whenever the active folder changes. Only keys of its own are touched.
 const vscode = require('vscode');
@@ -15,6 +16,14 @@ function hueOf(value) {
   if (d === 0) return 0;
   const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
   return Math.round((h * 60 + 360) % 360);
+}
+
+// Same name, same color: djb2 hash of the folder name picks one of the named hues
+function autoHue(name) {
+  let h = 5381;
+  for (const c of name) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
+  const names = Object.keys(HUES);
+  return HUES[names[h % names.length]];
 }
 
 function hex(h, s, l) {
@@ -72,8 +81,10 @@ function activate(context) {
     if (!name) return;
     context.workspaceState.update('folder', name);
 
-    const map = vscode.workspace.getConfiguration('folderTheme').get('folders') || {};
-    const hue = map[name] === undefined ? undefined : hueOf(map[name]);
+    const settings = vscode.workspace.getConfiguration('folderTheme');
+    const map = settings.get('folders') || {};
+    let hue = map[name] === undefined ? undefined : hueOf(map[name]);
+    if (hue === undefined && map[name] === undefined && settings.get('auto')) hue = autoHue(name);
     const kind = vscode.window.activeColorTheme.kind;
     const light = kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight;
     const key = `${name}|${hue}|${light}`;
@@ -89,6 +100,45 @@ function activate(context) {
     await cfg.update('colorCustomizations', Object.keys(next).length ? next : undefined, vscode.ConfigurationTarget.Workspace);
   }
 
+  // Quick pick: set (or clear) the color of the active folder, no JSON editing
+  async function setColor() {
+    const folders = vscode.workspace.workspaceFolders || [];
+    if (!vscode.workspace.workspaceFile || !folders.length) {
+      vscode.window.showInformationMessage('Folder Theme: open a .code-workspace first.');
+      return;
+    }
+    const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
+    const active = doc && vscode.workspace.getWorkspaceFolder(doc.uri);
+    let name = active ? active.name : context.workspaceState.get('folder');
+    if (folders.length > 1 && !active) {
+      name = await vscode.window.showQuickPick(folders.map((f) => f.name), { placeHolder: 'Folder' });
+    }
+    if (!name) return;
+
+    const icons = { red: '🟥', orange: '🟧', yellow: '🟨', green: '🟩', teal: '🩵', blue: '🟦', purple: '🟪', pink: '🩷' };
+    const items = [
+      ...Object.keys(HUES).map((c) => ({ label: `${icons[c]} ${c}`, value: c })),
+      { label: '$(symbol-color) Custom #rrggbb…', value: 'custom' },
+      { label: '$(sync) Automatic (from the name)', value: 'auto' },
+    ];
+    const pick = await vscode.window.showQuickPick(items, { placeHolder: `Color for ${name}` });
+    if (!pick) return;
+
+    let value = pick.value;
+    if (value === 'custom') {
+      value = await vscode.window.showInputBox({
+        prompt: `Color for ${name}`, placeHolder: '#3366ff',
+        validateInput: (v) => (hueOf(v.trim()) === undefined ? 'Use #rrggbb or a color name' : undefined),
+      });
+      if (!value) return;
+      value = value.trim();
+    }
+    const next = { ...(vscode.workspace.getConfiguration('folderTheme').get('folders') || {}) };
+    if (value === 'auto') delete next[name]; else next[name] = value;
+    // The configuration change re-applies the colors
+    await vscode.workspace.getConfiguration('folderTheme').update('folders', next, vscode.ConfigurationTarget.Workspace);
+  }
+
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(apply),
     vscode.window.onDidChangeActiveColorTheme(() => { applied = undefined; apply(); }),
@@ -96,6 +146,7 @@ function activate(context) {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('folderTheme')) { applied = undefined; apply(); }
     }),
+    vscode.commands.registerCommand('folderTheme.setColor', setColor),
     vscode.commands.registerCommand('folderTheme.refresh', () => { applied = undefined; return apply(); }),
   );
   apply();

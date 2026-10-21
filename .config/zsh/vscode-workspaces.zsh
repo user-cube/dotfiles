@@ -6,7 +6,8 @@
 # (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
 # COLOR tints the whole window with that color while you work in the folder (folder-theme
 # extension, installed by dotfiles-sync): red, orange, yellow, green, teal, blue, purple,
-# pink or #rrggbb.
+# pink or #rrggbb. Without COLOR the folder gets one from its name; change it later with
+# the "Folder Theme: Set Color" command.
 # In VS Code, ⌘R switches between recent workspaces.
 ws() {
   local dir=${VSCODE_WORKSPACES:-$HOME/workspaces} name
