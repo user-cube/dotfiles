@@ -131,21 +131,16 @@ function nameMatches(pattern, value) {
   return new RegExp(`^${re}$`).test(value);
 }
 
-// The kubeconfig files kubectl reads: $KUBECONFIG (a list) or ~/.kube/config
-function kubeconfigs() {
-  const env = process.env.KUBECONFIG;
-  return env ? env.split(path.delimiter).filter(Boolean) : [path.join(os.homedir(), '.kube', 'config')];
-}
+// Only ~/.kube/config: the file kubectl and kontext change. A KUBECONFIG exported in a
+// terminal is not visible to VS Code, so it is not supported
+function kubeconfigPath() { return path.join(os.homedir(), '.kube', 'config'); }
 
-// Only the current-context line is read from them, nothing else
+// Only the current-context line is read, nothing else
 function currentContext() {
-  for (const file of kubeconfigs()) {
-    try {
-      const m = /^current-context:\s*(.+?)\s*$/m.exec(fs.readFileSync(file, 'utf8'));
-      if (m) return m[1].replace(/^["']|["']$/g, '');
-    } catch (e) { /* missing file */ }
-  }
-  return undefined;
+  try {
+    const m = /^current-context:\s*(.+?)\s*$/m.exec(fs.readFileSync(kubeconfigPath(), 'utf8'));
+    return m ? m[1].replace(/^["']|["']$/g, '') : undefined;
+  } catch (e) { return undefined; }
 }
 
 const AMBER = { dark: '#8a5a00', light: '#ffd58a' };
@@ -430,12 +425,11 @@ function activate(context) {
     vscode.commands.registerCommand('folderTheme.clear', clear),
     vscode.commands.registerCommand('folderTheme.refresh', apply),
   );
-  // kubectl / kontext rewrite the kubeconfig when the context changes: poll its stat, and
+  // kubectl / kontext rewrite ~/.kube/config when the context changes: poll its stat, and
   // look again when the window gets focus
-  for (const file of kubeconfigs()) {
-    fs.watchFile(file, { interval: 2000 }, apply);
-    context.subscriptions.push({ dispose: () => fs.unwatchFile(file, apply) });
-  }
+  const kubeconfig = kubeconfigPath();
+  fs.watchFile(kubeconfig, { interval: 2000 }, apply);
+  context.subscriptions.push({ dispose: () => fs.unwatchFile(kubeconfig, apply) });
   context.subscriptions.push(vscode.window.onDidChangeWindowState((state) => { if (state.focused) apply(); }));
   rememberFile();
   apply();
