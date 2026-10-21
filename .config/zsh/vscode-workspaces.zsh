@@ -4,8 +4,9 @@
 #   ws -n NAME [-t TPL]... DIR[:COLOR]... create NAME.code-workspace with DIR(s) as folders, then open it
 # -t merges settings and recommended extensions from ~/.config/vscode/templates/TPL.json
 # (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
-# COLOR colors the folder's name in the Explorer (Folder Path Color extension, recommended
-# in the workspace): red, green, blue, yellow, purple, orange, brown, white or black.
+# COLOR tints the whole window with that color while you work in the folder (folder-theme
+# extension, installed by dotfiles-sync): red, orange, yellow, green, teal, blue, purple,
+# pink or #rrggbb.
 # In VS Code, ⌘R switches between recent workspaces.
 ws() {
   local dir=${VSCODE_WORKSPACES:-$HOME/workspaces} name
@@ -43,11 +44,9 @@ for t in tpls:
     merge(settings, doc.get("settings", {}))
     recs += [r for r in doc.get("extensions", {}).get("recommendations", []) if r not in recs]
 
-# The extension has 6 named colors and 6 hex slots, used here for the rest
-named = {"red": "red", "green": "green", "blue": "blue", "yellow": "yellow", "purple": "magenta"}
-slots = {"orange": ("custom1", "#f0883e"), "brown": ("custom2", "#b07d56"),
-         "white": ("custom3", "#e6e6e6"), "black": ("custom4", "#7a7a7a")}
-entries, folder_colors, hexes = [], [], {}
+# Colors the folder-theme extension knows (.config/vscode/extensions/folder-theme)
+colors = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink"]
+entries, theme = [], {}
 for arg in folders:
     path, _, tag = arg.rpartition(":")
     if not path or os.path.exists(arg):
@@ -56,19 +55,12 @@ for arg in folders:
     entries.append({"path": os.path.relpath(real, dir)})
     if not tag:
         continue
-    if tag not in named and tag not in slots:
-        sys.exit("ws: unknown color '%s' (have: %s)" % (tag, ", ".join(list(named) + list(slots))))
-    if tag in slots:
-        hexes["folderPathColor." + slots[tag][0]] = slots[tag][1]
-    # The glob is what makes the extension match a workspace root, and only the root
-    folder_colors.append({"path": os.path.basename(real) + "*", "color": named.get(tag) or slots[tag][0]})
+    if tag not in colors and not re.fullmatch(r"#[0-9a-fA-F]{6}", tag):
+        sys.exit("ws: unknown color '%s' (have: %s, or #rrggbb)" % (tag, ", ".join(colors)))
+    theme[os.path.basename(real)] = tag
 
-if folder_colors:
-    settings["folder-path-color.folders"] = folder_colors
-    if hexes:
-        merge(settings, {"workbench.colorCustomizations": hexes})
-    if "visbydev.folder-path-color" not in recs:
-        recs.append("visbydev.folder-path-color")
+if theme:
+    settings["folderTheme.folders"] = theme
 
 ws = {"folders": entries}
 if settings:
