@@ -2,7 +2,7 @@
   "name": "folder-theme",
   "displayName": "Folder Theme",
   "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -38,6 +38,46 @@
           "type": "boolean",
           "default": true,
           "description": "Give a folder with no color of its own a stable one picked from its name."
+        },
+        "folderTheme.colors": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "markdownDescription": "Named colors, added to or replacing the defaults (`red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink`). A value is a hue (0-360) or `#rrggbb`: `{ \"blue\": \"#3b82f6\", \"brand\": 300 }`. Used by `folderTheme.folders` and the automatic color."
+        },
+        "folderTheme.strength": {
+          "type": "string",
+          "enum": [
+            "subtle",
+            "normal",
+            "strong"
+          ],
+          "default": "normal",
+          "description": "How saturated the tint is."
+        },
+        "folderTheme.parts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "titleBar",
+              "activityBar",
+              "sideBar",
+              "statusBar"
+            ]
+          },
+          "default": [
+            "titleBar",
+            "activityBar",
+            "sideBar",
+            "statusBar"
+          ],
+          "description": "Which parts of the window are tinted."
         }
       }
     }

@@ -15,7 +15,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `nvim/`, `yazi/`: editor, file manager
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time)
   - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, ansible, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
-  - `vscode/extensions/folder-theme/`: small VS Code extension that tints the window with the color of the workspace folder you are working in (`ws -n NAME DIR:blue ...`; folders without a color get one from their name, and "Folder Theme: Set Color" changes it); installed by `dotfiles-sync` through `install.sh`, no marketplace
+  - `vscode/extensions/folder-theme/`: small VS Code extension that tints the window with the color of the workspace folder you are working in (`ws -n NAME DIR:blue ...`; folders without a color get one from their name, and "Folder Theme: Set Color" changes it; the named colors, the strength and which parts are tinted are `folderTheme.*` settings); installed by `dotfiles-sync` through `install.sh`, no marketplace
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
