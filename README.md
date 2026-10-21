@@ -14,13 +14,13 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`)
+  - `vscode/templates/`: settings and recommended extensions (terraform, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
 - `git_hooks/`: global git hooks, wired in `.gitconfig`: commit-msg (Go, `hook.commit-msg-go`) and two pre-commit checks of the staged CI config: actionlint for GitHub Actions workflows (`hook.actionlint`) and `glab ci lint` for `.gitlab-ci.yml`, through the GitLab API, in repos whose host glab is logged in to (`hook.gitlab-ci-lint`)
 - `claude/`: Claude Code config, synced to `~/.claude/`: `settings.json` (no co-author trailer, deny rules, hooks, plugins), global `CLAUDE.md`, and `hooks/deny-sensitive-reads.sh` (blocks Bash commands that touch cleartext credentials). Not `.claude/`: Claude Code would read that as this repo's project settings. Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
-- `vscode/`: reference VS Code workspace settings (golang, helmchart, terraform), copied by hand; not installed
 
 ## Zsh
 

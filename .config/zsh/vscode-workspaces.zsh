@@ -1,22 +1,51 @@
 # ws: open a VS Code workspace from ~/workspaces (VSCODE_WORKSPACES overrides).
-#   ws            pick one with fzf
-#   ws NAME       open NAME.code-workspace
-#   ws -n NAME DIR...   create NAME.code-workspace with DIR(s) as folders, then open it
+#   ws                              pick one with fzf
+#   ws NAME                         open NAME.code-workspace
+#   ws -n NAME [-t TPL]... DIR...   create NAME.code-workspace with DIR(s) as folders, then open it
+# -t merges settings and recommended extensions from ~/.config/vscode/templates/TPL.json
+# (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
 # In VS Code, ⌘R switches between recent workspaces.
 ws() {
   local dir=${VSCODE_WORKSPACES:-$HOME/workspaces} name
+  local tpldir=${VSCODE_TEMPLATES:-$HOME/.config/vscode/templates}
   mkdir -p "$dir"
   if [[ $1 == -n ]]; then
     name=$2
-    [[ -n $name && $# -ge 3 ]] || { echo "usage: ws -n NAME DIR..."; return 1; }
+    [[ -n $name && $# -ge 3 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR..."; return 1; }
     [[ -e $dir/$name.code-workspace ]] && { echo "ws: $name already exists"; return 1; }
     shift 2
-    # Folder paths are relative to the workspace file, so the file stays portable
-    local f folders=()
-    for f in "$@"; do
-      folders+=("{\"path\": \"$(python3 -c 'import os,sys; print(os.path.relpath(os.path.realpath(sys.argv[1]), sys.argv[2]))' "$f" "$dir")\"}")
+    local tpls=()
+    while [[ $1 == -t ]]; do
+      [[ -f $tpldir/$2.json ]] || { echo "ws: no template '$2' (have: ${(j:, :)${(@)${(f)"$(print -rl -- $tpldir/*.json(N:t:r))"}}})"; return 1; }
+      tpls+=("$tpldir/$2.json"); shift 2
     done
-    printf '{\n  "folders": [%s]\n}\n' "${(j:, :)folders}" > "$dir/$name.code-workspace"
+    [[ $# -ge 1 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR..."; return 1; }
+    # Folder paths are relative to the workspace file, so the file stays portable
+    python3 - "$dir" "${#tpls}" "${tpls[@]}" "$@" > "$dir/$name.code-workspace" <<'PY' || { rm -f "$dir/$name.code-workspace"; return 1; }
+import json, os, sys
+dir, n = sys.argv[1], int(sys.argv[2])
+tpls, folders = sys.argv[3:3 + n], sys.argv[3 + n:]
+
+def merge(a, b):
+    for k, v in b.items():
+        if isinstance(v, dict) and isinstance(a.get(k), dict):
+            merge(a[k], v)
+        else:
+            a[k] = v
+
+settings, recs = {}, []
+for t in tpls:
+    doc = json.load(open(t))
+    merge(settings, doc.get("settings", {}))
+    recs += [r for r in doc.get("extensions", {}).get("recommendations", []) if r not in recs]
+
+ws = {"folders": [{"path": os.path.relpath(os.path.realpath(f), dir)} for f in folders]}
+if settings:
+    ws["settings"] = settings
+if recs:
+    ws["extensions"] = {"recommendations": recs}
+print(json.dumps(ws, indent=2))
+PY
   else
     name=${1:-$(print -rl -- $dir/*.code-workspace(N:t:r) | fzf --prompt='workspace> ')}
     [[ -n $name ]] || return
