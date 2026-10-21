@@ -1,14 +1,14 @@
-// Folder Theme: tints the window (title bar, activity bar, sidebar, status bar) with the
+// Hue: tints the window (title bar, activity bar, sidebar, status bar) with the
 // color of the workspace folder of the active editor. A folder with no color of its own
-// gets a stable one from its name (folderTheme.auto). Window colors cannot be set per
+// gets a stable one from its name (hue.auto). Window colors cannot be set per
 // folder, so the colors are written to the workspace's workbench.colorCustomizations
 // whenever the active folder changes. Only keys of its own are touched.
 //
-// Settings: folderTheme.folders (folder name -> color), folderTheme.colors (the named
-// colors: name -> hue 0-360 or #rrggbb), folderTheme.strength, folderTheme.parts,
-// folderTheme.danger (folders, or paths inside them, that get a red title bar and a PROD marker),
-// folderTheme.dangerContexts (the same while the active Kubernetes context is one of them) and
-// folderTheme.protectedBranches (the status bar turns amber on those branches).
+// Settings: hue.folders (folder name -> color), hue.colors (the named
+// colors: name -> hue 0-360 or #rrggbb), hue.strength, hue.parts,
+// hue.danger (folders, or paths inside them, that get a red title bar and a PROD marker),
+// hue.dangerContexts (the same while the active Kubernetes context is one of them) and
+// hue.protectedBranches (the status bar turns amber on those branches).
 const vscode = require('vscode');
 const fs = require('fs');
 const os = require('os');
@@ -55,7 +55,7 @@ function hex(h, s, l) {
 }
 
 // Keys by part. Dark: a strong bar color, a barely tinted sidebar so the files stay the
-// focus. Light: the same idea, pale. k scales the saturation (folderTheme.strength).
+// focus. Light: the same idea, pale. k scales the saturation (hue.strength).
 function palette(h, light, k) {
   const t = light
     ? { bar: hex(h, 55 * k, 84), barOff: hex(h, 35 * k, 90), act: hex(h, 45 * k, 88), side: hex(h, 40 * k, 96),
@@ -151,7 +151,7 @@ const OWNED = Object.values(palette(0, false, 1)).flatMap((p) => Object.keys(p))
 
 function activate(context) {
   function colorsSetting() {
-    return { ...DEFAULT_COLORS, ...(vscode.workspace.getConfiguration('folderTheme').get('colors') || {}) };
+    return { ...DEFAULT_COLORS, ...(vscode.workspace.getConfiguration('hue').get('colors') || {}) };
   }
 
   // The active file's path inside `folder` (posix), or undefined
@@ -212,7 +212,7 @@ function activate(context) {
 
   const dangerItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10000);
   dangerItem.text = '$(warning) PROD';
-  dangerItem.tooltip = 'Folder Theme: this folder is marked as dangerous';
+  dangerItem.tooltip = 'Hue: this folder is marked as dangerous';
   dangerItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
   context.subscriptions.push(dangerItem);
 
@@ -226,7 +226,7 @@ function activate(context) {
     context.workspaceState.update('folder', name);
     const folder = folders.find((f) => f.name === name);
 
-    const settings = vscode.workspace.getConfiguration('folderTheme');
+    const settings = vscode.workspace.getConfiguration('hue');
     const colors = colorsSetting();
     const map = settings.get('folders') || {};
     const enabled = settings.get('enabled') !== false;
@@ -248,8 +248,8 @@ function activate(context) {
 
     if (danger) {
       dangerItem.text = kubeDanger && dangerEntry === undefined ? `$(warning) PROD · ${kube}` : '$(warning) PROD';
-      dangerItem.tooltip = [dangerEntry !== undefined && `Folder Theme: dangerous place (${dangerEntry})`,
-        kubeDanger && `Folder Theme: dangerous Kubernetes context (${kube})`].filter(Boolean).join('\n');
+      dangerItem.tooltip = [dangerEntry !== undefined && `Hue: dangerous place (${dangerEntry})`,
+        kubeDanger && `Hue: dangerous Kubernetes context (${kube})`].filter(Boolean).join('\n');
       dangerItem.show();
     } else dangerItem.hide();
 
@@ -280,7 +280,7 @@ function activate(context) {
   async function commandFolder() {
     const folders = vscode.workspace.workspaceFolders || [];
     if (!vscode.workspace.workspaceFile || !folders.length) {
-      vscode.window.showInformationMessage('Folder Theme: open a .code-workspace first.');
+      vscode.window.showInformationMessage('Hue: open a .code-workspace first.');
       return undefined;
     }
     const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
@@ -314,17 +314,17 @@ function activate(context) {
       if (!value) return;
       value = value.trim();
     }
-    const next = { ...(vscode.workspace.getConfiguration('folderTheme').get('folders') || {}) };
+    const next = { ...(vscode.workspace.getConfiguration('hue').get('folders') || {}) };
     if (value === 'auto') delete next[name]; else next[name] = value;
     // The configuration change re-applies the colors
-    await vscode.workspace.getConfiguration('folderTheme').update('folders', next, vscode.ConfigurationTarget.Workspace);
+    await vscode.workspace.getConfiguration('hue').update('folders', next, vscode.ConfigurationTarget.Workspace);
   }
 
   // Mark or unmark the whole folder, the active file's directory, or an existing entry
   async function toggleDanger() {
     const folder = await commandFolder();
     if (!folder) return;
-    const settings = vscode.workspace.getConfiguration('folderTheme');
+    const settings = vscode.workspace.getConfiguration('hue');
     const list = settings.get('danger') || [];
     const rel = activeRelPath(folder);
     const dir = rel && path.posix.dirname(rel) !== '.' ? `${folder.name}/${path.posix.dirname(rel)}` : undefined;
@@ -344,22 +344,22 @@ function activate(context) {
   async function toggleContextDanger() {
     const kube = currentContext();
     if (!kube) {
-      vscode.window.showInformationMessage('Folder Theme: no current Kubernetes context found in your kubeconfig.');
+      vscode.window.showInformationMessage('Hue: no current Kubernetes context found in your kubeconfig.');
       return;
     }
-    const settings = vscode.workspace.getConfiguration('folderTheme');
+    const settings = vscode.workspace.getConfiguration('hue');
     const inspected = settings.inspect('dangerContexts') || {};
     const list = inspected.globalValue || [];
     const next = list.includes(kube) ? list.filter((c) => c !== kube) : [...list, kube];
     await settings.update('dangerContexts', next, vscode.ConfigurationTarget.Global);
-    vscode.window.showInformationMessage(`Folder Theme: context ${kube} is ${next.includes(kube) ? 'now' : 'no longer'} marked as dangerous.`);
+    vscode.window.showInformationMessage(`Hue: context ${kube} is ${next.includes(kube) ? 'now' : 'no longer'} marked as dangerous.`);
   }
 
   // A terminal in the folder, its tab in the folder's color (red with a warning in a danger place)
   async function openTerminal() {
     const folder = await commandFolder();
     if (!folder) return;
-    const settings = vscode.workspace.getConfiguration('folderTheme');
+    const settings = vscode.workspace.getConfiguration('hue');
     const map = settings.get('folders') || {};
     const colors = colorsSetting();
     let hue = map[folder.name] === undefined ? undefined : hueOf(map[folder.name], colors);
@@ -380,7 +380,7 @@ function activate(context) {
   async function goToFolder() {
     const folders = vscode.workspace.workspaceFolders || [];
     if (!vscode.workspace.workspaceFile || !folders.length) {
-      vscode.window.showInformationMessage('Folder Theme: open a .code-workspace first.');
+      vscode.window.showInformationMessage('Hue: open a .code-workspace first.');
       return;
     }
     const files = lastFiles();
@@ -406,8 +406,8 @@ function activate(context) {
 
   // Take the colors out of the workspace and keep the extension off here
   async function clear() {
-    await vscode.workspace.getConfiguration('folderTheme').update('enabled', false, vscode.ConfigurationTarget.Workspace);
-    vscode.window.showInformationMessage('Folder Theme: colors removed. Set folderTheme.enabled to true to turn it back on.');
+    await vscode.workspace.getConfiguration('hue').update('enabled', false, vscode.ConfigurationTarget.Workspace);
+    vscode.window.showInformationMessage('Hue: colors removed. Set hue.enabled to true to turn it back on.');
   }
 
   context.subscriptions.push(
@@ -415,15 +415,15 @@ function activate(context) {
     vscode.window.onDidChangeActiveColorTheme(apply),
     vscode.workspace.onDidChangeWorkspaceFolders(apply),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('folderTheme')) apply();
+      if (e.affectsConfiguration('hue')) apply();
     }),
-    vscode.commands.registerCommand('folderTheme.setColor', setColor),
-    vscode.commands.registerCommand('folderTheme.toggleDanger', toggleDanger),
-    vscode.commands.registerCommand('folderTheme.openTerminal', openTerminal),
-    vscode.commands.registerCommand('folderTheme.toggleContextDanger', toggleContextDanger),
-    vscode.commands.registerCommand('folderTheme.goToFolder', goToFolder),
-    vscode.commands.registerCommand('folderTheme.clear', clear),
-    vscode.commands.registerCommand('folderTheme.refresh', apply),
+    vscode.commands.registerCommand('hue.setColor', setColor),
+    vscode.commands.registerCommand('hue.toggleDanger', toggleDanger),
+    vscode.commands.registerCommand('hue.openTerminal', openTerminal),
+    vscode.commands.registerCommand('hue.toggleContextDanger', toggleContextDanger),
+    vscode.commands.registerCommand('hue.goToFolder', goToFolder),
+    vscode.commands.registerCommand('hue.clear', clear),
+    vscode.commands.registerCommand('hue.refresh', apply),
   );
   // kubectl / kontext rewrite ~/.kube/config when the context changes: poll its stat, and
   // look again when the window gets focus

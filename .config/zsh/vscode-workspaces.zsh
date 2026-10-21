@@ -4,10 +4,10 @@
 #   ws -n NAME [-t TPL]... DIR[:COLOR]... create NAME.code-workspace with DIR(s) as folders, then open it
 # -t merges settings and recommended extensions from ~/.config/vscode/templates/TPL.json
 # (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
-# COLOR tints the whole window with that color while you work in the folder (folder-theme
+# COLOR tints the whole window with that color while you work in the folder (Hue
 # extension, installed by dotfiles-sync): red, orange, yellow, green, teal, blue, purple,
 # pink or #rrggbb. Without COLOR the folder gets one from its name; change it later with
-# the "Folder Theme: Set Color" command. ! marks production: DIR! all of the folder, DIR:COLOR!hetzner/prod,other/path only
+# the "Hue: Set Color" command. ! marks production: DIR! all of the folder, DIR:COLOR!hetzner/prod,other/path only
 # those paths (globs allowed): red title bar and a PROD marker while you work in them.
 # In VS Code, ⌘R switches between recent workspaces.
 ws() {
@@ -46,7 +46,7 @@ for t in tpls:
     merge(settings, doc.get("settings", {}))
     recs += [r for r in doc.get("extensions", {}).get("recommendations", []) if r not in recs]
 
-# Colors the folder-theme extension knows (.config/vscode/extensions/folder-theme)
+# Colors the Hue extension knows (.config/vscode/extensions/hue)
 colors = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink"]
 entries, theme, danger = [], {}, []
 for arg in folders:
@@ -67,9 +67,9 @@ for arg in folders:
     theme[os.path.basename(real)] = tag
 
 if theme:
-    settings["folderTheme.folders"] = theme
+    settings["hue.folders"] = theme
 if danger:
-    settings["folderTheme.danger"] = danger
+    settings["hue.danger"] = danger
 
 ws = {"folders": entries}
 if settings:

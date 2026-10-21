@@ -19,8 +19,8 @@ dotfiles-sync() {
   # .gitconfig-work holds a placeholder in the repo: only seed it, never overwrite
   [[ -f $HOME/.gitconfig-work ]] || cp "$repo/.gitconfig-work" "$HOME/"
 
-  # VS Code: the folder-theme extension (skips when unchanged)
-  "$HOME/.config/vscode/extensions/folder-theme/install.sh" || return
+  # VS Code: the Hue extension (skips when unchanged)
+  "$HOME/.config/vscode/extensions/hue/install.sh" || return
 
   tmux source-file "$HOME/.config/tmux/tmux.conf" 2>/dev/null && echo "tmux: reloaded"
   pgrep -xq AeroSpace && aerospace reload-config && echo "AeroSpace: reloaded"

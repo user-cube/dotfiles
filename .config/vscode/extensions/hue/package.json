@@ -1,8 +1,8 @@
 {
-  "name": "folder-theme",
-  "displayName": "Folder Theme",
-  "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.7.1",
+  "name": "hue",
+  "displayName": "Hue",
+  "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders, protected branches and Kubernetes contexts.",
+  "version": "0.8.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -15,38 +15,45 @@
   "contributes": {
     "commands": [
       {
-        "command": "folderTheme.setColor",
-        "title": "Folder Theme: Set Color"
+        "command": "hue.setColor",
+        "title": "Set Color",
+        "category": "Hue"
       },
       {
-        "command": "folderTheme.refresh",
-        "title": "Folder Theme: Refresh"
+        "command": "hue.refresh",
+        "title": "Refresh",
+        "category": "Hue"
       },
       {
-        "command": "folderTheme.toggleDanger",
-        "title": "Folder Theme: Toggle Danger (PROD) for Folder"
+        "command": "hue.toggleDanger",
+        "title": "Toggle Danger (PROD) for Folder",
+        "category": "Hue"
       },
       {
-        "command": "folderTheme.openTerminal",
-        "title": "Folder Theme: Open Terminal in Folder"
+        "command": "hue.openTerminal",
+        "title": "Open Terminal in Folder",
+        "category": "Hue"
       },
       {
-        "command": "folderTheme.goToFolder",
-        "title": "Folder Theme: Go to Folder"
+        "command": "hue.goToFolder",
+        "title": "Go to Folder",
+        "category": "Hue"
       },
       {
-        "command": "folderTheme.clear",
-        "title": "Folder Theme: Clear (remove colors and turn off)"
+        "command": "hue.clear",
+        "title": "Clear (remove colors and turn off)",
+        "category": "Hue"
       },
       {
-        "command": "folderTheme.toggleContextDanger",
-        "title": "Folder Theme: Toggle Danger (PROD) for Current Kubernetes Context"
+        "command": "hue.toggleContextDanger",
+        "title": "Toggle Danger (PROD) for Current Kubernetes Context",
+        "category": "Hue"
       }
     ],
     "configuration": {
-      "title": "Folder Theme",
+      "title": "Hue",
       "properties": {
-        "folderTheme.folders": {
+        "hue.folders": {
           "type": "object",
           "default": {},
           "additionalProperties": {
@@ -54,12 +61,12 @@
           },
           "markdownDescription": "Workspace folder name → color: `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink` or `#rrggbb`. Only applies in a `.code-workspace`, which is where the colors are written."
         },
-        "folderTheme.auto": {
+        "hue.auto": {
           "type": "boolean",
           "default": true,
           "description": "Give a folder with no color of its own a stable one picked from its name."
         },
-        "folderTheme.colors": {
+        "hue.colors": {
           "type": "object",
           "default": {},
           "additionalProperties": {
@@ -68,9 +75,9 @@
               "string"
             ]
           },
-          "markdownDescription": "Named colors, added to or replacing the defaults (`red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink`). A value is a hue (0-360) or `#rrggbb`: `{ \"blue\": \"#3b82f6\", \"brand\": 300 }`. Used by `folderTheme.folders` and the automatic color."
+          "markdownDescription": "Named colors, added to or replacing the defaults (`red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink`). A value is a hue (0-360) or `#rrggbb`: `{ \"blue\": \"#3b82f6\", \"brand\": 300 }`. Used by `hue.folders` and the automatic color."
         },
-        "folderTheme.strength": {
+        "hue.strength": {
           "type": "string",
           "enum": [
             "subtle",
@@ -80,7 +87,7 @@
           "default": "normal",
           "description": "How saturated the tint is."
         },
-        "folderTheme.parts": {
+        "hue.parts": {
           "type": "array",
           "items": {
             "type": "string",
@@ -99,7 +106,7 @@
           ],
           "description": "Which parts of the window are tinted."
         },
-        "folderTheme.danger": {
+        "hue.danger": {
           "type": "array",
           "items": {
             "type": "string"
@@ -107,7 +114,7 @@
           "default": [],
           "description": "Dangerous (production) places: a folder name (all of it) or `folder/path` (that path, `*` and `**` allowed). While the active file is in one, the title bar is red and the status bar shows PROD."
         },
-        "folderTheme.protectedBranches": {
+        "hue.protectedBranches": {
           "type": "array",
           "items": {
             "type": "string"
@@ -118,28 +125,33 @@
           ],
           "description": "The status bar turns amber while the active folder's repository is on one of these branches. Empty to turn it off."
         },
-        "folderTheme.enabled": {
+        "hue.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Turn the whole extension off for this workspace: its colors are removed."
         },
-        "folderTheme.dangerContexts": {
+        "hue.dangerContexts": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Kubernetes contexts to treat as dangerous (production): a name, or a pattern with `*` (`*-prod`). While the current context of `~/.kube/config` matches, the title bar is red and the status bar shows PROD, in any folder. The easy way to fill it: **Folder Theme: Toggle Danger (PROD) for Current Kubernetes Context**."
+          "markdownDescription": "Kubernetes contexts to treat as dangerous (production): a name, or a pattern with `*` (`*-prod`). While the current context of `~/.kube/config` matches, the title bar is red and the status bar shows PROD, in any folder. The easy way to fill it: **Hue: Toggle Danger (PROD) for Current Kubernetes Context**."
         }
       }
     },
     "keybindings": [
       {
-        "command": "folderTheme.openTerminal",
+        "command": "hue.openTerminal",
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
         "when": "workspaceFolderCount > 0"
       }
     ]
-  }
+  },
+  "icon": "icon.png",
+  "categories": [
+    "Themes",
+    "Other"
+  ]
 }
