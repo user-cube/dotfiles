@@ -1,0 +1,20 @@
+{
+  "settings": {
+    "files.associations": {
+      "**/playbooks/*.yml": "ansible",
+      "**/playbooks/*.yaml": "ansible",
+      "**/roles/*/tasks/*.yml": "ansible",
+      "**/roles/*/tasks/*.yaml": "ansible",
+      "**/roles/*/handlers/*.yml": "ansible",
+      "**/roles/*/handlers/*.yaml": "ansible"
+    },
+    "ansible.validation.enabled": true,
+    "ansible.validation.lint.enabled": true,
+    "[ansible]": {
+      "editor.tabSize": 2,
+      "editor.insertSpaces": true,
+      "editor.formatOnSave": true
+    }
+  },
+  "extensions": { "recommendations": ["redhat.ansible", "redhat.vscode-yaml"] }
+}

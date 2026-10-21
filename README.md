@@ -14,7 +14,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`)
-  - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
+  - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, ansible, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
