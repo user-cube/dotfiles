@@ -13,7 +13,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `sketchybar/`: bottom status bar
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
-  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`)
+  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time)
   - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, ansible, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
@@ -37,6 +37,17 @@ Startup is kept fast: nvm loads on first use, `pyenv init` skips the rehash
 (run `pyenv rehash` after installing a package with commands), and completions
 are cached in `~/.cache/zsh` (regenerated when the tool is upgraded; delete the
 folder to force it). Measure with `time zsh -i -c exit`.
+
+## SOPS age keys
+
+The keys for SOPS-encrypted files live in one Bitwarden secure note, `SOPS age keys`
+(a plain age keys file in the notes field), never on disk by default.
+`sops-on [60m]` writes them to sops's default keys file for a limited time (also
+what the VS Code SOPS extension needs), then removes them with a notice at the
+next prompt and a macOS notification. `sops-off` removes them now, `sops-status`
+shows the time left, and `sops-save FILE` puts a keys file in the note. A keys file
+that `sops-on` did not create is never overwritten or removed. Default time:
+`SOPS_ON_MINUTES`, else 60. See `.config/zsh/sops.zsh`.
 
 ## Secrets (tokens, API keys)
 
