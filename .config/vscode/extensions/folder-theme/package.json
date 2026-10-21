@@ -2,7 +2,7 @@
   "name": "folder-theme",
   "displayName": "Folder Theme",
   "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -21,6 +21,14 @@
       {
         "command": "folderTheme.refresh",
         "title": "Folder Theme: Refresh"
+      },
+      {
+        "command": "folderTheme.toggleDanger",
+        "title": "Folder Theme: Toggle Danger (PROD) for Folder"
+      },
+      {
+        "command": "folderTheme.openTerminal",
+        "title": "Folder Theme: Open Terminal in Folder"
       }
     ],
     "configuration": {
@@ -78,6 +86,25 @@
             "statusBar"
           ],
           "description": "Which parts of the window are tinted."
+        },
+        "folderTheme.danger": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Folder names marked as dangerous (production): red title bar and a PROD marker in the status bar while you work in them."
+        },
+        "folderTheme.protectedBranches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "main",
+            "master"
+          ],
+          "description": "The status bar turns amber while the active folder's repository is on one of these branches. Empty to turn it off."
         }
       }
     }

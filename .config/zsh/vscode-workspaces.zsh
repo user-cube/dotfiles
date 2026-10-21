@@ -7,7 +7,8 @@
 # COLOR tints the whole window with that color while you work in the folder (folder-theme
 # extension, installed by dotfiles-sync): red, orange, yellow, green, teal, blue, purple,
 # pink or #rrggbb. Without COLOR the folder gets one from its name; change it later with
-# the "Folder Theme: Set Color" command.
+# the "Folder Theme: Set Color" command. A trailing ! (DIR! or DIR:COLOR!) marks the folder as
+# dangerous: red title bar and a PROD marker while you work in it.
 # In VS Code, ⌘R switches between recent workspaces.
 ws() {
   local dir=${VSCODE_WORKSPACES:-$HOME/workspaces} name
@@ -47,13 +48,17 @@ for t in tpls:
 
 # Colors the folder-theme extension knows (.config/vscode/extensions/folder-theme)
 colors = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink"]
-entries, theme = [], {}
+entries, theme, danger = [], {}, []
 for arg in folders:
+    bang = arg.endswith("!")  # DIR! or DIR:COLOR!: a dangerous (production) folder
+    arg = arg.rstrip("!")
     path, _, tag = arg.rpartition(":")
     if not path or os.path.exists(arg):
         path, tag = arg, ""
     real = os.path.realpath(path)
     entries.append({"path": os.path.relpath(real, dir)})
+    if bang:
+        danger.append(os.path.basename(real))
     if not tag:
         continue
     if tag not in colors and not re.fullmatch(r"#[0-9a-fA-F]{6}", tag):
@@ -62,6 +67,8 @@ for arg in folders:
 
 if theme:
     settings["folderTheme.folders"] = theme
+if danger:
+    settings["folderTheme.danger"] = danger
 
 ws = {"folders": entries}
 if settings:
