@@ -6,9 +6,10 @@
 //
 // Settings: folderTheme.folders (folder name -> color), folderTheme.colors (the named
 // colors: name -> hue 0-360 or #rrggbb), folderTheme.strength, folderTheme.parts,
-// folderTheme.danger (folders that get a red title bar and a PROD marker) and
+// folderTheme.danger (folders, or paths inside them, that get a red title bar and a PROD marker) and
 // folderTheme.protectedBranches (the status bar turns amber on those branches).
 const vscode = require('vscode');
+const path = require('path');
 
 const DEFAULT_COLORS = { red: 4, orange: 24, yellow: 46, green: 140, teal: 176, blue: 212, purple: 268, pink: 328 };
 const STRENGTH = { subtle: 0.55, normal: 1, strong: 1.35 };
@@ -99,6 +100,28 @@ function ansiFor(h) {
   return 'terminal.ansiBrightMagenta';
 }
 
+// Glob for a path inside a folder: ** crosses directories, * and ? do not
+function globRegex(glob) {
+  const re = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/?/g, '\u0000').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]')
+    .replace(/\u0000/g, '(?:.*/)?');
+  return new RegExp(`^${re}$`);
+}
+
+// danger entries: "folder" (all of it) or "folder/some/path" (that path, globs allowed).
+// rel = the active file's path inside the folder, undefined when there is none
+function isDanger(entries, folderName, rel) {
+  for (const entry of entries) {
+    const slash = entry.indexOf('/');
+    if (slash === -1) { if (entry === folderName) return entry; continue; }
+    if (entry.slice(0, slash) !== folderName || rel === undefined) continue;
+    const sub = entry.slice(slash + 1).replace(/\/+$/, '');
+    const parts = rel.split('/');
+    // The path itself or anything under it: test every leading part of the file's path
+    for (let i = 1; i <= parts.length; i++) if (globRegex(sub).test(parts.slice(0, i).join('/'))) return entry;
+  }
+  return undefined;
+}
+
 const AMBER = { dark: '#8a5a00', light: '#ffd58a' };
 const DANGER = { dark: ['#8a1c1c', '#4a1212'], light: ['#f5b5b5', '#f9d5d5'] };
 
@@ -108,6 +131,14 @@ const OWNED = Object.values(palette(0, false, 1)).flatMap((p) => Object.keys(p))
 function activate(context) {
   function colorsSetting() {
     return { ...DEFAULT_COLORS, ...(vscode.workspace.getConfiguration('folderTheme').get('colors') || {}) };
+  }
+
+  // The active file's path inside `folder` (posix), or undefined
+  function activeRelPath(folder) {
+    const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
+    if (!doc || !folder || doc.uri.scheme !== 'file') return undefined;
+    const rel = path.relative(folder.uri.fsPath, doc.uri.fsPath);
+    return rel.startsWith('..') || path.isAbsolute(rel) ? undefined : rel.split(path.sep).join('/');
   }
 
   function activeFolderName() {
@@ -171,13 +202,17 @@ function activate(context) {
     const light = kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight;
     const k = STRENGTH[settings.get('strength')] || 1;
     const parts = new Set(settings.get('parts') || PARTS);
-    const danger = (settings.get('danger') || []).includes(name);
+    const dangerEntry = isDanger(settings.get('danger') || [], name, activeRelPath(folder));
+    const danger = dangerEntry !== undefined;
     const protectedBranches = settings.get('protectedBranches') || [];
     const branch = folder && protectedBranches.length ? await branchOf(folder) : undefined;
     const onProtected = !!branch && protectedBranches.includes(branch);
     const theme = light ? 'light' : 'dark';
 
-    if (danger) dangerItem.show(); else dangerItem.hide();
+    if (danger) {
+      dangerItem.tooltip = `Folder Theme: dangerous (${dangerEntry})`;
+      dangerItem.show();
+    } else dangerItem.hide();
 
     const cfg = vscode.workspace.getConfiguration('workbench');
     const current = { ...((cfg.inspect('colorCustomizations') || {}).workspaceValue || {}) };
@@ -246,14 +281,24 @@ function activate(context) {
     await vscode.workspace.getConfiguration('folderTheme').update('folders', next, vscode.ConfigurationTarget.Workspace);
   }
 
+  // Mark or unmark the whole folder, the active file's directory, or an existing entry
   async function toggleDanger() {
     const folder = await commandFolder();
     if (!folder) return;
     const settings = vscode.workspace.getConfiguration('folderTheme');
     const list = settings.get('danger') || [];
-    const next = list.includes(folder.name) ? list.filter((n) => n !== folder.name) : [...list, folder.name];
+    const rel = activeRelPath(folder);
+    const dir = rel && path.posix.dirname(rel) !== '.' ? `${folder.name}/${path.posix.dirname(rel)}` : undefined;
+    const candidates = [folder.name, dir, ...list.filter((e) => e === folder.name || e.startsWith(`${folder.name}/`))];
+    const items = [...new Set(candidates.filter(Boolean))].map((entry) => ({
+      label: `${list.includes(entry) ? '$(check)' : '$(circle-outline)'} ${entry}`,
+      description: entry === folder.name ? 'the whole folder' : undefined,
+      entry,
+    }));
+    const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Toggle danger (PROD)' });
+    if (!pick) return;
+    const next = list.includes(pick.entry) ? list.filter((e) => e !== pick.entry) : [...list, pick.entry];
     await settings.update('danger', next, vscode.ConfigurationTarget.Workspace);
-    vscode.window.showInformationMessage(`Folder Theme: ${folder.name} is ${next.includes(folder.name) ? 'now' : 'no longer'} marked as dangerous.`);
   }
 
   // A terminal in the folder, its tab in the folder's color

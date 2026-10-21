@@ -2,7 +2,7 @@
   "name": "folder-theme",
   "displayName": "Folder Theme",
   "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -93,7 +93,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Folder names marked as dangerous (production): red title bar and a PROD marker in the status bar while you work in them."
+          "description": "Dangerous (production) places: a folder name (all of it) or `folder/path` (that path, `*` and `**` allowed). While the active file is in one, the title bar is red and the status bar shows PROD."
         },
         "folderTheme.protectedBranches": {
           "type": "array",
