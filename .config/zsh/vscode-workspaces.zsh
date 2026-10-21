@@ -1,10 +1,11 @@
 # ws: open a VS Code workspace from ~/workspaces (VSCODE_WORKSPACES overrides).
 #   ws                              pick one with fzf
 #   ws NAME                         open NAME.code-workspace
-#   ws -n NAME [-t TPL]... DIR[:TAG]...   create NAME.code-workspace with DIR(s) as folders, then open it
+#   ws -n NAME [-t TPL]... DIR[:TAG[:BADGE]]...   create NAME.code-workspace with DIR(s) as folders, then open it
 # TAG marks a folder in the Explorer: red, green, blue, yellow, purple, orange, brown,
 # white or black color its name (Folder Path Color extension, recommended in the
-# workspace); anything else (an emoji, "TF") is put in front of its name.
+# workspace), and everything under it too, with a 2-letter badge (BADGE, default the
+# initials of the folder name); anything else (an emoji, "TF") is put in front of its name.
 # -t merges settings and recommended extensions from ~/.config/vscode/templates/TPL.json
 # (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
 # In VS Code, ⌘R switches between recent workspaces.
@@ -14,7 +15,7 @@ ws() {
   mkdir -p "$dir"
   if [[ $1 == -n ]]; then
     name=$2
-    [[ -n $name && $# -ge 3 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR[:TAG]..."; return 1; }
+    [[ -n $name && $# -ge 3 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR[:TAG[:BADGE]]..."; return 1; }
     [[ -e $dir/$name.code-workspace ]] && { echo "ws: $name already exists"; return 1; }
     shift 2
     local tpls=()
@@ -22,7 +23,7 @@ ws() {
       [[ -f $tpldir/$2.json ]] || { echo "ws: no template '$2' (have: ${(j:, :)${(@)${(f)"$(print -rl -- $tpldir/*.json(N:t:r))"}}})"; return 1; }
       tpls+=("$tpldir/$2.json"); shift 2
     done
-    [[ $# -ge 1 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR[:TAG]..."; return 1; }
+    [[ $# -ge 1 ]] || { echo "usage: ws -n NAME [-t TPL]... DIR[:TAG[:BADGE]]..."; return 1; }
     # Folder paths are relative to the workspace file, so the file stays portable
     python3 - "$dir" "${#tpls}" "${tpls[@]}" "$@" > "$dir/$name.code-workspace" <<'PY' || { rm -f "$dir/$name.code-workspace"; return 1; }
 import json, os, sys
@@ -48,21 +49,31 @@ for t in tpls:
 named = {"red": "red", "green": "green", "blue": "blue", "yellow": "yellow", "purple": "magenta"}
 slots = {"orange": ("custom1", "#f0883e"), "brown": ("custom2", "#b07d56"),
          "white": ("custom3", "#e6e6e6"), "black": ("custom4", "#7a7a7a")}
-folder_colors, hexes, entries = [], {}, []
+folder_colors, hexes, entries, first = [], {}, [], None
+
+def badge(base):
+    # Two letters for the tab/Explorer badge: initials of the first two words
+    words = [w for w in base.replace("_", "-").split("-") if w]
+    return ("".join(w[0] for w in words[:2]) or base[:2]).upper()
 
 for arg in folders:
-    path, _, tag = arg.rpartition(":")
-    if not path or os.path.exists(arg):
-        path, tag = arg, ""
+    parts = arg.split(":")
+    path, tag, symbol = (arg, "", "") if os.path.exists(arg) else (parts + ["", ""])[:3]
     real = os.path.realpath(path)
     base = os.path.basename(real)
+    first = first or real
     entry = {"path": os.path.relpath(real, dir)}
     if tag in named or tag in slots:
         color = named.get(tag) or slots[tag][0]
         if tag in slots:
             hexes["folderPathColor." + slots[tag][0]] = slots[tag][1]
-        # The glob is what makes the extension match a workspace root
-        folder_colors.append({"path": base + "*", "color": color})
+        # The extension joins each workspace root with this path and colors everything
+        # under the result: relative to the first root, it reaches this folder (and
+        # its files and tabs) from there
+        # ("." for the first root itself would match every root: "../name" matches only it)
+        rel = "../" + base if real == first else os.path.relpath(real, first)
+        folder_colors.append({"path": rel, "color": color,
+                              "symbol": symbol or badge(base), "tooltip": base})
     elif tag:
         entry["name"] = tag + " " + base
     entries.append(entry)
