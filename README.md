@@ -13,7 +13,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `sketchybar/`: bottom status bar
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
-  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`)
+  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`)
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
