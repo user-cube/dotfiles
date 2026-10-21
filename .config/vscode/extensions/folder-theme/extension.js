@@ -6,9 +6,12 @@
 //
 // Settings: folderTheme.folders (folder name -> color), folderTheme.colors (the named
 // colors: name -> hue 0-360 or #rrggbb), folderTheme.strength, folderTheme.parts,
-// folderTheme.danger (folders, or paths inside them, that get a red title bar and a PROD marker) and
+// folderTheme.danger (folders, or paths inside them, that get a red title bar and a PROD marker),
+// folderTheme.dangerContexts (the same while the active Kubernetes context is one of them) and
 // folderTheme.protectedBranches (the status bar turns amber on those branches).
 const vscode = require('vscode');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const DEFAULT_COLORS = { red: 4, orange: 24, yellow: 46, green: 140, teal: 176, blue: 212, purple: 268, pink: 328 };
@@ -122,6 +125,29 @@ function isDanger(entries, folderName, rel) {
   return undefined;
 }
 
+// A plain name, or a pattern where * stands for any text and ? for one character
+function nameMatches(pattern, value) {
+  const re = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.');
+  return new RegExp(`^${re}$`).test(value);
+}
+
+// The kubeconfig files kubectl reads: $KUBECONFIG (a list) or ~/.kube/config
+function kubeconfigs() {
+  const env = process.env.KUBECONFIG;
+  return env ? env.split(path.delimiter).filter(Boolean) : [path.join(os.homedir(), '.kube', 'config')];
+}
+
+// Only the current-context line is read from them, nothing else
+function currentContext() {
+  for (const file of kubeconfigs()) {
+    try {
+      const m = /^current-context:\s*(.+?)\s*$/m.exec(fs.readFileSync(file, 'utf8'));
+      if (m) return m[1].replace(/^["']|["']$/g, '');
+    } catch (e) { /* missing file */ }
+  }
+  return undefined;
+}
+
 const AMBER = { dark: '#8a5a00', light: '#ffd58a' };
 const DANGER = { dark: ['#8a1c1c', '#4a1212'], light: ['#f5b5b5', '#f9d5d5'] };
 
@@ -217,14 +243,18 @@ function activate(context) {
     const k = STRENGTH[settings.get('strength')] || 1;
     const parts = new Set(settings.get('parts') || PARTS);
     const dangerEntry = enabled ? isDanger(settings.get('danger') || [], name, activeRelPath(folder)) : undefined;
-    const danger = dangerEntry !== undefined;
+    const kube = enabled ? currentContext() : undefined;
+    const kubeDanger = !!kube && (settings.get('dangerContexts') || []).some((p) => nameMatches(p, kube));
+    const danger = dangerEntry !== undefined || kubeDanger;
     const protectedBranches = settings.get('protectedBranches') || [];
     const branch = enabled && folder && protectedBranches.length ? await branchOf(folder) : undefined;
     const onProtected = !!branch && protectedBranches.includes(branch);
     const theme = light ? 'light' : 'dark';
 
     if (danger) {
-      dangerItem.tooltip = `Folder Theme: dangerous (${dangerEntry})`;
+      dangerItem.text = kubeDanger && dangerEntry === undefined ? `$(warning) PROD · ${kube}` : '$(warning) PROD';
+      dangerItem.tooltip = [dangerEntry !== undefined && `Folder Theme: dangerous place (${dangerEntry})`,
+        kubeDanger && `Folder Theme: dangerous Kubernetes context (${kube})`].filter(Boolean).join('\n');
       dangerItem.show();
     } else dangerItem.hide();
 
@@ -315,6 +345,21 @@ function activate(context) {
     await settings.update('danger', next, vscode.ConfigurationTarget.Workspace);
   }
 
+  // Add or remove the current Kubernetes context in the list (a user setting: contexts are yours, not a workspace's)
+  async function toggleContextDanger() {
+    const kube = currentContext();
+    if (!kube) {
+      vscode.window.showInformationMessage('Folder Theme: no current Kubernetes context found in your kubeconfig.');
+      return;
+    }
+    const settings = vscode.workspace.getConfiguration('folderTheme');
+    const inspected = settings.inspect('dangerContexts') || {};
+    const list = inspected.globalValue || [];
+    const next = list.includes(kube) ? list.filter((c) => c !== kube) : [...list, kube];
+    await settings.update('dangerContexts', next, vscode.ConfigurationTarget.Global);
+    vscode.window.showInformationMessage(`Folder Theme: context ${kube} is ${next.includes(kube) ? 'now' : 'no longer'} marked as dangerous.`);
+  }
+
   // A terminal in the folder, its tab in the folder's color (red with a warning in a danger place)
   async function openTerminal() {
     const folder = await commandFolder();
@@ -324,7 +369,9 @@ function activate(context) {
     const colors = colorsSetting();
     let hue = map[folder.name] === undefined ? undefined : hueOf(map[folder.name], colors);
     if (hue === undefined && map[folder.name] === undefined) hue = autoHue(folder.name, colors);
-    const danger = isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder)) !== undefined;
+    const kube = currentContext();
+    const danger = isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder)) !== undefined
+      || (!!kube && (settings.get('dangerContexts') || []).some((p) => nameMatches(p, kube)));
     const red = new vscode.ThemeColor('terminal.ansiRed');
     vscode.window.createTerminal({
       name: danger ? `⚠ ${folder.name}` : folder.name,
@@ -378,10 +425,18 @@ function activate(context) {
     vscode.commands.registerCommand('folderTheme.setColor', setColor),
     vscode.commands.registerCommand('folderTheme.toggleDanger', toggleDanger),
     vscode.commands.registerCommand('folderTheme.openTerminal', openTerminal),
+    vscode.commands.registerCommand('folderTheme.toggleContextDanger', toggleContextDanger),
     vscode.commands.registerCommand('folderTheme.goToFolder', goToFolder),
     vscode.commands.registerCommand('folderTheme.clear', clear),
     vscode.commands.registerCommand('folderTheme.refresh', apply),
   );
+  // kubectl / kontext rewrite the kubeconfig when the context changes: poll its stat, and
+  // look again when the window gets focus
+  for (const file of kubeconfigs()) {
+    fs.watchFile(file, { interval: 2000 }, apply);
+    context.subscriptions.push({ dispose: () => fs.unwatchFile(file, apply) });
+  }
+  context.subscriptions.push(vscode.window.onDidChangeWindowState((state) => { if (state.focused) apply(); }));
   rememberFile();
   apply();
 }

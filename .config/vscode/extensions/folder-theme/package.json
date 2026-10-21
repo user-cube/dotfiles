@@ -2,7 +2,7 @@
   "name": "folder-theme",
   "displayName": "Folder Theme",
   "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -37,6 +37,10 @@
       {
         "command": "folderTheme.clear",
         "title": "Folder Theme: Clear (remove colors and turn off)"
+      },
+      {
+        "command": "folderTheme.toggleContextDanger",
+        "title": "Folder Theme: Toggle Danger (PROD) for Current Kubernetes Context"
       }
     ],
     "configuration": {
@@ -118,6 +122,14 @@
           "type": "boolean",
           "default": true,
           "description": "Turn the whole extension off for this workspace: its colors are removed."
+        },
+        "folderTheme.dangerContexts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Kubernetes contexts to treat as dangerous (production): a name, or a pattern with `*` (`*-prod`). While the current context of your kubeconfig matches, the title bar is red and the status bar shows PROD, in any folder. The easy way to fill it: **Folder Theme: Toggle Danger (PROD) for Current Kubernetes Context**."
         }
       }
     },
