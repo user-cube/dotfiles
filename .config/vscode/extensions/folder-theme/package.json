@@ -2,7 +2,7 @@
   "name": "folder-theme",
   "displayName": "Folder Theme",
   "description": "Tints the VS Code window with the color of the workspace folder you are working in",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -107,6 +107,14 @@
           "description": "The status bar turns amber while the active folder's repository is on one of these branches. Empty to turn it off."
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "folderTheme.openTerminal",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
+        "when": "workspaceFolderCount > 0"
+      }
+    ]
   }
 }
