@@ -1,39 +1,34 @@
 # ws: open a VS Code workspace from ~/workspaces (VSCODE_WORKSPACES overrides).
-#   ws                                          pick one with fzf
-#   ws NAME                                     open NAME.code-workspace
-#   ws -n NAME [-t TPL]... [-c COLOR] DIR...    create NAME.code-workspace with DIR(s) as folders, then open it
+#   ws                                    pick one with fzf
+#   ws NAME                               open NAME.code-workspace
+#   ws -n NAME [-t TPL]... DIR[:COLOR]... create NAME.code-workspace with DIR(s) as folders, then open it
 # -t merges settings and recommended extensions from ~/.config/vscode/templates/TPL.json
 # (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
-# -c colors the window's title bar so workspaces are told apart at a glance:
-# red, orange, yellow, green, teal, blue, purple, pink, or a #rrggbb.
+# COLOR colors the folder's name in the Explorer (Folder Path Color extension, recommended
+# in the workspace): red, green, blue, yellow, purple, orange, brown, white or black.
 # In VS Code, ⌘R switches between recent workspaces.
 ws() {
   local dir=${VSCODE_WORKSPACES:-$HOME/workspaces} name
   local tpldir=${VSCODE_TEMPLATES:-$HOME/.config/vscode/templates}
-  local usage="usage: ws -n NAME [-t TPL]... [-c COLOR] DIR..."
+  local usage="usage: ws -n NAME [-t TPL]... DIR[:COLOR]..."
   mkdir -p "$dir"
   if [[ $1 == -n ]]; then
     name=$2
     [[ -n $name && $# -ge 3 ]] || { echo $usage; return 1; }
     [[ -e $dir/$name.code-workspace ]] && { echo "ws: $name already exists"; return 1; }
     shift 2
-    local tpls=() color=
-    while [[ $1 == -t || $1 == -c ]]; do
+    local tpls=()
+    while [[ $1 == -t ]]; do
       [[ -n $2 ]] || { echo $usage; return 1; }
-      if [[ $1 == -t ]]; then
-        [[ -f $tpldir/$2.json ]] || { echo "ws: no template '$2' (have: ${(j:, :)${(@)${(f)"$(print -rl -- $tpldir/*.json(N:t:r))"}}})"; return 1; }
-        tpls+=("$tpldir/$2.json")
-      else
-        color=$2
-      fi
-      shift 2
+      [[ -f $tpldir/$2.json ]] || { echo "ws: no template '$2' (have: ${(j:, :)${(@)${(f)"$(print -rl -- $tpldir/*.json(N:t:r))"}}})"; return 1; }
+      tpls+=("$tpldir/$2.json"); shift 2
     done
     [[ $# -ge 1 ]] || { echo $usage; return 1; }
     # Folder paths are relative to the workspace file, so the file stays portable
-    python3 - "$dir" "$color" "${#tpls}" "${tpls[@]}" "$@" > "$dir/$name.code-workspace" <<'PY' || { rm -f "$dir/$name.code-workspace"; return 1; }
+    python3 - "$dir" "${#tpls}" "${tpls[@]}" "$@" > "$dir/$name.code-workspace" <<'PY' || { rm -f "$dir/$name.code-workspace"; return 1; }
 import json, os, re, sys
-dir, color, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
-tpls, folders = sys.argv[4:4 + n], sys.argv[4 + n:]
+dir, n = sys.argv[1], int(sys.argv[2])
+tpls, folders = sys.argv[3:3 + n], sys.argv[3 + n:]
 
 def merge(a, b):
     for k, v in b.items():
@@ -48,23 +43,34 @@ for t in tpls:
     merge(settings, doc.get("settings", {}))
     recs += [r for r in doc.get("extensions", {}).get("recommendations", []) if r not in recs]
 
-# Title bar: (active, inactive) backgrounds, dark enough for white text
-palette = {"red": ("#7a2b2b", "#4a1a1a"), "orange": ("#8a4b14", "#5a3010"),
-           "yellow": ("#7a6a10", "#4d4309"), "green": ("#1f5f33", "#133a20"),
-           "teal": ("#176b6b", "#0e4141"), "blue": ("#1f4f8a", "#132f52"),
-           "purple": ("#5a2f8a", "#371c55"), "pink": ("#8a2f5f", "#551c3a")}
-if color:
-    if color in palette:
-        active, inactive = palette[color]
-    elif re.fullmatch(r"#[0-9a-fA-F]{6}", color):
-        active = inactive = color
-    else:
-        sys.exit("ws: unknown color '%s' (have: %s, or #rrggbb)" % (color, ", ".join(palette)))
-    merge(settings, {"workbench.colorCustomizations": {
-        "titleBar.activeBackground": active, "titleBar.inactiveBackground": inactive,
-        "titleBar.activeForeground": "#ffffff", "titleBar.inactiveForeground": "#ffffffaa"}})
+# The extension has 6 named colors and 6 hex slots, used here for the rest
+named = {"red": "red", "green": "green", "blue": "blue", "yellow": "yellow", "purple": "magenta"}
+slots = {"orange": ("custom1", "#f0883e"), "brown": ("custom2", "#b07d56"),
+         "white": ("custom3", "#e6e6e6"), "black": ("custom4", "#7a7a7a")}
+entries, folder_colors, hexes = [], [], {}
+for arg in folders:
+    path, _, tag = arg.rpartition(":")
+    if not path or os.path.exists(arg):
+        path, tag = arg, ""
+    real = os.path.realpath(path)
+    entries.append({"path": os.path.relpath(real, dir)})
+    if not tag:
+        continue
+    if tag not in named and tag not in slots:
+        sys.exit("ws: unknown color '%s' (have: %s)" % (tag, ", ".join(list(named) + list(slots))))
+    if tag in slots:
+        hexes["folderPathColor." + slots[tag][0]] = slots[tag][1]
+    # The glob is what makes the extension match a workspace root, and only the root
+    folder_colors.append({"path": os.path.basename(real) + "*", "color": named.get(tag) or slots[tag][0]})
 
-ws = {"folders": [{"path": os.path.relpath(os.path.realpath(f), dir)} for f in folders]}
+if folder_colors:
+    settings["folder-path-color.folders"] = folder_colors
+    if hexes:
+        merge(settings, {"workbench.colorCustomizations": hexes})
+    if "visbydev.folder-path-color" not in recs:
+        recs.append("visbydev.folder-path-color")
+
+ws = {"folders": entries}
 if settings:
     ws["settings"] = settings
 if recs:
