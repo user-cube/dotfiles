@@ -2,8 +2,9 @@
 #   ws                              pick one with fzf
 #   ws NAME                         open NAME.code-workspace
 #   ws -n NAME [-t TPL]... DIR[:TAG]...   create NAME.code-workspace with DIR(s) as folders, then open it
-# TAG marks a folder in the Explorer: red, orange, yellow, green, blue, purple, brown,
-# black or white give a colored square, anything else (an emoji, "TF") is used as is.
+# TAG marks a folder in the Explorer: red, green, blue, yellow, purple, orange, brown,
+# white or black color its name (Folder Path Color extension, recommended in the
+# workspace); anything else (an emoji, "TF") is put in front of its name.
 # -t merges settings and recommended extensions from ~/.config/vscode/templates/TPL.json
 # (VSCODE_TEMPLATES overrides); repeat it to combine, e.g. -t terraform -t helm.
 # In VS Code, ⌘R switches between recent workspaces.
@@ -41,25 +42,44 @@ for t in tpls:
     merge(settings, doc.get("settings", {}))
     recs += [r for r in doc.get("extensions", {}).get("recommendations", []) if r not in recs]
 
-colors = {"red": "🟥", "orange": "🟧", "yellow": "🟨", "green": "🟩", "blue": "🟦",
-          "purple": "🟪", "brown": "🟫", "black": "⬛", "white": "⬜"}
+# Palette colors color the folder name (Folder Path Color extension); any other
+# TAG (an emoji, "TF") is prefixed to the name. The extension has 6 named colors
+# and 6 hex slots, used here for the rest.
+named = {"red": "red", "green": "green", "blue": "blue", "yellow": "yellow", "purple": "magenta"}
+slots = {"orange": ("custom1", "#f0883e"), "brown": ("custom2", "#b07d56"),
+         "white": ("custom3", "#e6e6e6"), "black": ("custom4", "#7a7a7a")}
+folder_colors, hexes, entries = [], {}, []
 
-def folder(arg):
+for arg in folders:
     path, _, tag = arg.rpartition(":")
     if not path or os.path.exists(arg):
         path, tag = arg, ""
     real = os.path.realpath(path)
+    base = os.path.basename(real)
     entry = {"path": os.path.relpath(real, dir)}
-    if tag:
-        entry["name"] = colors.get(tag, tag) + " " + os.path.basename(real)
-    return entry
+    if tag in named or tag in slots:
+        color = named.get(tag) or slots[tag][0]
+        if tag in slots:
+            hexes["folderPathColor." + slots[tag][0]] = slots[tag][1]
+        # The glob is what makes the extension match a workspace root
+        folder_colors.append({"path": base + "*", "color": color})
+    elif tag:
+        entry["name"] = tag + " " + base
+    entries.append(entry)
 
-ws = {"folders": [folder(f) for f in folders]}
+if folder_colors:
+    settings["folder-path-color.folders"] = folder_colors
+    if hexes:
+        settings.setdefault("workbench.colorCustomizations", {}).update(hexes)
+    if "visbydev.folder-path-color" not in recs:
+        recs.append("visbydev.folder-path-color")
+
+ws = {"folders": entries}
 if settings:
     ws["settings"] = settings
 if recs:
     ws["extensions"] = {"recommendations": recs}
-print(json.dumps(ws, indent=2))
+print(json.dumps(ws, indent=2, ensure_ascii=False))
 PY
   else
     name=${1:-$(print -rl -- $dir/*.code-workspace(N:t:r) | fzf --prompt='workspace> ')}
