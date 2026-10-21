@@ -1,0 +1,18 @@
+{
+  "settings": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "files.encoding": "utf8",
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "files.exclude": { ".terraform": true },
+    "search.exclude": { ".terraform": true },
+    "files.associations": { "*.tfvars": "opentofu-vars" },
+    "[opentofu]": { "editor.formatOnSave": true },
+    "[opentofu-vars]": { "editor.formatOnSave": true }
+  },
+  "extensions": { "recommendations": ["opentofu.vscode-opentofu"] }
+}
