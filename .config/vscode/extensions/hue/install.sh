@@ -8,14 +8,8 @@ command -v code >/dev/null || { echo "hue: 'code' not on PATH, skipped"; exit 0;
 
 stamp_file="$HOME/.cache/hue.sha"
 sha=$(cat "$dir/package.json" "$dir/extension.js" "$dir/README.md" "$dir/icon.png" | shasum | cut -d' ' -f1)
-installed=$(code --list-extensions)
-if [[ -f $stamp_file && $(cat "$stamp_file") == "$sha" ]] && grep -qix 'rui.hue' <<<"$installed"; then
+if [[ -f $stamp_file && $(cat "$stamp_file") == "$sha" ]] && code --list-extensions | grep -ix 'rui.hue' >/dev/null; then
   exit 0
-fi
-
-# This extension was called folder-theme before it was renamed
-if grep -qix 'rui.folder-theme' <<<"$installed"; then
-  code --uninstall-extension rui.folder-theme
 fi
 
 tmp=$(mktemp -d)
@@ -63,5 +57,4 @@ PY
 code --install-extension "$tmp/hue.vsix" --force
 mkdir -p "$(dirname "$stamp_file")"
 echo "$sha" > "$stamp_file"
-rm -f "$HOME/.cache/folder-theme.sha"
 echo "hue: installed $version; reload VS Code windows to pick it up"
