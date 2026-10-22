@@ -133,7 +133,8 @@ dotfiles-sync
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
 syncs `.config/` (building `local-files` and the SketchyBar checks, downloading the SketchyBar icon map), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`, building its hook), copies `.zshrc`, `.p10k.zsh` and the git configs
-(`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
+(`.gitconfig-work` only when missing), removes the files the repo no longer installs
+(`.config/dotfiles/obsolete`: rsync never deletes; add a line when a file leaves the repo), then reloads tmux, AeroSpace, SketchyBar and
 borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
 ## CI

@@ -1,0 +1,11 @@
+# Files this repo used to install and no longer does, relative to $HOME.
+# rsync never deletes, so dotfiles-sync and the playbook remove these (only
+# regular files, then their directory when it is left empty). Add a line when
+# a file leaves the repo; never a directory, a glob or a path outside $HOME.
+.config/sketchybar/plugins/check.sh
+.claude/hooks/deny-sensitive-reads.sh
+.config/cmux/settings.json
+git_hooks/bash/commit-msg
+git_hooks/bash/pre-push
+git_hooks/go/commit-msg/Makefile
+git_hooks/go/commit-msg/taskfile.yaml

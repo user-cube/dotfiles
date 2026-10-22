@@ -22,6 +22,8 @@ dotfiles-sync() {
   mkdir -p "$HOME/.claude" && rsync -a "$repo/claude/" "$HOME/.claude/" || return
   # Claude Code's PreToolUse hook (settings.json blocks Bash and Read until it is built)
   go build -C "$HOME/.claude/hooks/deny-sensitive-reads" -o deny-sensitive-reads . || return
+  # Files the repo no longer installs (rsync never deletes): .config/dotfiles/obsolete
+  "$HOME/.config/dotfiles/remove-obsolete.sh" || return
   # .gitconfig-work holds a placeholder in the repo: only seed it, never overwrite
   [[ -f $HOME/.gitconfig-work ]] || cp "$repo/.gitconfig-work" "$HOME/"
 
