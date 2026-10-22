@@ -13,6 +13,10 @@ TEXT_FONT="SF Pro"
 ICON_FONT="Hack Nerd Font"
 APP_FONT="sketchybar-app-font:Regular:15.0"
 
+# The rounded pill behind each group of items (spaces, status, cloud, dev)
+BRACKET_STYLE=(background.color="$BRACKET_BG" background.corner_radius=10 background.height=30
+               background.border_width=1 background.border_color="$ITEM_BORDER")
+
 sketchybar --bar position=bottom height=40 y_offset=4 margin=8 corner_radius=12 \
            color=$BAR_BG border_width=1 border_color=$ITEM_BORDER blur_radius=20 \
            display=all sticky=on topmost=off padding_left=8 padding_right=12 \
@@ -49,8 +53,7 @@ for mid in $(aerospace list-monitors --format '%{monitor-appkit-nsscreen-screens
 done
 
 sketchybar --add bracket spaces '/space\..*/' \
-  --set spaces background.color=$BRACKET_BG background.corner_radius=10 \
-        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+  --set spaces "${BRACKET_STYLE[@]}"
 
 # --- Focused app ---------------------------------------------------------------
 sketchybar --add item chevron left \
@@ -68,8 +71,7 @@ sketchybar --add event brew_update \
         script="$PLUGIN_DIR/brew.sh" click_script="$PLUGIN_DIR/brew_upgrade.sh"
 
 sketchybar --add bracket status brew \
-  --set status background.color=$BRACKET_BG background.corner_radius=10 \
-        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+  --set status "${BRACKET_STYLE[@]}"
 
 sketchybar --add item weather right \
   --subscribe weather mouse.clicked system_woke \
@@ -116,8 +118,7 @@ for profile in $AWS_PROFILES; do
 done
 
 sketchybar --add bracket cloud $CLOUD_ITEMS \
-  --set cloud background.color=$BRACKET_BG background.corner_radius=10 \
-        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+  --set cloud "${BRACKET_STYLE[@]}"
 
 # --- Dev group: kube context, Colima, PRs/MRs to review ----------------------------
 sketchybar --add item gitlab right \
@@ -146,8 +147,7 @@ sketchybar --add item checks right \
         popup.background.border_width=1 popup.background.border_color=$ITEM_BORDER
 
 sketchybar --add bracket dev kube colima github gitlab checks \
-  --set dev background.color=$BRACKET_BG background.corner_radius=10 \
-        background.height=30 background.border_width=1 background.border_color=$ITEM_BORDER
+  --set dev "${BRACKET_STYLE[@]}"
 
 # --- Spotify (hidden unless running; dim while paused) --------------------------------------
 sketchybar --add event spotify_change com.spotify.client.PlaybackStateChanged \
