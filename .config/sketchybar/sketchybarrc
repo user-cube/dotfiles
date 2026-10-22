@@ -163,8 +163,8 @@ sketchybar --add event spotify_change com.spotify.client.PlaybackStateChanged \
 MIN_WIDE_WIDTH=1800
 LOW_PRIORITY="spotify weather cpu ram colima github gitlab brew"
 
-WIDE_DISPLAYS=$(sketchybar --query displays | python3 -c "import sys,json
-print(','.join(str(d['arrangement-id']) for d in json.load(sys.stdin) if d['frame']['w'] >= $MIN_WIDE_WIDTH))")
+WIDE_DISPLAYS=$(sketchybar --query displays |
+  jq -r --argjson min "$MIN_WIDE_WIDTH" 'map(select(.frame.w >= $min)."arrangement-id" | tostring) | join(",")')
 
 for item in $LOW_PRIORITY; do
   if [ -n "$WIDE_DISPLAYS" ]; then

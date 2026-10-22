@@ -3,6 +3,7 @@
 # Spotify isn't running. Click toggles play/pause.
 # Never `tell application "Spotify"` unguarded: that relaunches it, e.g. right
 # after ⌘Q when the quit event arrives. Prefer the event payload ($INFO).
+source "$CONFIG_DIR/plugins/helpers.sh" # PATH: jq
 source "$CONFIG_DIR/colors.sh"
 
 if [ "$SENDER" = "mouse.clicked" ]; then
@@ -12,12 +13,7 @@ fi
 
 if [ -n "$INFO" ]; then
   # Event payload: {"Player State": "Playing|Paused|Stopped", "Artist": ..., "Name": ...}
-  OUT=$(echo "$INFO" | python3 -c 'import sys,json
-try:
-    d=json.load(sys.stdin)
-    print(d.get("Player State","").lower() + "|" + d.get("Artist","") + " — " + d.get("Name",""))
-except Exception:
-    print("")')
+  OUT=$(echo "$INFO" | jq -r '((."Player State" // "") | ascii_downcase) + "|" + (.Artist // "") + " — " + (.Name // "")' 2>/dev/null)
 else
   # Startup / periodic: ask Spotify only if it is already running
   OUT=$(osascript -e 'if application "Spotify" is running then

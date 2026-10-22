@@ -9,8 +9,8 @@ case "$SENDER" in
 esac
 
 LIST=$(run colima list --json 2>/dev/null)
-RUNNING=$(echo "$LIST" | python3 -c 'import sys,json
-print(" ".join(p["name"] for p in map(json.loads, filter(None, sys.stdin.read().split("\n"))) if p.get("status")=="Running"))' 2>/dev/null)
+# colima list --json: one JSON object per line
+RUNNING=$(echo "$LIST" | jq -rs 'map(select(.status == "Running").name) | join(" ")' 2>/dev/null)
 
 if [ -n "$RUNNING" ]; then
   sketchybar --set "$NAME" label="$RUNNING" icon.color=$GREEN label.color=$FG
@@ -20,8 +20,7 @@ fi
 
 # Rebuild popup: one entry per profile, click starts/stops it
 sketchybar --remove '/colima\.profile\..*/' >/dev/null 2>&1
-echo "$LIST" | python3 -c 'import sys,json
-for p in map(json.loads, filter(None, sys.stdin.read().split("\n"))): print(p["name"], p["status"])' |
+echo "$LIST" | jq -r '"\(.name) \(.status)"' 2>/dev/null |
 while read -r PROFILE STATUS; do
   if [ "$STATUS" = "Running" ]; then ACTION=stop; DOT=$GREEN; else ACTION=start; DOT=$DIM; fi
   sketchybar --add item "colima.profile.$PROFILE" popup.colima \
