@@ -10,18 +10,31 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
 - `.config/`: tool configs, synced to `~/.config/`
   - `aerospace/`: tiling window manager, plus `CHEATSHEET.md` (`⌥ i`)
   - `borders/`: JankyBorders (focused window border)
-  - `sketchybar/`: bottom status bar; `plugins/icon_map.sh` (app icons) is not in git: `fetch-icon-map.sh` downloads it from the sketchybar-app-font release of the installed font; `plugins/check/` (connectivity checks: kube contexts or `~/.config/sketchybar/checks`) is a Go program built by `dotfiles-sync`
+  - `sketchybar/`: bottom status bar
+    - `plugins/icon_map.sh` (app icons) is not in git: `fetch-icon-map.sh` downloads it from the sketchybar-app-font release of the installed font
+    - `plugins/check/`: connectivity checks (kube contexts, or `~/.config/sketchybar/checks`), a Go program
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time)
   - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, ansible, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
-  - `vscode/extensions/hue/`: Hue, a small VS Code extension that tints the window with the color of the workspace folder you are working in (`ws -n NAME DIR:blue ...`; folders without a color get one from their name, and "Hue: Set Color" changes it; the named colors, the strength and which parts are tinted are `hue.*` settings; `DIR!` (all of it) or `DIR!hetzner/prod` (only that path) marks production with a red title bar, a PROD marker and a red terminal tab, the status bar turns amber on `main`/`master`, and "Hue: Open Terminal in Folder" (⌘⌥T) opens a terminal with a tab in the folder's color, "Go to Folder" jumps to a folder's last file, "Clear" removes the colors and turns it off); installed by `.config/dotfiles/install.sh` (`dotfiles-sync` and the playbook) through its own `install.sh`, no marketplace
+  - `vscode/extensions/hue/`: Hue, a small VS Code extension, no marketplace ([its README](.config/vscode/extensions/hue/README.md) has the commands and settings)
+    - the window takes the color of the workspace folder you work in: `ws -n NAME DIR:blue ...`, or one from the folder's name
+    - production: `DIR!` (all of it) or `DIR!hetzner/prod` (only that path) gives a red title bar, a PROD marker and a red terminal tab
+    - the status bar turns amber on `main`/`master`
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
-- `git_hooks/`: global git hooks, wired in `.gitconfig`: commit-msg (Go, `hook.commit-msg-go`) and two pre-commit checks of the staged CI config: actionlint for GitHub Actions workflows (`hook.actionlint`) and `glab ci lint` for `.gitlab-ci.yml`, through the GitLab API, in repos whose host glab is logged in to (`hook.gitlab-ci-lint`)
-- `claude/`: Claude Code config, synced to `~/.claude/`: `settings.json` (no co-author trailer, deny rules, hooks, plugins), global `CLAUDE.md`, and `hooks/deny-sensitive-reads/` (a Go PreToolUse hook built by `dotfiles-sync` and the playbook: blocks Bash commands and reads that touch what is really private: ssh private keys, AWS credentials, env files (not `.env.example`), `*.pem`/`*.key`, age keys, app credential files, and files under `secrets/`/`credentials/` that sops does not report as encrypted; `~/.ssh/config`, `~/.aws/config` and docker-compose files stay readable; while it is not built, Claude Code's Bash and Read are blocked). Not `.claude/`: Claude Code would read that as this repo's project settings. Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
+- `git_hooks/`: global git hooks, wired in `.gitconfig`
+  - commit-msg (Go, `hook.commit-msg-go`)
+  - pre-commit, on the staged CI config: actionlint for GitHub Actions workflows (`hook.actionlint`), and `glab ci lint` for `.gitlab-ci.yml` through the GitLab API, in repos whose host glab is logged in to (`hook.gitlab-ci-lint`)
+- `claude/`: Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
+  - `settings.json`: no co-author trailer, deny rules, hooks, plugins
+  - `CLAUDE.md`: global instructions
+  - `hooks/deny-sensitive-reads/`: a Go PreToolUse hook; while it is not built, Claude Code's Bash and Read are blocked
+    - blocks Bash commands and reads that touch what is really private: ssh private keys, AWS credentials, env files (not `.env.example`), `*.pem`/`*.key`, age keys, app credential files
+    - and files under `secrets/`/`credentials/` that sops does not report as encrypted
+    - `~/.ssh/config`, `~/.aws/config` and docker-compose files stay readable
 
 ## Zsh
 
