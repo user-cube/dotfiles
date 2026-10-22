@@ -1,8 +1,10 @@
 // deny-sensitive-reads: Claude Code PreToolUse hook (matchers: Bash, Read).
 //
 // Bash: the Read(...) deny rules in settings.json do not cover Bash: a plain
-// `cat file` still goes through. This hook inspects the command line and
-// blocks it when it touches sensitive paths.
+// `cat file` still goes through. This hook takes the paths a command names
+// and blocks it when one of them is private (see private): only what really
+// is (keys, credentials, env files), so ~/.ssh/config, ~/.aws/config,
+// .env.example or a docker-compose file stay readable. Read: the same paths.
 //
 // secrets/ and credentials/ directories: files there may be read only when
 // they ARE encrypted, judged by content with `sops filestatus` (which also
@@ -28,6 +30,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -45,12 +48,14 @@ var (
 	secretDirs    = regexp.MustCompile(`(?im)(^|[^a-z0-9_-])(secrets|credentials)/`)
 	encryptedName = regexp.MustCompile(`\.(enc|encrypted|sops)\.(ya?ml|json|hcl|env|ini)`)
 
-	// Cleartext credentials: blocked unconditionally.
-	// `.key` must look like a path, not an expression: `each.key` and `local.key`
-	// are ordinary HCL/Python and must not trip this.
-	credentials = regexp.MustCompile(`(?im)age-key|\.agekey|AGE-SECRET-KEY|\.pem([^a-z]|$)|[/~][a-z0-9_.-]*\.key([^a-z]|$)|` +
-		`(^|[^a-z0-9_-])\.aws/|(^|[^a-z0-9_-])\.ssh/|(^|[^a-z0-9_-])\.env|(^|/)env\.php|config/database\.yml`)
-	compose = regexp.MustCompile(`(?i)docker-compose[^ \n]*\.ya?ml`)
+	// The words of a command that can be paths: split at blanks, quotes and
+	// backquotes, redirections, `=` (--file=x) and `:` (scp host:path)
+	pathToken = regexp.MustCompile("[^[:space:]\"'`<>|;&()=:,]+")
+	// An age secret key pasted or grepped for in the command itself
+	ageSecret = regexp.MustCompile(`AGE-SECRET-KEY`)
+	// ssh private keys by their default names, wherever they are (cd ~/.ssh && cat id_rsa)
+	sshKeyName = regexp.MustCompile(`^id_(rsa|dsa|ecdsa|ed25519)(_sk)?$`)
+	ageKeyName = regexp.MustCompile(`^age-key[^/]*\.txt$|\.agekey$`)
 
 	// Paths in a command that go through secrets/ or credentials/ ...
 	secretPath = regexp.MustCompile(`(?i)[^[:space:]"'=<>|;&()]*(secrets|credentials)/[^[:space:]"'<>|;&()]*`)
@@ -97,7 +102,13 @@ func (h hook) check(ev event) string {
 }
 
 func (h hook) checkRead(path string) string {
-	if path == "" || !secretDirs.MatchString(path) {
+	if path == "" {
+		return ""
+	}
+	if why := h.private(path); why != "" {
+		return fmt.Sprintf("%s is private (%s; local rule in ~/.claude/hooks/deny-sensitive-reads). Ask the user to do it themselves.", path, why)
+	}
+	if !secretDirs.MatchString(path) {
 		return ""
 	}
 	// Nothing to leak from a missing file: let Read report "not found"
@@ -114,11 +125,13 @@ func (h hook) checkCommand(cmd string) string {
 	if cmd == "" {
 		return ""
 	}
-	if credentials.MatchString(cmd) {
-		return "Command touches a cleartext credential file (local rule in ~/.claude/hooks/deny-sensitive-reads). Ask the user to do it themselves."
+	if ageSecret.MatchString(cmd) {
+		return "Command holds or looks for an age secret key (local rule in ~/.claude/hooks/deny-sensitive-reads). Ask the user to do it themselves."
 	}
-	if compose.MatchString(cmd) {
-		return "Command touches a docker-compose file (local rule). Ask the user to do it themselves."
+	for _, token := range pathToken.FindAllString(cmd, -1) {
+		if why := h.private(token); why != "" {
+			return fmt.Sprintf("Command touches %s, which is private (%s; local rule in ~/.claude/hooks/deny-sensitive-reads). Ask the user to do it themselves.", token, why)
+		}
 	}
 	// secrets/ and credentials/: every path the command names must resolve to
 	// files that are all encrypted; a path that resolves to no file falls back
@@ -138,6 +151,74 @@ func (h hook) checkCommand(cmd string) string {
 		}
 	}
 	return ""
+}
+
+// The files in ~/.ssh that hold no secret: client config, host keys, public
+// keys, ControlMaster sockets (cm-%C, .config/ssh/controlmaster.conf)
+var sshPublic = map[string]bool{"config": true, "known_hosts": true, "known_hosts.old": true, "authorized_keys": true}
+
+// Suffixes of env files that are templates, not secrets: .env.example
+var envTemplate = map[string]bool{"example": true, "sample": true, "template": true, "dist": true}
+
+// private says why a path is private, or "" when it is not. Only what holds
+// secrets: a whole ~/.ssh or ~/.aws (cp -r, tar) or a glob in them counts,
+// since it takes the keys along.
+func (h hook) private(path string) string {
+	// the macOS file system ignores case; a full stop ends a sentence, not a path
+	p := strings.ToLower(path)
+	if t := strings.TrimRight(p, "."); t != "" && !strings.HasSuffix(t, "/") {
+		p = t
+	}
+	segs := strings.Split(p, "/")
+	base := segs[len(segs)-1]
+
+	if i := slices.Index(segs, ".ssh"); i >= 0 {
+		rest := strings.Join(segs[i+1:], "/")
+		public := !strings.ContainsAny(rest, "*?[") && (sshPublic[rest] || strings.HasPrefix(rest, "config.d/") ||
+			strings.HasPrefix(rest, "cm-") || (strings.HasSuffix(rest, ".pub") && !strings.Contains(rest, "/")))
+		if !public {
+			return "an ssh private key, or ~/.ssh as a whole"
+		}
+	}
+	if i := slices.Index(segs, ".aws"); i >= 0 && strings.Join(segs[i+1:], "/") != "config" {
+		return "AWS credentials or cached tokens, or ~/.aws as a whole"
+	}
+	switch {
+	case sshKeyName.MatchString(base):
+		return "an ssh private key"
+	case ageKeyName.MatchString(base), strings.HasSuffix(p, "sops/age/keys.txt"):
+		return "an age key"
+	case isEnvFile(base):
+		return "an env file"
+	case strings.HasSuffix(base, ".pem"):
+		return "a PEM key or certificate"
+	// each.key / local.key are HCL or Python, not files: a .key counts when it
+	// looks like a path or is a file here
+	case strings.HasSuffix(base, ".key") && (strings.ContainsAny(path, "/~") || h.isFile(path)):
+		return "a key file"
+	case base == "env.php", strings.HasSuffix(p, "config/database.yml"):
+		return "application credentials"
+	}
+	return ""
+}
+
+// .env, .envrc, .env.local, .env-prod: env files; .env.example and other templates are not
+func isEnvFile(base string) bool {
+	rest, ok := strings.CutPrefix(base, ".env")
+	switch {
+	case !ok:
+		return false
+	case rest == "" || rest == "rc":
+		return true
+	case strings.ContainsAny(rest[:1], ".-_"):
+		return !envTemplate[rest[1:]]
+	}
+	return false // .environment
+}
+
+func (h hook) isFile(path string) bool {
+	st, err := os.Stat(h.abs(path))
+	return err == nil && st.Mode().IsRegular()
 }
 
 // files: the regular files a command-line path names, ~ and globs expanded

@@ -34,6 +34,7 @@ func tree(t *testing.T) (cwd, home string) {
 	write(filepath.Join(cwd, "credentials/db.sops.json"), encrypted)
 	write(filepath.Join(cwd, "charts/external-secrets/values.yaml"), cleartext)
 	write(filepath.Join(home, "secrets/token.txt"), cleartext)
+	write(filepath.Join(cwd, "server.key"), cleartext)
 	return cwd, home
 }
 
@@ -47,10 +48,15 @@ func TestCommand(t *testing.T) {
 	cwd, home := tree(t)
 	h := hook{home: home, cwd: cwd, encrypted: fakeEncrypted}
 	const (
-		cred     = "cleartext credential"
-		composeF = "docker-compose"
-		notEnc   = "not SOPS-encrypted"
-		unknown  = "can't be checked"
+		ssh     = "ssh private key"
+		aws     = "AWS credentials"
+		env     = "an env file"
+		pem     = "PEM"
+		key     = "a key file"
+		age     = "age"
+		app     = "application credentials"
+		notEnc  = "not SOPS-encrypted"
+		unknown = "can't be checked"
 	)
 	cases := []struct {
 		cmd, deny string // deny: part of the reason, "" = allowed
@@ -59,26 +65,70 @@ func TestCommand(t *testing.T) {
 		{"ls -la", ""},
 		{"git status", ""},
 
-		// cleartext credentials, whatever the file holds
-		{"cat ~/.ssh/id_ed25519", cred},
-		{"cat ~/.aws/credentials", cred},
-		{"cat .env", cred},
-		{"cat .envrc", cred}, // .env* as in the Read deny rules
-		{"openssl x509 -in cert.pem -noout", cred},
-		{"cat ~/keys/server.key", cred},
-		{"cat age-key.txt", cred},
-		{"grep AGE-SECRET-KEY keys.txt", cred},
-		{"cat wp/env.php", cred},
-		{"cat config/database.yml", cred},
-		{"ls\nenv.php", cred}, // ^ per line, like grep
+		// ~/.ssh: keys, the whole directory and globs are private; config,
+		// host keys, public keys and ControlMaster sockets are not
+		{"cat ~/.ssh/id_ed25519", ssh},
+		{"cat ~/.ssh/github_work", ssh}, // a key under its own name
+		{"cat $HOME/.ssh/ID_RSA", ssh},
+		{"scp host:~/.ssh/id_rsa .", ssh},
+		{"ssh -i ~/.ssh/deploy host", ssh},
+		{"ssh -o IdentityFile=~/.ssh/deploy host", ssh},
+		{"tar czf keys.tgz ~/.ssh", ssh},
+		{"cp -r ~/.ssh/ /tmp/x", ssh},
+		{"cat ~/.ssh/*", ssh},
+		{"cat ~/.ssh/*.pub", ssh}, // a glob: can't tell what it expands to
+		{"cd ~/.ssh && cat id_ed25519", ssh},
+		{"cat ~/.ssh/config", ""},
+		{"cat ~/.ssh/config.d/work", ""},
+		{"ssh-keygen -F github.com -f ~/.ssh/known_hosts", ""},
+		{"cat ~/.ssh/id_ed25519.pub", ""},
+		{"cat ~/.ssh/authorized_keys", ""},
+		{"ls ~/.ssh/cm-0123abcd", ""},
+		{"grep ControlPath ~/.config/ssh/controlmaster.conf", ""},
+		// a mention in a comment or a heredoc: only private paths count
+		{"python3 - <<'EOF'\n# ~/.ssh/config stays per machine\nEOF", ""},
+		{"echo 'see `~/.ssh/config` and ~/.aws/config.'", ""},
+		{"echo `cat ~/.ssh/id_rsa`", ssh},
+		{"cat ~/.ssh/id_rsa.", ssh},
+
+		// ~/.aws: only config is not a secret
+		{"cat ~/.aws/credentials", aws},
+		{"ls ~/.aws/sso/cache/", aws},
+		{"cat ~/.aws/cli/cache/x.json", aws},
+		{"zip -r aws.zip ~/.aws", aws},
+		{"cat ~/.aws/config", ""},
+		{"aws configure list-profiles", ""},
+
+		// env files; templates are not
+		{"cat .env", env},
+		{"cat app/.env.local", env},
+		{"cat .env.production", env},
+		{"cat .env-prod", env},
+		{"cat .envrc", env},
+		{"cat .env.example", ""},
+		{"cp .env.sample .env.template", ""},
+		{"cat .environment", ""},
+		{"direnv allow", ""},
+
+		// keys and app credentials, whatever they hold
+		{"openssl x509 -in cert.pem -noout", pem},
+		{"cat ~/keys/server.key", key},
+		{"cat server.key", key}, // a file here
 		{"echo each.key local.key", ""},
 		{"cat keypair.pemfile", ""},
-		// The text alone trips it, also in a comment or a heredoc: a safety net
-		// over the command line, it can't tell a mention from a read
-		{"python3 - <<'EOF'\n# ~/.ssh/config stays per machine\nEOF", cred},
+		{"cat age-key.txt", age},
+		{"cat backup.agekey", age},
+		{`cat "$HOME/Library/Application Support/sops/age/keys.txt"`, age},
+		{"grep AGE-SECRET-KEY keys.txt", age},
+		{"age-keygen -o /tmp/test-id.txt", ""}, // the command, not a key file
+		{"cat wp/env.php", app},
+		{"cat config/database.yml", app},
+		{"ls\nenv.php", app},
 
-		{"docker compose -f docker-compose.prod.yml up", composeF},
-		{"docker compose -f compose.yaml up", ""},
+		// not private: code and config that only mention credentials
+		{"docker compose -f docker-compose.prod.yml up", ""},
+		{"cat docker-compose.yml", ""},
+		{"cat charts/app/values.yaml", ""},
 
 		// secrets/ and credentials/: by content
 		{"cat secrets/plain.yaml", notEnc},
@@ -126,8 +176,17 @@ func TestRead(t *testing.T) {
 		{filepath.Join(cwd, "secrets/missing.yaml"), false}, // Read reports "not found"
 		{filepath.Join(cwd, "secrets"), false},              // no trailing slash: not under secrets/
 		{filepath.Join(cwd, "charts/external-secrets/values.yaml"), false},
-		// Cleartext credentials are the Read(...) deny rules' job, not this hook's
-		{filepath.Join(home, ".ssh/id_ed25519"), false},
+		// the same private paths as for Bash
+		{filepath.Join(home, ".ssh/id_ed25519"), true},
+		{filepath.Join(home, ".ssh/github_work"), true},
+		{filepath.Join(home, ".ssh/config"), false},
+		{filepath.Join(home, ".ssh/id_ed25519.pub"), false},
+		{filepath.Join(home, ".aws/credentials"), true},
+		{filepath.Join(home, ".aws/config"), false},
+		{filepath.Join(cwd, ".env"), true},
+		{filepath.Join(cwd, ".env.example"), false},
+		{filepath.Join(cwd, "docker-compose.yml"), false},
+		{filepath.Join(cwd, "server.key"), true},
 	}
 	for _, c := range cases {
 		if got := h.checkRead(c.path) != ""; got != c.deny {

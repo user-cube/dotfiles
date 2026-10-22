@@ -3,13 +3,13 @@
     "deny": [
       "Read(//**/age-key.txt*)",
       "Read(//**/*.agekey)",
-      "Read(//**/.env*)",
+      "Read(//**/.env)",
+      "Read(//**/.envrc)",
       "Read(//**/env.php*)",
       "Read(//**/*.pem)",
       "Read(//**/*.key)",
-      "Read(//**/.aws/**)",
-      "Read(//**/.ssh/**)",
-      "Read(//**/docker-compose*.yml)",
+      "Read(//**/.aws/credentials)",
+      "Read(//**/.ssh/id_*)",
       "Read(//**/config/database.yml)"
     ]
   },
