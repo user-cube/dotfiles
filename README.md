@@ -164,8 +164,10 @@ Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
 `.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
 `shellcheck` on every shell script, `zsh -n` on the zsh files, `go vet` and `go test`
-on the commit-msg hook, `local-files`, the SketchyBar checks and the Claude Code hook, and `gitleaks` over
-the whole history. Run the same checks locally before pushing:
+on the commit-msg hook, `local-files`, the SketchyBar checks and the Claude Code hook,
+`.github/scripts/test-install.sh` (`dotfiles-sync` into an empty fake HOME: everything
+installed, a second run that changes nothing, the built tools working), and
+`gitleaks` over the whole history. Run the same checks locally before pushing:
 
 ```sh
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
@@ -173,5 +175,6 @@ git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S
 (cd .config/dotfiles/local-files && go vet ./... && go test ./...)
 (cd .config/sketchybar/plugins/check && go vet ./... && go test ./...)
 (cd claude/hooks/deny-sensitive-reads && go vet ./... && go test ./...)
+.github/scripts/test-install.sh
 gitleaks git --redact --no-banner .
 ```

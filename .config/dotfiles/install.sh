@@ -7,7 +7,8 @@
 # Prints a line for each thing it changed ("built", "downloaded", "installed",
 # "removed"); nothing when all was up to date. Fails when a build fails.
 set -euo pipefail
-export PATH="/opt/homebrew/bin:$PATH"
+# The playbook's shell lacks Homebrew; kept where it is when already on PATH
+case ":$PATH:" in *:/opt/homebrew/bin:*) ;; *) export PATH="/opt/homebrew/bin:$PATH" ;; esac
 
 # Go tools: source directory -> binary in it. Rebuilt when a .go file or
 # go.mod is newer than the binary.

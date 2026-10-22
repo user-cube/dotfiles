@@ -61,5 +61,10 @@ jobs:
         working-directory: claude/hooks/deny-sensitive-reads
         run: go vet ./... && go test ./...
 
+      # dotfiles-sync into an empty fake HOME: the install path end to end
+      # (copies, Go builds, icon map, Hue, obsolete files, a second run that does nothing)
+      - name: install (dotfiles-sync in a fake HOME)
+        run: .github/scripts/test-install.sh
+
       - name: gitleaks
         run: gitleaks git --redact --no-banner .
