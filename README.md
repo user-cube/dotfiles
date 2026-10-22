@@ -15,7 +15,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
   - `nvim/`, `yazi/`: editor, file manager
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time)
   - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, ansible, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
-  - `vscode/extensions/hue/`: Hue, a small VS Code extension that tints the window with the color of the workspace folder you are working in (`ws -n NAME DIR:blue ...`; folders without a color get one from their name, and "Hue: Set Color" changes it; the named colors, the strength and which parts are tinted are `hue.*` settings; `DIR!` (all of it) or `DIR!hetzner/prod` (only that path) marks production with a red title bar, a PROD marker and a red terminal tab, the status bar turns amber on `main`/`master`, and "Hue: Open Terminal in Folder" (⌘⌥T) opens a terminal with a tab in the folder's color, "Go to Folder" jumps to a folder's last file, "Clear" removes the colors and turns it off); installed by `dotfiles-sync` through `install.sh`, no marketplace
+  - `vscode/extensions/hue/`: Hue, a small VS Code extension that tints the window with the color of the workspace folder you are working in (`ws -n NAME DIR:blue ...`; folders without a color get one from their name, and "Hue: Set Color" changes it; the named colors, the strength and which parts are tinted are `hue.*` settings; `DIR!` (all of it) or `DIR!hetzner/prod` (only that path) marks production with a red title bar, a PROD marker and a red terminal tab, the status bar turns amber on `main`/`master`, and "Hue: Open Terminal in Folder" (⌘⌥T) opens a terminal with a tab in the folder's color, "Go to Folder" jumps to a folder's last file, "Clear" removes the colors and turns it off); installed by `.config/dotfiles/install.sh` (`dotfiles-sync` and the playbook) through its own `install.sh`, no marketplace
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
@@ -132,10 +132,20 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/` (building `local-files` and the SketchyBar checks, downloading the SketchyBar icon map), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`, building its hook), copies `.zshrc`, `.p10k.zsh` and the git configs
-(`.gitconfig-work` only when missing), removes the files the repo no longer installs
-(`.config/dotfiles/obsolete`: rsync never deletes; add a line when a file leaves the repo), then reloads tmux, AeroSpace, SketchyBar and
-borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
+syncs `.config/`, `git_hooks/` and `claude/` (to `~/.claude/`), copies `.zshrc`,
+`.p10k.zsh` and the git configs (`.gitconfig-work` only when missing), runs
+`.config/dotfiles/install.sh`, then reloads tmux, AeroSpace, SketchyBar and borders.
+Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
+
+`install.sh` holds the steps after the files are in place, the same for
+`dotfiles-sync` and the playbook (a new step goes there, in one repo):
+
+- builds the Go tools when their sources changed: the commit-msg hook,
+  `local-files`, the SketchyBar checks and the Claude Code hook
+- downloads the SketchyBar icon map for the installed font version
+- installs the Hue VS Code extension when it changed
+- removes the files the repo no longer installs (`.config/dotfiles/obsolete`:
+  rsync never deletes; add a line when a file leaves the repo)
 
 ## CI
 

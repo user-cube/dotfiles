@@ -7,28 +7,16 @@ dotfiles-sync() {
 
   git -C "$repo" pull --ff-only || return
   rsync -a "$repo/.config/" "$HOME/.config/" || return
-  # SketchyBar app icons: the map of the installed font version (not in git); offline keeps the old one
-  "$HOME/.config/sketchybar/fetch-icon-map.sh" || echo "icon_map.sh: kept the current one"
   rsync -a "$repo/git_hooks/" "$HOME/git_hooks/" || return
-  # Global commit-msg hook (hook.commit-msg-go in .gitconfig)
-  go build -C "$HOME/git_hooks/go/commit-msg" -o commit-msg commit-msg.go || return
-  # local-backup / local-restore (Bitwarden)
-  go build -C "$HOME/.config/dotfiles/local-files" -o local-files . || return
-  # SketchyBar connectivity checks (the `checks` item)
-  go build -C "$HOME/.config/sketchybar/plugins/check" -o check . || return
   cp "$repo/.zshrc" "$repo/.p10k.zsh" "$repo/.gitconfig" "$repo/.gitconfig-personal" "$HOME/" || return
   # Claude Code: settings, global instructions, hooks (claude/ and not .claude/,
   # which Claude Code would read as this repo's own project settings)
   mkdir -p "$HOME/.claude" && rsync -a "$repo/claude/" "$HOME/.claude/" || return
-  # Claude Code's PreToolUse hook (settings.json blocks Bash and Read until it is built)
-  go build -C "$HOME/.claude/hooks/deny-sensitive-reads" -o deny-sensitive-reads . || return
-  # Files the repo no longer installs (rsync never deletes): .config/dotfiles/obsolete
-  "$HOME/.config/dotfiles/remove-obsolete.sh" || return
   # .gitconfig-work holds a placeholder in the repo: only seed it, never overwrite
   [[ -f $HOME/.gitconfig-work ]] || cp "$repo/.gitconfig-work" "$HOME/"
 
-  # VS Code: the Hue extension (skips when unchanged)
-  "$HOME/.config/vscode/extensions/hue/install.sh" || return
+  # Go tools, SketchyBar icon map, Hue, obsolete files: the same steps as the playbook
+  "$HOME/.config/dotfiles/install.sh" || return
 
   tmux source-file "$HOME/.config/tmux/tmux.conf" 2>/dev/null && echo "tmux: reloaded"
   pgrep -xq AeroSpace && aerospace reload-config && echo "AeroSpace: reloaded"
