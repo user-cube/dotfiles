@@ -1,6 +1,5 @@
 [user]
 email = 33549232+user-cube@users.noreply.github.com
-name = Rui Coelho
 signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMTB9m96/tWZeDTjkO971Ye1nlp3cN3p21aQhH9shiij
 
 [gpg]
@@ -8,9 +7,6 @@ format = ssh
 
 [commit]
 gpgsign = true
-
-[push]
-autoSetupRemote = true
 
 # Personal repos commit straight to main: skip the work commit-msg hook
 [hook "commit-msg-go"]

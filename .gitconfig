@@ -19,7 +19,7 @@
 
 [hook "gitleaks"]
     event = pre-commit
-    command = gitleaks protect --staged --redact --verbose
+    command = gitleaks git --staged --redact --verbose
 
 # Staged GitHub Actions workflows through actionlint (git_hooks/actionlint)
 [hook "actionlint"]

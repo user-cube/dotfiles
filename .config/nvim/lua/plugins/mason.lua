@@ -21,19 +21,20 @@ return {
       "b0o/SchemaStore.nvim", -- yaml schemas (GitHub Actions, compose, kustomize, ...)
     },
     config = function()
-      require("mason-lspconfig").setup({
-        ensure_installed = {
-          "lua_ls",
-          "pyright",
-          "terraformls",
-          "ansiblels",
-          "dockerls",
-          "yamlls",
-          "bashls",
-          "gopls",
-          "helm_ls",
-        },
-      })
+      -- tofu_ls is enabled too, but not in Mason: it comes from Homebrew (tofu-ls)
+      local servers = {
+        "lua_ls",
+        "pyright",
+        "terraformls",
+        "ansiblels",
+        "dockerls",
+        "yamlls",
+        "bashls",
+        "gopls",
+        "helm_ls",
+      }
+
+      require("mason-lspconfig").setup({ ensure_installed = servers })
 
       vim.lsp.config("terraformls", {
         filetypes = { "terraform", "terraform-vars" },
@@ -94,18 +95,7 @@ return {
         },
       })
 
-      vim.lsp.enable({
-        "lua_ls",
-        "pyright",
-        "terraformls",
-        "tofu_ls",
-        "ansiblels",
-        "dockerls",
-        "yamlls",
-        "bashls",
-        "gopls",
-        "helm_ls",
-      })
+      vim.lsp.enable(vim.list_extend({ "tofu_ls" }, servers))
 
       -- Keymaps LSP
       vim.api.nvim_create_autocmd("LspAttach", {
