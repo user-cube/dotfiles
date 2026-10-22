@@ -1,6 +1,7 @@
 .DS_Store
 git_hooks/go/commit-msg/commit-msg
 .config/dotfiles/local-files/local-files
+claude/hooks/deny-sensitive-reads/deny-sensitive-reads
 # Per-machine files (never committed)
 .config/tmux/sessions.local
 .config/sketchybar/aws_profiles

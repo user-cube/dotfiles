@@ -18,6 +18,8 @@ dotfiles-sync() {
   # Claude Code: settings, global instructions, hooks (claude/ and not .claude/,
   # which Claude Code would read as this repo's own project settings)
   mkdir -p "$HOME/.claude" && rsync -a "$repo/claude/" "$HOME/.claude/" || return
+  # Claude Code's PreToolUse hook (settings.json blocks Bash and Read until it is built)
+  go build -C "$HOME/.claude/hooks/deny-sensitive-reads" -o deny-sensitive-reads . || return
   # .gitconfig-work holds a placeholder in the repo: only seed it, never overwrite
   [[ -f $HOME/.gitconfig-work ]] || cp "$repo/.gitconfig-work" "$HOME/"
 

@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/deny-sensitive-reads.sh",
+            "command": "~/.claude/hooks/deny-sensitive-reads/deny-sensitive-reads || { echo 'deny-sensitive-reads is not built: run dotfiles-sync' >&2; exit 2; }",
             "timeout": 5
           }
         ]

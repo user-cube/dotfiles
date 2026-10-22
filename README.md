@@ -21,7 +21,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
 - `git_hooks/`: global git hooks, wired in `.gitconfig`: commit-msg (Go, `hook.commit-msg-go`) and two pre-commit checks of the staged CI config: actionlint for GitHub Actions workflows (`hook.actionlint`) and `glab ci lint` for `.gitlab-ci.yml`, through the GitLab API, in repos whose host glab is logged in to (`hook.gitlab-ci-lint`)
-- `claude/`: Claude Code config, synced to `~/.claude/`: `settings.json` (no co-author trailer, deny rules, hooks, plugins), global `CLAUDE.md`, and `hooks/deny-sensitive-reads.sh` (blocks Bash commands that touch cleartext credentials). Not `.claude/`: Claude Code would read that as this repo's project settings. Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
+- `claude/`: Claude Code config, synced to `~/.claude/`: `settings.json` (no co-author trailer, deny rules, hooks, plugins), global `CLAUDE.md`, and `hooks/deny-sensitive-reads/` (a Go PreToolUse hook built by `dotfiles-sync` and the playbook: blocks Bash commands that touch cleartext credentials, and reads of files under `secrets/`/`credentials/` that sops does not report as encrypted; while it is not built, Claude Code's Bash and Read are blocked). Not `.claude/`: Claude Code would read that as this repo's project settings. Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
 
 ## Zsh
 
@@ -132,7 +132,7 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/` (building `local-files`, downloading the SketchyBar icon map), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`), copies `.zshrc`, `.p10k.zsh` and the git configs
+syncs `.config/` (building `local-files`, downloading the SketchyBar icon map), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`, building its hook), copies `.zshrc`, `.p10k.zsh` and the git configs
 (`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
 borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
@@ -140,12 +140,13 @@ borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
 `.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
 `shellcheck` on every shell script, `zsh -n` on the zsh files, `go vet` and `go test`
-on the commit-msg hook and on `local-files`, and `gitleaks` over
+on the commit-msg hook, `local-files` and the Claude Code hook, and `gitleaks` over
 the whole history. Run the same checks locally before pushing:
 
 ```sh
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
 (cd git_hooks/go/commit-msg && go vet ./... && go test ./...)
 (cd .config/dotfiles/local-files && go vet ./... && go test ./...)
+(cd claude/hooks/deny-sensitive-reads && go vet ./... && go test ./...)
 gitleaks git --redact --no-banner .
 ```

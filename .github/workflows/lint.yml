@@ -52,5 +52,10 @@ jobs:
         working-directory: .config/dotfiles/local-files
         run: go vet ./... && go test ./...
 
+      # Claude Code's PreToolUse hook: blocks reads of cleartext credentials
+      - name: deny-sensitive-reads hook (go vet + test)
+        working-directory: claude/hooks/deny-sensitive-reads
+        run: go vet ./... && go test ./...
+
       - name: gitleaks
         run: gitleaks git --redact --no-banner .
