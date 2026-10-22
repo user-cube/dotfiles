@@ -18,7 +18,7 @@ the keys it owns, and removes them when they stop applying. A repo's own
   window are tinted (for example only the title and status bars).
 - **Dangerous places.** Folders, or paths inside them (`infra/hetzner/prod`, globs
   allowed), turn the title bar red and show `⚠ PROD` in the status bar while the
-  active file is in them. The same for a Kubernetes context (`prod`, `*-prod`).
+  active file is in them.
 - **Protected branches.** The status bar turns amber on `main` / `master`
   (configurable).
 - **Terminals.** `⌘⌥T` opens a terminal in the folder of the active file, its tab in
@@ -32,7 +32,6 @@ the keys it owns, and removes them when they stop applying. A repo's own
 |---|---|
 | Hue: Set Color | Pick the color of the active folder (or "Automatic") |
 | Hue: Toggle Danger (PROD) for Folder | Mark or unmark the folder, the active file's directory, or an existing entry |
-| Hue: Toggle Danger (PROD) for Current Kubernetes Context | Add or remove the current context in `hue.dangerContexts` |
 | Hue: Open Terminal in Folder (`⌘⌥T`) | Terminal in the active folder, colored tab |
 | Hue: Go to Folder | Jump to a workspace folder's last file |
 | Hue: Refresh | Apply the colors again |
@@ -48,13 +47,8 @@ the keys it owns, and removes them when they stop applying. A repo's own
 | `hue.strength` | `normal` | `subtle`, `normal`, `strong` |
 | `hue.parts` | all | `titleBar`, `activityBar`, `sideBar`, `statusBar` |
 | `hue.danger` | `[]` | Folder names, or `folder/path` (`*` and `**` allowed) |
-| `hue.dangerContexts` | `[]` | Kubernetes contexts: names or patterns (`*-prod`) |
 | `hue.protectedBranches` | `["main", "master"]` | `[]` to turn the amber status bar off |
 | `hue.enabled` | `true` | Off removes the colors from the workspace |
-
-The Kubernetes context is read from the `current-context` line of `~/.kube/config`
-(the file `kubectl` and `kontext` change). A `KUBECONFIG` exported in a terminal is
-not visible to VS Code and is not used.
 
 ## Example
 
@@ -63,8 +57,7 @@ not visible to VS Code and is not used.
   "folders": [{ "path": "../work/github/infra" }, { "path": "../work/github/docs" }],
   "settings": {
     "hue.folders": { "infra": "purple", "docs": "teal" },
-    "hue.danger": ["infra/hetzner/prod"],
-    "hue.dangerContexts": ["*-prod"]
+    "hue.danger": ["infra/hetzner/prod"]
   }
 }
 ```

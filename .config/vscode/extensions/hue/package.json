@@ -1,8 +1,8 @@
 {
   "name": "hue",
   "displayName": "Hue",
-  "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders, protected branches and Kubernetes contexts.",
-  "version": "0.8.0",
+  "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders and protected branches.",
+  "version": "0.9.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -42,11 +42,6 @@
       {
         "command": "hue.clear",
         "title": "Clear (remove colors and turn off)",
-        "category": "Hue"
-      },
-      {
-        "command": "hue.toggleContextDanger",
-        "title": "Toggle Danger (PROD) for Current Kubernetes Context",
         "category": "Hue"
       }
     ],
@@ -129,14 +124,6 @@
           "type": "boolean",
           "default": true,
           "description": "Turn the whole extension off for this workspace: its colors are removed."
-        },
-        "hue.dangerContexts": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "markdownDescription": "Kubernetes contexts to treat as dangerous (production): a name, or a pattern with `*` (`*-prod`). While the current context of `~/.kube/config` matches, the title bar is red and the status bar shows PROD, in any folder. The easy way to fill it: **Hue: Toggle Danger (PROD) for Current Kubernetes Context**."
         }
       }
     },

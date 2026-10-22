@@ -6,12 +6,9 @@
 //
 // Settings: hue.folders (folder name -> color), hue.colors (the named
 // colors: name -> hue 0-360 or #rrggbb), hue.strength, hue.parts,
-// hue.danger (folders, or paths inside them, that get a red title bar and a PROD marker),
-// hue.dangerContexts (the same while the active Kubernetes context is one of them) and
+// hue.danger (folders, or paths inside them, that get a red title bar and a PROD marker) and
 // hue.protectedBranches (the status bar turns amber on those branches).
 const vscode = require('vscode');
-const fs = require('fs');
-const os = require('os');
 const path = require('path');
 
 const DEFAULT_COLORS = { red: 4, orange: 24, yellow: 46, green: 140, teal: 176, blue: 212, purple: 268, pink: 328 };
@@ -125,24 +122,6 @@ function isDanger(entries, folderName, rel) {
   return undefined;
 }
 
-// A plain name, or a pattern where * stands for any text and ? for one character
-function nameMatches(pattern, value) {
-  const re = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.');
-  return new RegExp(`^${re}$`).test(value);
-}
-
-// Only ~/.kube/config: the file kubectl and kontext change. A KUBECONFIG exported in a
-// terminal is not visible to VS Code, so it is not supported
-function kubeconfigPath() { return path.join(os.homedir(), '.kube', 'config'); }
-
-// Only the current-context line is read, nothing else
-function currentContext() {
-  try {
-    const m = /^current-context:\s*(.+?)\s*$/m.exec(fs.readFileSync(kubeconfigPath(), 'utf8'));
-    return m ? m[1].replace(/^["']|["']$/g, '') : undefined;
-  } catch (e) { return undefined; }
-}
-
 const AMBER = { dark: '#8a5a00', light: '#ffd58a' };
 const DANGER = { dark: ['#8a1c1c', '#4a1212'], light: ['#f5b5b5', '#f9d5d5'] };
 
@@ -238,18 +217,14 @@ function activate(context) {
     const k = STRENGTH[settings.get('strength')] || 1;
     const parts = new Set(settings.get('parts') || PARTS);
     const dangerEntry = enabled ? isDanger(settings.get('danger') || [], name, activeRelPath(folder)) : undefined;
-    const kube = enabled ? currentContext() : undefined;
-    const kubeDanger = !!kube && (settings.get('dangerContexts') || []).some((p) => nameMatches(p, kube));
-    const danger = dangerEntry !== undefined || kubeDanger;
+    const danger = dangerEntry !== undefined;
     const protectedBranches = settings.get('protectedBranches') || [];
     const branch = enabled && folder && protectedBranches.length ? await branchOf(folder) : undefined;
     const onProtected = !!branch && protectedBranches.includes(branch);
     const theme = light ? 'light' : 'dark';
 
     if (danger) {
-      dangerItem.text = kubeDanger && dangerEntry === undefined ? `$(warning) PROD · ${kube}` : '$(warning) PROD';
-      dangerItem.tooltip = [dangerEntry !== undefined && `Hue: dangerous place (${dangerEntry})`,
-        kubeDanger && `Hue: dangerous Kubernetes context (${kube})`].filter(Boolean).join('\n');
+      dangerItem.tooltip = `Hue: dangerous place (${dangerEntry})`;
       dangerItem.show();
     } else dangerItem.hide();
 
@@ -340,21 +315,6 @@ function activate(context) {
     await settings.update('danger', next, vscode.ConfigurationTarget.Workspace);
   }
 
-  // Add or remove the current Kubernetes context in the list (a user setting: contexts are yours, not a workspace's)
-  async function toggleContextDanger() {
-    const kube = currentContext();
-    if (!kube) {
-      vscode.window.showInformationMessage('Hue: no current Kubernetes context found in your kubeconfig.');
-      return;
-    }
-    const settings = vscode.workspace.getConfiguration('hue');
-    const inspected = settings.inspect('dangerContexts') || {};
-    const list = inspected.globalValue || [];
-    const next = list.includes(kube) ? list.filter((c) => c !== kube) : [...list, kube];
-    await settings.update('dangerContexts', next, vscode.ConfigurationTarget.Global);
-    vscode.window.showInformationMessage(`Hue: context ${kube} is ${next.includes(kube) ? 'now' : 'no longer'} marked as dangerous.`);
-  }
-
   // A terminal in the folder, its tab in the folder's color (red with a warning in a danger place)
   async function openTerminal() {
     const folder = await commandFolder();
@@ -364,9 +324,7 @@ function activate(context) {
     const colors = colorsSetting();
     let hue = map[folder.name] === undefined ? undefined : hueOf(map[folder.name], colors);
     if (hue === undefined && map[folder.name] === undefined) hue = autoHue(folder.name, colors);
-    const kube = currentContext();
-    const danger = isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder)) !== undefined
-      || (!!kube && (settings.get('dangerContexts') || []).some((p) => nameMatches(p, kube)));
+    const danger = isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder)) !== undefined;
     const red = new vscode.ThemeColor('terminal.ansiRed');
     vscode.window.createTerminal({
       name: danger ? `⚠ ${folder.name}` : folder.name,
@@ -420,17 +378,10 @@ function activate(context) {
     vscode.commands.registerCommand('hue.setColor', setColor),
     vscode.commands.registerCommand('hue.toggleDanger', toggleDanger),
     vscode.commands.registerCommand('hue.openTerminal', openTerminal),
-    vscode.commands.registerCommand('hue.toggleContextDanger', toggleContextDanger),
     vscode.commands.registerCommand('hue.goToFolder', goToFolder),
     vscode.commands.registerCommand('hue.clear', clear),
     vscode.commands.registerCommand('hue.refresh', apply),
   );
-  // kubectl / kontext rewrite ~/.kube/config when the context changes: poll its stat, and
-  // look again when the window gets focus
-  const kubeconfig = kubeconfigPath();
-  fs.watchFile(kubeconfig, { interval: 2000 }, apply);
-  context.subscriptions.push({ dispose: () => fs.unwatchFile(kubeconfig, apply) });
-  context.subscriptions.push(vscode.window.onDidChangeWindowState((state) => { if (state.focused) apply(); }));
   rememberFile();
   apply();
 }
