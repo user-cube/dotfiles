@@ -10,7 +10,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
 - `.config/`: tool configs, synced to `~/.config/`
   - `aerospace/`: tiling window manager, plus `CHEATSHEET.md` (`⌥ i`)
   - `borders/`: JankyBorders (focused window border)
-  - `sketchybar/`: bottom status bar; `plugins/icon_map.sh` (app icons) is not in git: `fetch-icon-map.sh` downloads it from the sketchybar-app-font release of the installed font
+  - `sketchybar/`: bottom status bar; `plugins/icon_map.sh` (app icons) is not in git: `fetch-icon-map.sh` downloads it from the sketchybar-app-font release of the installed font; `plugins/check/` (connectivity checks: kube contexts or `~/.config/sketchybar/checks`) is a Go program built by `dotfiles-sync`
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time)
@@ -132,7 +132,7 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/` (building `local-files`, downloading the SketchyBar icon map), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`, building its hook), copies `.zshrc`, `.p10k.zsh` and the git configs
+syncs `.config/` (building `local-files` and the SketchyBar checks, downloading the SketchyBar icon map), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`, building its hook), copies `.zshrc`, `.p10k.zsh` and the git configs
 (`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
 borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
@@ -140,13 +140,14 @@ borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
 `.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
 `shellcheck` on every shell script, `zsh -n` on the zsh files, `go vet` and `go test`
-on the commit-msg hook, `local-files` and the Claude Code hook, and `gitleaks` over
+on the commit-msg hook, `local-files`, the SketchyBar checks and the Claude Code hook, and `gitleaks` over
 the whole history. Run the same checks locally before pushing:
 
 ```sh
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
 (cd git_hooks/go/commit-msg && go vet ./... && go test ./...)
 (cd .config/dotfiles/local-files && go vet ./... && go test ./...)
+(cd .config/sketchybar/plugins/check && go vet ./... && go test ./...)
 (cd claude/hooks/deny-sensitive-reads && go vet ./... && go test ./...)
 gitleaks git --redact --no-banner .
 ```

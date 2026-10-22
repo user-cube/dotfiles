@@ -136,13 +136,13 @@ sketchybar --add item gitlab right \
   --add item kube right \
   --set kube update_freq=5 icon=$'\xf3\xb1\x83\xbe' script="$PLUGIN_DIR/kube.sh"
 
-# Connectivity checks (see plugins/check.sh), left of kube: passed/total and a
+# Connectivity checks (plugins/check/, a Go program built by dotfiles-sync), left of kube: passed/total and a
 # popup per check. $CONFIG_DIR/checks or, without it, every kube context;
 # the item hides itself when there is nothing to check.
 sketchybar --add item checks right \
   --subscribe checks system_woke mouse.clicked mouse.exited.global \
   --set checks update_freq=300 updates=on icon=$'\xf3\xb1\x83\xbe' icon.color=$BLUE \
-        label.color=$DIM script="$PLUGIN_DIR/check.sh" \
+        label.color=$DIM script="$PLUGIN_DIR/check/check" \
         popup.align=center popup.y_offset=4 popup.background.corner_radius=12 \
         popup.background.border_width=1 popup.background.border_color=$ITEM_BORDER
 

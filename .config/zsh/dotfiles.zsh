@@ -14,6 +14,8 @@ dotfiles-sync() {
   go build -C "$HOME/git_hooks/go/commit-msg" -o commit-msg commit-msg.go || return
   # local-backup / local-restore (Bitwarden)
   go build -C "$HOME/.config/dotfiles/local-files" -o local-files . || return
+  # SketchyBar connectivity checks (the `checks` item)
+  go build -C "$HOME/.config/sketchybar/plugins/check" -o check . || return
   cp "$repo/.zshrc" "$repo/.p10k.zsh" "$repo/.gitconfig" "$repo/.gitconfig-personal" "$HOME/" || return
   # Claude Code: settings, global instructions, hooks (claude/ and not .claude/,
   # which Claude Code would read as this repo's own project settings)
