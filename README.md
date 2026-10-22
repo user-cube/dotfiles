@@ -150,6 +150,16 @@ syncs `.config/`, `git_hooks/` and `claude/` (to `~/.claude/`), copies `.zshrc`,
 `.config/dotfiles/install.sh`, then reloads tmux, AeroSpace, SketchyBar and borders.
 Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
+To see first what it would change, changing nothing:
+
+```sh
+dotfiles-diff      # files it would overwrite (changed here, or older), add, or remove (obsolete)
+dotfiles-diff -p   # and their diffs: - is this machine, + what the sync brings
+```
+
+It compares with the upstream `dotfiles-sync` would pull (fetched, not merged), and
+says how many commits the clone is behind.
+
 `install.sh` holds the steps after the files are in place, the same for
 `dotfiles-sync` and the playbook (a new step goes there, in one repo):
 
@@ -166,7 +176,7 @@ Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 `shellcheck` on every shell script, `zsh -n` on the zsh files, `go vet` and `go test`
 on the commit-msg hook, `local-files`, the SketchyBar checks and the Claude Code hook,
 `.github/scripts/test-install.sh` (`dotfiles-sync` into an empty fake HOME: everything
-installed, a second run that changes nothing, the built tools working), and
+installed, a second run that changes nothing, the built tools working, `dotfiles-diff`), and
 `gitleaks` over the whole history. Run the same checks locally before pushing:
 
 ```sh

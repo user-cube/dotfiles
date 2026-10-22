@@ -17,9 +17,18 @@ failed=0
 fail() { echo "FAIL: $*"; failed=1; }
 pass() { echo "ok:   $*"; }
 
-# The "repo" dotfiles-sync pulls: a clone of this checkout, with the working tree on top
-git clone -q "$repo" "$t/dotfiles"
+# The "repo" dotfiles-sync pulls: a clone of this checkout with the working tree
+# on top, committed, and its own bare origin (dotfiles-diff compares with it)
+# git without the user's config: no global hooks (commit-msg blocks main), no signing
+g() { HOME=$t GIT_CONFIG_NOSYSTEM=1 git -c user.name=test -c user.email=test@example.com "$@"; }
+g clone -q "$repo" "$t/dotfiles"
 rsync -a --exclude .git "$repo/" "$t/dotfiles/"
+g -C "$t/dotfiles" add -A
+g -C "$t/dotfiles" commit -q --allow-empty -m "working tree" || fail "could not commit the working tree"
+g clone -q --bare "$t/dotfiles" "$t/origin.git"
+g -C "$t/dotfiles" remote set-url origin "$t/origin.git"
+g -C "$t/dotfiles" fetch -q
+g -C "$t/dotfiles" branch -q -u "origin/$(g -C "$t/dotfiles" branch --show-current)"
 
 # A fake VS Code CLI (Hue's install.sh): lists rui.hue once installed
 cat >"$t/bin/code" <<EOF
@@ -75,6 +84,34 @@ PATH="$t/bin:$PATH" NAME=checks SENDER=mouse.clicked CONFIG_DIR=$H/.config/sketc
   grep -q 'popup.drawing=toggle' "$t/bar" && pass "check toggles its popup" || fail "check did not run"
 usage=$("$H/.config/dotfiles/local-files/local-files" 2>&1) # exits 1 without a command
 [[ $usage == usage:* ]] && pass "local-files prints its usage" || fail "local-files did not run: $usage"
+
+echo "== dotfiles-diff: what a sync would change, changing nothing"
+diff_() {
+  HOME=$H PATH="$t/bin:$PATH" DOTFILES_DIR=$t/dotfiles \
+    zsh -f -c 'source "$DOTFILES_DIR/.config/zsh/dotfiles.zsh" && dotfiles-diff "$@"' _ "$@" 2>&1
+}
+state() { (cd "$H" && find . -type f -exec cksum {} + | sort); }
+out=$(diff_)
+[[ $out == *"This machine matches it."* ]] && pass "matches right after a sync" || fail "after a sync: $out"
+echo "# local edit" >>"$H/.zshrc"
+rm "$H/.config/sketchybar/colors.sh"
+mkdir -p "$H/.config/cmux" && echo old >"$H/.config/cmux/settings.json"
+before=$(state)
+out=$(diff_)
+[[ $out == *"changed  ~/.zshrc"* ]] && pass "lists a changed file" || fail "no changed ~/.zshrc: $out"
+[[ $out == *"new      ~/.config/sketchybar/colors.sh"* ]] && pass "lists a missing file as new" || fail "no new colors.sh: $out"
+[[ $out == *"removed  ~/.config/cmux/settings.json"* ]] && pass "lists an obsolete file" || fail "no removed cmux: $out"
+out=$(diff_ -p)
+[[ $out == *"+++ "*"/.zshrc"* && $out == *"-# local edit"* ]] && pass "-p shows the diff (- is this machine)" || fail "-p: $out"
+[ "$(state)" = "$before" ] && pass "changes nothing in HOME" || fail "dotfiles-diff changed HOME"
+# Upstream moves ahead: compared with what the sync would pull, not the clone
+g clone -q "$t/origin.git" "$t/other"
+echo "# from upstream" >>"$t/other/.config/git/ignore"
+g -C "$t/other" commit -qam upstream && g -C "$t/other" push -q
+out=$(diff_)
+[[ $out == *"1 commit(s) ahead of the clone"* && $out == *"changed  ~/.config/git/ignore"* ]] &&
+  pass "compares with the upstream the sync pulls" || fail "upstream: $out"
+g -C "$t/dotfiles" pull -q --ff-only # back in step for the rest
 
 echo "== a broken build fails the sync"
 echo 'not go' >>"$t/dotfiles/.config/dotfiles/local-files/main.go"
