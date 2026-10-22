@@ -10,7 +10,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
 - `.config/`: tool configs, synced to `~/.config/`
   - `aerospace/`: tiling window manager, plus `CHEATSHEET.md` (`⌥ i`)
   - `borders/`: JankyBorders (focused window border)
-  - `sketchybar/`: bottom status bar
+  - `sketchybar/`: bottom status bar; `plugins/icon_map.sh` (app icons) is not in git: `fetch-icon-map.sh` downloads it from the sketchybar-app-font release of the installed font
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
   - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time)
@@ -132,7 +132,7 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/` (building `local-files`), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`), copies `.zshrc`, `.p10k.zsh` and the git configs
+syncs `.config/` (building `local-files`, downloading the SketchyBar icon map), `git_hooks/` (building the commit-msg hook) and `claude/` (to `~/.claude/`), copies `.zshrc`, `.p10k.zsh` and the git configs
 (`.gitconfig-work` only when missing), then reloads tmux, AeroSpace, SketchyBar and
 borders. Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 

@@ -7,3 +7,5 @@ git_hooks/go/commit-msg/commit-msg
 .config/sketchybar/checks
 .config/tmux/plugins/
 .config/nvim/lua/plugins_local/
+# Downloaded by .config/sketchybar/fetch-icon-map.sh
+.config/sketchybar/plugins/icon_map.sh*

@@ -7,6 +7,8 @@ dotfiles-sync() {
 
   git -C "$repo" pull --ff-only || return
   rsync -a "$repo/.config/" "$HOME/.config/" || return
+  # SketchyBar app icons: the map of the installed font version (not in git); offline keeps the old one
+  "$HOME/.config/sketchybar/fetch-icon-map.sh" || echo "icon_map.sh: kept the current one"
   rsync -a "$repo/git_hooks/" "$HOME/git_hooks/" || return
   # Global commit-msg hook (hook.commit-msg-go in .gitconfig)
   go build -C "$HOME/git_hooks/go/commit-msg" -o commit-msg commit-msg.go || return

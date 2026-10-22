@@ -4,13 +4,15 @@
 # Has windows: dim. Empty: hidden.
 export PATH="/opt/homebrew/bin:$PATH"
 source "$CONFIG_DIR/colors.sh"
-# shellcheck source=SCRIPTDIR/icon_map.sh
+# Not in git: downloaded by fetch-icon-map.sh; __icon_map sets icon_result
+# shellcheck source=/dev/null
 source "$CONFIG_DIR/plugins/icon_map.sh"
 
 WS="$1"
 FOCUSED="${FOCUSED_WORKSPACE:-$(aerospace list-workspaces --focused)}"
 VISIBLE="$(aerospace list-workspaces --monitor all --visible)"
 
+icon_result=""
 ICONS=""
 while IFS= read -r app; do
   [ -z "$app" ] && continue
