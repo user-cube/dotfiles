@@ -28,6 +28,7 @@ The folders with more than a config file have their own README.
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities. Defaults: `pull` rebases (autostash), `fetch` prunes, conflicts in `zdiff3` with `rerere`, histogram diffs with moved lines colored, branches and tags newest first, `main` for new repos
 - [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig`: gitleaks, actionlint and `glab ci lint` on the staged CI config, `tofu fmt` on the staged Terraform files, the Go commit-msg hook
+- [`tests/`](tests/README.md): pytest, run by CI: the shortcuts agree across Ghostty, tmux and the cheat sheet, k9s keys, every config parses, and the behaviour of kube-guard, the hooks and the zsh functions
 - [`claude/`](claude/README.md): Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
   - `settings.json`: no co-author trailer, deny rules, hooks, plugins
   - `hooks/deny-sensitive-reads/`: a Go PreToolUse hook that blocks Bash commands and reads of what is really private (keys, credentials, env files); while it is not built, Claude Code's Bash and Read are blocked
@@ -187,7 +188,8 @@ says how many commits the clone is behind.
 `shellcheck` on every shell script (unquoted variables included: where splitting is
 wanted, use an array), `zsh -n` on the zsh files, `jq` on every JSON
 file (a broken `claude/settings.json` would break Claude Code), nvim started headless
-with the plugins at `lazy-lock.json` (any output on startup is an error), `go vet` and `go test`
+with the plugins at `lazy-lock.json` (any output on startup is an error), the pytest
+tests in `tests/`, `go vet` and `go test`
 on the commit-msg hook, `local-files`, the SketchyBar checks and the Claude Code hook,
 `.github/scripts/test-install.sh` (`dotfiles-sync` into an empty fake HOME: everything
 installed, a second run that changes nothing, the built tools working, `dotfiles-diff`), and
@@ -201,5 +203,6 @@ git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S
 (cd .config/sketchybar/plugins/check && go vet ./... && go test ./...)
 (cd claude/hooks/deny-sensitive-reads && go vet ./... && go test ./...)
 .github/scripts/test-install.sh
+python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt && .venv/bin/pytest tests/
 gitleaks git --redact --no-banner .
 ```

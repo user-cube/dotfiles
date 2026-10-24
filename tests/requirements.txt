@@ -1,0 +1,5 @@
+# Test dependencies (tests/, run by CI): pytest drives them, pexpect answers the
+# prompts in a terminal (kube-guard), PyYAML reads the YAML configs
+pytest==9.1.1
+pexpect==4.9.0
+PyYAML==6.0.3

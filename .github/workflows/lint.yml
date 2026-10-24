@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   lint:
-    name: shellcheck + bash 3.2 + zsh and JSON syntax + nvim + go tools + gitleaks
+    name: shellcheck + bash 3.2 + zsh and JSON syntax + nvim + go tools + pytest + gitleaks
     # macOS on purpose: scripts run with /bin/bash 3.2, which only macOS ships
     runs-on: macos-latest
 
@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0 # gitleaks scans the whole history
 
       - name: Install tooling
-        run: brew install shellcheck gitleaks go jq neovim tree-sitter-cli
+        run: brew install shellcheck gitleaks go jq neovim tree-sitter-cli tmux bat opentofu
 
       - name: List shell scripts
         run: git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' > "$RUNNER_TEMP/scripts.txt"
@@ -64,6 +64,15 @@ jobs:
           nvim --headless "+Lazy! restore" +qa
           out=$(nvim --headless +qa 2>&1)
           if [ -n "$out" ]; then echo "$out"; exit 1; fi
+
+      # tests/: the shortcuts in Ghostty, tmux and the cheat sheet agree, k9s keys
+      # and plugins, every config parses, and the behaviour of kube-guard, the
+      # tofu fmt hook, the krew completions and plugins-outdated (fake commands)
+      - name: pytest
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install -q -r tests/requirements.txt
+          "$RUNNER_TEMP/venv/bin/pytest" tests/ -q
 
       # Every work commit runs this hook: a broken build blocks them all
       - name: commit-msg hook (go vet + test)

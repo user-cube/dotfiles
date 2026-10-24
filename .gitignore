@@ -14,3 +14,7 @@ claude/hooks/deny-sensitive-reads/deny-sensitive-reads
 .config/k9s/screen-dumps/
 # Downloaded by .config/sketchybar/fetch-icon-map.sh
 .config/sketchybar/plugins/icon_map.sh*
+# pytest (tests/)
+__pycache__/
+.pytest_cache/
+.venv/
