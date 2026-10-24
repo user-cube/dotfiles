@@ -126,7 +126,7 @@ _cached_source() {
 }
 _cached_source pyenv           'pyenv init - --no-rehash zsh'
 _cached_source zoxide          'zoxide init zsh --cmd cd' # cd learns: `cd dotfiles` from anywhere, cdi picks
-# fzf (Ctrl+T files, Alt+C folders, Ctrl+R history): fd lists them (dotfiles in,
+# fzf (Ctrl+T files, Ctrl+G folders, Ctrl+R history): fd lists them (dotfiles in,
 # .gitignore respected), with a preview; ? shows a long history entry in full
 if (( $+commands[fd] )); then
   export FZF_CTRL_T_COMMAND='fd --type f --hidden --exclude .git'
@@ -136,6 +136,8 @@ export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-ran
 export FZF_ALT_C_OPTS="--preview 'ls -1 --color=always {}'"
 export FZF_CTRL_R_OPTS="--preview 'echo {2..}' --preview-window=up:3:hidden:wrap --bind '?:toggle-preview'"
 _cached_source fzf             'fzf --zsh'
+# Folders on Ctrl+G, not fzf's Alt+C: Option+letter belongs to AeroSpace
+(( $+widgets[fzf-cd-widget] )) && bindkey '^G' fzf-cd-widget
 _cached_source aws-cli-manager 'aws-cli-manager completion zsh'
 _cached_source kontext         'kontext completion zsh'
 _cached_source helm            'helm completion zsh'

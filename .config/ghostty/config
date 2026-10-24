@@ -120,10 +120,6 @@ keybind = cmd+shift+c=text:\x02y
 keybind = cmd+shift+up=text:\x02P
 keybind = cmd+shift+down=text:\x02N
 
-# Option+C sends Alt+C (fzf: pick a folder to cd into). Only this key: Option
-# stays Option elsewhere, for the characters it types
-keybind = alt+c=text:\x1bc
-
 # Cheat sheet of all these shortcuts, in a popup
 keybind = cmd+shift+h=text:\x02?
 
