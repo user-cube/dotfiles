@@ -7,34 +7,25 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
 
 ## Directory Structure
 
+The folders with more than a config file have their own README.
+
 - `.config/`: tool configs, synced to `~/.config/`
   - `aerospace/`: tiling window manager, plus `CHEATSHEET.md` (`⌥ i`)
   - `borders/`: JankyBorders (focused window border)
-  - `sketchybar/`: bottom status bar
-    - `plugins/icon_map.sh` (app icons) is not in git: `fetch-icon-map.sh` downloads it from the sketchybar-app-font release of the installed font
-    - `plugins/check/`: connectivity checks (kube contexts, or `~/.config/sketchybar/checks`), a Go program
-  - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
-  - `nvim/`, `yazi/`: editor, file manager
-  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time, `plugins-outdated`: the zsh/tmux plugins the playbook pins that master has moved past, with a notification every 14 days)
-  - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, ansible, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
-  - `vscode/extensions/hue/`: Hue, a small VS Code extension, no marketplace ([its README](.config/vscode/extensions/hue/README.md) has the commands and settings)
-    - the window takes the color of the workspace folder you work in: `ws -n NAME DIR:blue ...`, or one from the folder's name
-    - production: `DIR!` (all of it) or `DIR!hetzner/prod` (only that path) gives a red title bar, a PROD marker and a red terminal tab
-    - the status bar turns amber on `main`/`master`
+  - [`sketchybar/`](.config/sketchybar/README.md): bottom status bar; its plugins, and the per-machine `aws_profiles` and `checks`
+  - [`ghostty/`](.config/ghostty/README.md), [`tmux/`](.config/tmux/README.md): terminal; every Ghostty window runs inside tmux, and the ⌘ shortcuts are tmux's (the tmux README lists them, and how to copy)
+  - [`nvim/`](.config/nvim/README.md), `yazi/`: editor, file manager
+  - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync`, `local-backup`, `ws`, `plugins-outdated`)
+  - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
+  - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the obsolete files list, `local-files`
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities
-- `git_hooks/`: global git hooks, wired in `.gitconfig`
-  - commit-msg (Go, `hook.commit-msg-go`)
-  - pre-commit, on the staged CI config: actionlint for GitHub Actions workflows (`hook.actionlint`), and `glab ci lint` for `.gitlab-ci.yml` through the GitLab API, in repos whose host glab is logged in to (`hook.gitlab-ci-lint`)
-- `claude/`: Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
+- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig`: gitleaks, actionlint and `glab ci lint` on the staged CI config, the Go commit-msg hook
+- [`claude/`](claude/README.md): Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
   - `settings.json`: no co-author trailer, deny rules, hooks, plugins
-  - `CLAUDE.md`: global instructions
-  - `hooks/deny-sensitive-reads/`: a Go PreToolUse hook; while it is not built, Claude Code's Bash and Read are blocked
-    - blocks Bash commands and reads that touch what is really private: ssh private keys, AWS credentials, env files (not `.env.example`), `*.pem`/`*.key`, age keys, app credential files
-    - and files under `secrets/`/`credentials/` that sops does not report as encrypted
-    - `~/.ssh/config`, `~/.aws/config` and docker-compose files stay readable
+  - `hooks/deny-sensitive-reads/`: a Go PreToolUse hook that blocks Bash commands and reads of what is really private (keys, credentials, env files); while it is not built, Claude Code's Bash and Read are blocked
 
 ## Zsh
 
@@ -47,10 +38,22 @@ Shared shell functions live in `.config/zsh/*.zsh` and are all sourced before
 `~/.zshrc.local`, e.g. `bw.zsh` (Bitwarden CLI session wrapper; needs
 `export BW_USER=<email>` in `~/.zshrc.local`).
 
-Startup is kept fast: nvm loads on first use, `pyenv init` skips the rehash
+Startup is kept around 0.1 s: nvm loads on first use, `pyenv init` skips the rehash
 (run `pyenv rehash` after installing a package with commands), and the
 pyenv/zoxide/fzf inits and the completions are cached in `~/.cache/zsh`
-(regenerated when the tool is upgraded; delete the folder to force it). Measure with `time zsh -i -c exit`.
+(regenerated when the tool is upgraded or its command line changes; delete the
+folder to force it). Measure with `time zsh -i -c exit`.
+
+Day to day (details in the [zsh README](.config/zsh/README.md)):
+
+- Tab completes in an fzf list (fzf-tab), hidden files included
+- Ctrl+T picks a file, Ctrl+G a folder, Ctrl+R a history entry, with previews
+- `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick
+- the Oh My Zsh plugins (zsh-autosuggestions, fzf-tab, zsh-syntax-highlighting)
+  are cloned at pinned commits by the playbook; `plugins-outdated` shows which
+  ones master has moved past, and every 14 days a notification says so
+- p10k marks each prompt and command output, so tmux can jump between commands
+  and copy one's output (⌘⇧↑ / ⌘⇧↓, ⌘⇧C: see the [tmux README](.config/tmux/README.md))
 
 ## SOPS age keys
 
@@ -120,7 +123,7 @@ before committing (gitleaks also runs as a pre-commit hook).
 
 ### Backup in Bitwarden
 
-These files, plus `~/.gitconfig-work`, `~/.kube/config`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
+These files (but not the nvim plugins or the workspaces), plus `~/.gitconfig-work`, `~/.kube/config`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
 `.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
 (`.config/dotfiles/local-files/`, a Go tool built by `dotfiles-sync` and the
 playbook; uses the `bw` wrapper's session).
@@ -173,7 +176,8 @@ says how many commits the clone is behind.
 ## CI
 
 `.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
-`shellcheck` on every shell script, `zsh -n` on the zsh files, `go vet` and `go test`
+`shellcheck` on every shell script, `zsh -n` on the zsh files, `jq` on every JSON
+file (a broken `claude/settings.json` would break Claude Code), `go vet` and `go test`
 on the commit-msg hook, `local-files`, the SketchyBar checks and the Claude Code hook,
 `.github/scripts/test-install.sh` (`dotfiles-sync` into an empty fake HOME: everything
 installed, a second run that changes nothing, the built tools working, `dotfiles-diff`), and
