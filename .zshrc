@@ -1,3 +1,7 @@
+# PATH keeps only the first of each entry: nested shells (tmux, exec zsh)
+# would otherwise prepend Homebrew, go/bin and the rest again
+typeset -U path PATH
+
 # direnv loads a folder's .envrc (and prints its "direnv: loading" lines) here,
 # before instant prompt, so p10k doesn't warn about console output. The hook
 # itself is set later by the oh-my-zsh direnv plugin.
@@ -14,7 +18,6 @@ export ZSH="$HOME/.oh-my-zsh"
 plugins=(
   git
   zsh-autosuggestions
-  zsh-syntax-highlighting
   colored-man-pages
   docker
   docker-compose
@@ -27,6 +30,7 @@ plugins=(
   direnv
   opentofu
   gh
+  zsh-syntax-highlighting # last: it wraps the widgets defined before it
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -35,11 +39,12 @@ source $ZSH/oh-my-zsh.sh
 HISTFILE=~/.zsh_history
 HISTSIZE=100000
 SAVEHIST=100000
-setopt APPEND_HISTORY
-setopt SHARE_HISTORY          # every tmux pane sees the others' commands
+setopt SHARE_HISTORY          # every tmux pane sees the others' commands (appends too)
+setopt EXTENDED_HISTORY       # start time and duration of each command: history -i
 setopt HIST_IGNORE_ALL_DUPS   # a repeated command keeps only its latest entry
 setopt HIST_IGNORE_SPACE
 setopt HIST_REDUCE_BLANKS
+setopt HIST_VERIFY            # !! and !$ expand onto the line, run on a second Enter
 
 # --- Powerlevel10k ---
 source ~/powerlevel10k/powerlevel10k.zsh-theme
