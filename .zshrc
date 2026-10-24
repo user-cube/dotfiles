@@ -30,6 +30,11 @@ plugins=(
   direnv
   opentofu
   gh
+  sudo        # Esc Esc: sudo in front of the line (or of the last command)
+  copybuffer  # Ctrl+O: the line being typed to the clipboard, not run
+  copypath    # copypath [file]: the folder's (or file's) path to the clipboard
+  extract     # extract FILE: any archive (.tar.gz, .zip, .7z, ...)
+  macos       # ofd: this folder in Finder, cdf: cd to Finder's, quick-look FILE
   zsh-syntax-highlighting # last: it wraps the widgets defined before it
 )
 

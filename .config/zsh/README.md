@@ -23,6 +23,10 @@ The details are in each file's header comment and in the [main README](../../REA
   fzf-tab (Tab completes in an fzf list, hidden files included), and
   zsh-syntax-highlighting, which must stay last
 - Oh My Zsh only notes its updates at startup (`omz update` when you want)
+- small Oh My Zsh plugins: **Esc Esc** puts `sudo` in front of the line (or of the
+  last command); **Ctrl+O** copies the line being typed, without running it;
+  `copypath [file]` copies a path; `extract FILE` unpacks any archive; `ofd` opens
+  this folder in Finder, `cdf` goes to Finder's, `quick-look FILE` previews
 - history: 100000 lines shared between panes, with start time and duration
   (`history -i`), no duplicates, `!!` expanded before it runs
 - fzf: Ctrl+T files, Ctrl+G folders, Ctrl+R history, listed with `fd`

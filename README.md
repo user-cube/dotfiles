@@ -49,6 +49,7 @@ Day to day (details in the [zsh README](.config/zsh/README.md)):
 - Tab completes in an fzf list (fzf-tab), hidden files included
 - Ctrl+T picks a file, Ctrl+G a folder, Ctrl+R a history entry, with previews
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick
+- Esc Esc adds `sudo`, Ctrl+O copies the line, `copypath`, `extract`, `ofd` / `cdf` (Finder)
 - the Oh My Zsh plugins (zsh-autosuggestions, fzf-tab, zsh-syntax-highlighting)
   are cloned at pinned commits by the playbook; `plugins-outdated` shows which
   ones master has moved past, and every 14 days a notification says so
