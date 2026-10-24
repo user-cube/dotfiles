@@ -48,6 +48,10 @@ if [[ -d $ZSH/custom/plugins/fzf-tab ]]; then
 fi
 
 source $ZSH/oh-my-zsh.sh
+# Tab lists hidden files and folders too (completion only: * still skips them),
+# without ./ and ../ (Oh My Zsh's special-dirs would add them to every list)
+_comp_options+=(globdots)
+zstyle ':completion:*' special-dirs false
 
 # --- History ---
 HISTFILE=~/.zsh_history
