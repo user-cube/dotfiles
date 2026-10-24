@@ -7,4 +7,4 @@ COUNT=$(run gh search prs --review-requested=@me --state=open --json number --jq
 [ -z "$COUNT" ] && COUNT="?"
 
 if [ "$COUNT" = "0" ]; then COLOR=$DIM; else COLOR=$YELLOW; fi
-sketchybar --set "$NAME" label="$COUNT" icon.color=$COLOR label.color=$COLOR
+sketchybar --set "$NAME" label="$COUNT" icon.color="$COLOR" label.color="$COLOR"

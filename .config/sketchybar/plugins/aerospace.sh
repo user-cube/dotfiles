@@ -23,11 +23,11 @@ ICONS="${ICONS% }"
 
 if [ "$WS" = "$FOCUSED" ]; then
   sketchybar --set "$NAME" drawing=on label="$ICONS" label.drawing="$([ -n "$ICONS" ] && echo on || echo off)" \
-    icon.color=$GREEN label.color=$DARK label.background.color=$GREEN
+    icon.color="$GREEN" label.color="$DARK" label.background.color="$GREEN"
 elif [ -n "$ICONS" ] || echo "$VISIBLE" | grep -qx "$WS"; then
   if echo "$VISIBLE" | grep -qx "$WS"; then COLOR=$FG; else COLOR=$DIM; fi
   sketchybar --set "$NAME" drawing=on label="$ICONS" label.drawing="$([ -n "$ICONS" ] && echo on || echo off)" \
-    icon.color=$COLOR label.color=$COLOR label.background.color=$PILL_BG
+    icon.color="$COLOR" label.color="$COLOR" label.background.color="$PILL_BG"
 else
   sketchybar --set "$NAME" drawing=off
 fi

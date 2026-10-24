@@ -21,7 +21,7 @@ BADGE=$(osascript -e "tell application \"System Events\" to tell process \"Dock\
 [ "$BADGE" = "missing value" ] && BADGE=""
 
 case "$BADGE" in
-  "")      sketchybar --set "$NAME" drawing=on label.drawing=off icon.color=$DIM ;;
-  *[0-9]*) sketchybar --set "$NAME" drawing=on label.drawing=on label="$BADGE" icon.color=$RED label.color=$RED ;;
-  *)       sketchybar --set "$NAME" drawing=on label.drawing=on label="•" icon.color=$YELLOW label.color=$YELLOW ;;
+  "")      sketchybar --set "$NAME" drawing=on label.drawing=off icon.color="$DIM" ;;
+  *[0-9]*) sketchybar --set "$NAME" drawing=on label.drawing=on label="$BADGE" icon.color="$RED" label.color="$RED" ;;
+  *)       sketchybar --set "$NAME" drawing=on label.drawing=on label="•" icon.color="$YELLOW" label.color="$YELLOW" ;;
 esac

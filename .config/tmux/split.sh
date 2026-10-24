@@ -14,8 +14,9 @@ SSH_ARGS=$(ps -o stat=,args= -t "$TTY" 2>/dev/null \
 # Only `ssh [options] host`: options that take a value skip it, -N/-f/-O/-W
 # mean no interactive shell, and any word after the host is a remote command.
 interactive_host() {
-  local host="" arg
-  set -- $SSH_ARGS
+  local host="" arg words
+  read -ra words <<<"$SSH_ARGS" # words, never globs (an arg could hold a *)
+  set -- "${words[@]}"
   shift # "ssh"
   while [ $# -gt 0 ]; do
     arg="$1"

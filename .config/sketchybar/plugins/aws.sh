@@ -8,9 +8,9 @@ PROFILE="$1"
 
 OUT=$(run aws sts get-caller-identity --profile "$PROFILE" --output json 2>&1)
 if [ $? -eq 0 ]; then
-  sketchybar --set "$NAME" label="$PROFILE" label.color=$FG icon.color=$ORANGE
+  sketchybar --set "$NAME" label="$PROFILE" label.color="$FG" icon.color="$ORANGE"
 elif echo "$OUT" | grep -qiE 'expired|sso|refresh|token'; then
-  sketchybar --set "$NAME" label="$PROFILE expired" label.color=$RED icon.color=$RED
+  sketchybar --set "$NAME" label="$PROFILE expired" label.color="$RED" icon.color="$RED"
 else
-  sketchybar --set "$NAME" label="$PROFILE error" label.color=$RED icon.color=$RED
+  sketchybar --set "$NAME" label="$PROFILE error" label.color="$RED" icon.color="$RED"
 fi

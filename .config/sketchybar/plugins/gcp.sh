@@ -12,7 +12,7 @@ PROJECT=$(run gcloud config get-value project 2>/dev/null)
 
 # Refreshes the token if possible; output discarded
 if run gcloud auth print-access-token >/dev/null 2>&1; then
-  sketchybar --set "$NAME" drawing=on label="${PROJECT:-$ACCOUNT}" icon.color=$BLUE label.color=$FG
+  sketchybar --set "$NAME" drawing=on label="${PROJECT:-$ACCOUNT}" icon.color="$BLUE" label.color="$FG"
 else
-  sketchybar --set "$NAME" drawing=on label="expired" icon.color=$RED label.color=$RED
+  sketchybar --set "$NAME" drawing=on label="expired" icon.color="$RED" label.color="$RED"
 fi

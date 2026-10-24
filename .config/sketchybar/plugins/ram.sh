@@ -6,4 +6,4 @@ USED=$((100 - FREE))
 COLOR=$GREEN
 [ "$USED" -ge 70 ] && COLOR=$YELLOW
 [ "$USED" -ge 85 ] && COLOR=$RED
-sketchybar --set "$NAME" label="${USED}%" icon.color=$COLOR
+sketchybar --set "$NAME" label="${USED}%" icon.color="$COLOR"

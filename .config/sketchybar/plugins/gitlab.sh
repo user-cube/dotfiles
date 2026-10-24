@@ -23,4 +23,4 @@ COUNT=$(run glab api "merge_requests?scope=all&state=opened&reviewer_id=$USER_ID
 [ -z "$COUNT" ] && COUNT="?"
 
 if [ "$COUNT" = "0" ]; then COLOR=$DIM; else COLOR=$ORANGE; fi
-sketchybar --set "$NAME" drawing=on label="$COUNT" icon.color=$COLOR label.color=$COLOR
+sketchybar --set "$NAME" drawing=on label="$COUNT" icon.color="$COLOR" label.color="$COLOR"

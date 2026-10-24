@@ -26,9 +26,9 @@ TRACK="${OUT#*|}"
 
 case "$STATE" in
   playing)
-    sketchybar --set "$NAME" drawing=on label="$TRACK" icon.color=$GREEN label.color=$FG ;;
+    sketchybar --set "$NAME" drawing=on label="$TRACK" icon.color="$GREEN" label.color="$FG" ;;
   paused)
-    sketchybar --set "$NAME" drawing=on label=$'\xe2\x96\xb6\xef\xb8\x8e'"  $TRACK" icon.color=$DIM label.color=$DIM ;;
+    sketchybar --set "$NAME" drawing=on label=$'\xe2\x96\xb6\xef\xb8\x8e'"  $TRACK" icon.color="$DIM" label.color="$DIM" ;;
   *)
     sketchybar --set "$NAME" drawing=off ;;
 esac

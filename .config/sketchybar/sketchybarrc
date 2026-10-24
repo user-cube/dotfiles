@@ -18,7 +18,7 @@ BRACKET_STYLE=(background.color="$BRACKET_BG" background.corner_radius=10 backgr
                background.border_width=1 background.border_color="$ITEM_BORDER")
 
 sketchybar --bar position=bottom height=40 y_offset=4 margin=8 corner_radius=12 \
-           color=$BAR_BG border_width=1 border_color=$ITEM_BORDER blur_radius=20 \
+           color="$BAR_BG" border_width=1 border_color="$ITEM_BORDER" blur_radius=20 \
            display=all sticky=on topmost=off padding_left=8 padding_right=12 \
            notch_width=0
 
@@ -26,12 +26,12 @@ sketchybar --bar position=bottom height=40 y_offset=4 margin=8 corner_radius=12 
 # themselves (Spotify, GitLab, AWS, GCP, checks) set updates=on to be able to reappear.
 sketchybar --default updates=when_shown \
            icon.font="$ICON_FONT:Bold:14.0" label.font="$TEXT_FONT:Semibold:13.0" \
-           icon.color=$FG label.color=$FG \
+           icon.color="$FG" label.color="$FG" \
            icon.padding_left=6 icon.padding_right=4 \
            label.padding_left=4 label.padding_right=6 \
            padding_left=2 padding_right=2 \
-           popup.background.color=$POPUP_BG popup.background.corner_radius=10 \
-           popup.background.border_width=2 popup.background.border_color=$FG \
+           popup.background.color="$POPUP_BG" popup.background.corner_radius=10 \
+           popup.background.border_width=2 popup.background.border_color="$FG" \
            popup.blur_radius=20
 
 # --- AeroSpace workspaces: name + pill with its app icons, on its own monitor ---
@@ -45,7 +45,7 @@ for mid in $(aerospace list-monitors --format '%{monitor-appkit-nsscreen-screens
             icon="${ws#*-}" icon.font="$TEXT_FONT:Bold:13.0" icon.padding_left=10 \
             label.font="$APP_FONT" label.y_offset=-1 \
             label.padding_left=8 label.padding_right=8 \
-            label.background.color=$PILL_BG label.background.corner_radius=7 \
+            label.background.color="$PILL_BG" label.background.corner_radius=7 \
             label.background.height=24 \
             click_script="aerospace workspace $ws" \
             script="$PLUGIN_DIR/aerospace.sh $ws"
@@ -57,17 +57,17 @@ sketchybar --add bracket spaces '/space\..*/' \
 
 # --- Focused app ---------------------------------------------------------------
 sketchybar --add item chevron left \
-  --set chevron icon=$'\xef\x81\x94' icon.color=$FG label.drawing=off padding_left=10 \
+  --set chevron icon=$'\xef\x81\x94' icon.color="$FG" label.drawing=off padding_left=10 \
   --add item front_app left \
   --subscribe front_app front_app_switched \
-  --set front_app icon.font="$APP_FONT" icon.color=$ORANGE \
+  --set front_app icon.font="$APP_FONT" icon.color="$ORANGE" \
         script="$PLUGIN_DIR/front_app.sh"
 
 # --- Right side (added rightmost first) ------------------------------------------
 sketchybar --add event brew_update \
   --add item brew right \
   --subscribe brew brew_update \
-  --set brew update_freq=3600 updates=on icon=$'\xf3\xb0\x8f\x97' icon.color=$ORANGE \
+  --set brew update_freq=3600 updates=on icon=$'\xf3\xb0\x8f\x97' icon.color="$ORANGE" \
         script="$PLUGIN_DIR/brew.sh" click_script="$PLUGIN_DIR/brew_upgrade.sh"
 
 sketchybar --add bracket status brew \
@@ -83,9 +83,9 @@ sketchybar --add item ram right \
 
 sketchybar --add graph cpu right 60 \
   --set cpu update_freq=2 padding_right=10 \
-        graph.color=$BLUE graph.fill_color=0x4466d9ef \
+        graph.color="$BLUE" graph.fill_color=0x4466d9ef \
         icon.drawing=off label.font="$TEXT_FONT:Semibold:12.0" \
-        label.color=$FG background.height=26 \
+        label.color="$FG" background.height=26 \
         script="$PLUGIN_DIR/cpu.sh"
 
 # --- Messaging badges (Dock badge via Accessibility; hidden when app closed) -------
@@ -107,9 +107,9 @@ sketchybar --add item gcp right \
 # U+F0E0F — U+F375 is linux-qt in Nerd Fonts v3).
 AWS_PROFILES=$("$PLUGIN_DIR/aws_profiles.sh" | tail -r)
 last=$(echo "$AWS_PROFILES" | tail -1)
-CLOUD_ITEMS="gcp"
+CLOUD_ITEMS=(gcp)
 for profile in $AWS_PROFILES; do
-  CLOUD_ITEMS="$CLOUD_ITEMS aws.$profile"
+  CLOUD_ITEMS+=("aws.$profile")
   sketchybar --add item "aws.$profile" right \
     --subscribe "aws.$profile" system_woke \
     --set "aws.$profile" update_freq=300 icon=$'\xf3\xb0\xb8\x8f' icon.font="$ICON_FONT:Bold:16.0" \
@@ -117,7 +117,7 @@ for profile in $AWS_PROFILES; do
           script="$PLUGIN_DIR/aws.sh $profile"
 done
 
-sketchybar --add bracket cloud $CLOUD_ITEMS \
+sketchybar --add bracket cloud "${CLOUD_ITEMS[@]}" \
   --set cloud "${BRACKET_STYLE[@]}"
 
 # --- Dev group: kube context, Colima, PRs/MRs to review ----------------------------
@@ -141,10 +141,10 @@ sketchybar --add item gitlab right \
 # the item hides itself when there is nothing to check.
 sketchybar --add item checks right \
   --subscribe checks system_woke mouse.clicked mouse.exited.global \
-  --set checks update_freq=300 updates=on icon=$'\xf3\xb1\x83\xbe' icon.color=$BLUE \
-        label.color=$DIM script="$PLUGIN_DIR/check/check" \
+  --set checks update_freq=300 updates=on icon=$'\xf3\xb1\x83\xbe' icon.color="$BLUE" \
+        label.color="$DIM" script="$PLUGIN_DIR/check/check" \
         popup.align=center popup.y_offset=4 popup.background.corner_radius=12 \
-        popup.background.border_width=1 popup.background.border_color=$ITEM_BORDER
+        popup.background.border_width=1 popup.background.border_color="$ITEM_BORDER"
 
 sketchybar --add bracket dev kube colima github gitlab checks \
   --set dev "${BRACKET_STYLE[@]}"
@@ -153,7 +153,7 @@ sketchybar --add bracket dev kube colima github gitlab checks \
 sketchybar --add event spotify_change com.spotify.client.PlaybackStateChanged \
   --add item spotify right \
   --subscribe spotify spotify_change mouse.clicked \
-  --set spotify icon=":spotify:" icon.font="$APP_FONT" icon.color=$GREEN \
+  --set spotify icon=":spotify:" icon.font="$APP_FONT" icon.color="$GREEN" \
         label.max_chars=40 padding_right=10 drawing=off updates=on \
         script="$PLUGIN_DIR/spotify.sh"
 

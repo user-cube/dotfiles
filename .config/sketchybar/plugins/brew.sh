@@ -10,4 +10,4 @@ COUNT=$(run brew outdated --quiet 2>/dev/null | wc -l | tr -d ' ')
 COLOR=$GREEN
 [ "$COUNT" -gt 0 ] && COLOR=$YELLOW
 [ "$COUNT" -gt 20 ] && COLOR=$ORANGE
-sketchybar --set "$NAME" label="$COUNT" icon.color=$COLOR
+sketchybar --set "$NAME" label="$COUNT" icon.color="$COLOR"
