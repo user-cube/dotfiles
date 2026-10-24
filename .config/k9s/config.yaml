@@ -15,7 +15,8 @@ k9s:
     logoless: false
     crumbsless: false
     splashless: false
-    reactive: false
+    reactive: true # rereads the config and skin when they change, no restart
+    skin: monokai # skins/monokai.yaml
     noIcons: false
     invert: false
     defaultsToFullScreen: false
@@ -34,13 +35,13 @@ k9s:
       namespaces: []
       labels: {}
   logger:
-    tail: 100
+    tail: 200 # lines shown when the logs open
     buffer: 5000
     sinceSeconds: -1
-    textWrap: false
+    textWrap: true # long lines wrap instead of going off screen
     disableAutoscroll: false
     columnLock: false
-    showTime: false
+    showTime: true # each line's timestamp
   thresholds:
     cpu:
       critical: 90

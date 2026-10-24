@@ -1,0 +1,21 @@
+# Shift-<digit>: straight to a view, from any other (the digits alone pick a
+# favorite namespace). Only the digits whose Shift types the same character on
+# the Portuguese and US layouts (1 !, 3 #, 4 $, 5 %): k9s reads Shift-2 as @,
+# which a Portuguese keyboard doesn't send, and won't take " as a key.
+hotKeys:
+  shift-1:
+    shortCut: Shift-1
+    description: Pods
+    command: pods
+  shift-3:
+    shortCut: Shift-3
+    description: Deployments
+    command: deployments
+  shift-4:
+    shortCut: Shift-4
+    description: Argo CD apps
+    command: applications
+  shift-5:
+    shortCut: Shift-5
+    description: Events
+    command: events

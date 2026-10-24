@@ -31,3 +31,44 @@ plugins:
     command: dive
     background: false
     args: [$COL-IMAGE]
+
+  # Ctrl-B on a container: a debug container (busybox) next to it, sharing its
+  # processes: a shell for images that have none (distroless)
+  debug:
+    shortCut: Ctrl-B
+    description: Debug container
+    scopes: [containers]
+    command: kubectl
+    background: false
+    dangerous: true # adds an ephemeral container: off in read-only (production)
+    args: [debug, -it, --context, $CONTEXT, -n, $NAMESPACE, $POD, --target, $NAME, --image, "busybox:1.37.0", --profile, general, --, sh]
+
+  # Argo CD applications, through kubectl (no argocd login): the same as the
+  # UI's Refresh, Hard refresh and Sync. Off in read-only (production)
+  argocd-refresh:
+    shortCut: Ctrl-F
+    description: Argo refresh
+    scopes: [applications]
+    command: kubectl
+    background: true
+    dangerous: true
+    args: [annotate, applications, $NAME, -n, $NAMESPACE, --context, $CONTEXT, --overwrite, argocd.argoproj.io/refresh=normal]
+
+  argocd-hard-refresh:
+    shortCut: Ctrl-G
+    description: Argo hard refresh
+    scopes: [applications]
+    command: kubectl
+    background: true
+    dangerous: true
+    args: [annotate, applications, $NAME, -n, $NAMESPACE, --context, $CONTEXT, --overwrite, argocd.argoproj.io/refresh=hard]
+
+  argocd-sync:
+    shortCut: Ctrl-Y
+    description: Argo sync
+    scopes: [applications]
+    command: kubectl
+    background: true
+    confirm: true
+    dangerous: true
+    args: [patch, applications, $NAME, -n, $NAMESPACE, --context, $CONTEXT, --type, merge, -p, '{"operation":{"initiatedBy":{"username":"k9s"},"sync":{"syncStrategy":{"hook":{}}}}}']
