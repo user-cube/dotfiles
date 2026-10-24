@@ -32,6 +32,8 @@ favorite namespace.
 |---|---|---|
 | Ctrl-L | pods, deployments, statefulsets, daemonsets | stern: the logs of all its pods together |
 | Ctrl-N | any resource | its YAML through `kubectl neat` (no managedFields, status, defaults), in `less` |
+| Ctrl-O | containers | dive on the container's image: its layers, what each adds, the space wasted (pulls through Docker / Colima) |
+| Ctrl-T | deployments, statefulsets, daemonsets | krr: CPU / memory requests and limits recommended from Prometheus usage, for the workloads of its namespace, in `less` |
 | Ctrl-B | containers | `kubectl debug`: a busybox container next to it, sharing its processes (a shell for distroless images) |
 | Ctrl-F, Ctrl-G | Argo CD applications | refresh, hard refresh (the `argocd.argoproj.io/refresh` annotation) |
 | Ctrl-Y | Argo CD applications | sync, after a confirmation (a patch of `operation.sync`) |

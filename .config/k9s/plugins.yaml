@@ -23,6 +23,30 @@ plugins:
       - -c
       - kubectl get "$RESOURCE_NAME" "$NAME" -n "$NAMESPACE" --context "$CONTEXT" -o yaml | kubectl neat | less
 
+  # Ctrl-O on a container: its image's layers, what each adds and the space
+  # wasted (dive; pulls the image through Docker / Colima). Not Ctrl-I: that is
+  # Tab to a terminal, which k9s rejects, and then it loads no plugin at all
+  dive:
+    shortCut: Ctrl-O
+    description: Image layers (dive)
+    scopes: [containers]
+    command: dive
+    background: false
+    args: [$COL-IMAGE]
+
+  # Ctrl-T on a workload: krr's CPU / memory requests and limits recommendations
+  # from Prometheus usage, for the workloads of its namespace (krr finds the
+  # cluster's Prometheus itself), in less
+  krr:
+    shortCut: Ctrl-T
+    description: Resources (krr)
+    scopes: [deployments, statefulsets, daemonsets]
+    command: sh
+    background: false
+    args:
+      - -c
+      - krr simple -q -c "$CONTEXT" -n "$NAMESPACE" --width "$(tput cols)" 2>&1 | LESSCHARSET=utf-8 less -R
+
   # Ctrl-B on a container: a debug container (busybox) next to it, sharing its
   # processes: a shell for images that have none (distroless)
   debug:
