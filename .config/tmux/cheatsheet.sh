@@ -34,6 +34,7 @@ entries=(
   'C-b Y	copy	⌘Y	copy a token on screen'
   'C-b u	copy	⌘U	open a URL from the pane'
   'C-b a	copy	⌘A	select all'
+  'C-b [	copy	C-b [	copy mode (or scroll up): v selects, wheel extends, y copies'
   'F12	other	F12	nested tmux on / off'
 )
 
