@@ -33,7 +33,8 @@ The details are in each file's header comment and in the [main README](../../REA
 - fzf: Ctrl+T files, Ctrl+G folders, Ctrl+R history, listed with `fd`
   (hidden files in, `.gitignore` respected) and previewed with `bat` / `ls`
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick; `z` still works
-- `~/.krew/bin` on PATH: `kubectl neat`, `tree`, `view-secret`, `who-can`
+- `~/.krew/bin` on PATH: `kubectl neat`, `tree`, `view-secret`, `who-can`; their Tab
+  completion (and `kubectl krew`'s) comes from `../kubectl/complete/`
 - `k` = kubecolor; `vim` = nvim; `lz` / `lzd` = lazygit / lazydocker; `ktx` = kontext
 - startup around 0.1 s (`time zsh -i -c exit`): nvm loads on first use, and
   the pyenv/zoxide/fzf inits and tool completions are cached in `~/.cache/zsh`,

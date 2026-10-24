@@ -1,0 +1,13 @@
+#!/bin/bash
+# Tab completion for a kubectl plugin: kubectl runs kubectl_complete-<plugin> with
+# the words after the plugin name (the last one is being typed) and reads one
+# completion per line, then :<directive> (4 = no file names). On PATH from .zshrc.
+# kubectl neat get [--] KIND NAME: get, then what kubectl get completes
+if [ $# -le 1 ]; then
+  echo get
+  echo :4
+  exit
+fi
+shift
+[ "$1" = -- ] && shift
+exec kubectl __complete get "$@"

@@ -1,0 +1,17 @@
+#!/bin/bash
+# Tab completion for a kubectl plugin: kubectl runs kubectl_complete-<plugin> with
+# the words after the plugin name (the last one is being typed) and reads one
+# completion per line, then :<directive> (4 = no file names). On PATH from .zshrc.
+# kubectl krew: its commands, then plugin names from the local index (install,
+# info) or from the installed ones (uninstall, upgrade)
+root=${KREW_ROOT:-$HOME/.krew}
+names() { for f in "$1"/*.yaml; do [ -e "$f" ] && basename "$f" .yaml; done; }
+if [ $# -le 1 ]; then
+  printf '%s\n' help index info install list search uninstall update upgrade version
+else
+  case $1 in
+    install | info) names "$root/index/default/plugins" ;;
+    uninstall | upgrade) names "$root/receipts" ;;
+  esac
+fi
+echo :4

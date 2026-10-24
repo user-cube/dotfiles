@@ -103,8 +103,9 @@ fi
 
 # --- PATH ---
 export PATH=${PATH}:$GOBIN
-# kubectl plugins from krew (kubectl neat, tree, view-secret, who-can; the playbook installs them)
-[[ -d $HOME/.krew/bin ]] && path+=($HOME/.krew/bin)
+# kubectl plugins from krew (kubectl neat, tree, view-secret, who-can; the playbook installs them),
+# and their Tab completion (kubectl_complete-<plugin> scripts, .config/kubectl/complete)
+[[ -d $HOME/.krew/bin ]] && path+=($HOME/.krew/bin $HOME/.config/kubectl/complete)
 
 # --- Aliases ---
 alias vim="nvim"
