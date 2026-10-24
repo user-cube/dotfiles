@@ -15,7 +15,7 @@ playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
     - `plugins/check/`: connectivity checks (kube contexts, or `~/.config/sketchybar/checks`), a Go program
   - `ghostty/`, `tmux/`: terminal; every Ghostty window runs inside tmux
   - `nvim/`, `yazi/`: editor, file manager
-  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time)
+  - `zsh/`: shell functions sourced by `.zshrc` (`bw`, `dotfiles-sync`, `ws`: VS Code workspaces in `~/workspaces`, `sops-on`: age keys from Bitwarden for a limited time, `plugins-outdated`: the zsh/tmux plugins the playbook pins that master has moved past, with a notification every 14 days)
   - `vscode/templates/`: settings and recommended extensions (terraform, opentofu, ansible, golang, helm) merged into a workspace by `ws -n NAME -t terraform DIR...`
   - `vscode/extensions/hue/`: Hue, a small VS Code extension, no marketplace ([its README](.config/vscode/extensions/hue/README.md) has the commands and settings)
     - the window takes the color of the workspace folder you work in: `ws -n NAME DIR:blue ...`, or one from the folder's name
