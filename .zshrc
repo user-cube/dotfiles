@@ -39,6 +39,14 @@ zstyle ':omz:update' mode reminder
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 
+# fzf-tab: Tab completes in an fzf list. Loaded when cloned into custom/plugins
+# (the playbook), before the plugins that wrap widgets
+if [[ -d $ZSH/custom/plugins/fzf-tab ]]; then
+  plugins[(i)zsh-autosuggestions]=(fzf-tab zsh-autosuggestions)
+  zstyle ':completion:*' menu no   # fzf-tab replaces the menu
+  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 --color=always $realpath'
+fi
+
 source $ZSH/oh-my-zsh.sh
 
 # --- History ---
@@ -94,6 +102,7 @@ alias lz="lazygit"
 alias lzd="lazydocker"
 alias tmux-sessions="~/.config/tmux/preload-sessions.sh" # after editing ~/.config/tmux/sessions.local
 alias ktx="kontext"
+alias z=cd # zoxide is cd now (below); z kept for the habit
 
 # Kubernetes
 alias k=kubecolor
@@ -102,20 +111,30 @@ setNS() { kubectl config set-context --current --namespace="$@" ; }
 
 # --- Inits and completions ---
 # Cached in ~/.cache/zsh, skipped when the tool is missing. Regenerated when the
-# binary is newer than the cache or resolves to another path (a brew upgrade:
-# pyenv's init sources a file under its versioned Cellar directory)
+# binary is newer than the cache, resolves to another path (a brew upgrade:
+# pyenv's init sources a file under its versioned Cellar directory), or its
+# command here changes
 _cached_source() {
   (( $+commands[$1] )) || return
   local f="$HOME/.cache/zsh/$1.zsh" bin=${commands[$1]:A} first
   [[ -s $f ]] && read -r first < $f
-  if [[ $first != "# $bin" || $bin -nt $f ]]; then
+  if [[ $first != "# $bin $2" || $bin -nt $f ]]; then
     mkdir -p ${f:h}
-    { print -r -- "# $bin"; eval "$2" } >| $f
+    { print -r -- "# $bin $2"; eval "$2" } >| $f
   fi
   source $f
 }
 _cached_source pyenv           'pyenv init - --no-rehash zsh'
-_cached_source zoxide          'zoxide init zsh'
+_cached_source zoxide          'zoxide init zsh --cmd cd' # cd learns: `cd dotfiles` from anywhere, cdi picks
+# fzf (Ctrl+T files, Alt+C folders, Ctrl+R history): fd lists them (dotfiles in,
+# .gitignore respected), with a preview; ? shows a long history entry in full
+if (( $+commands[fd] )); then
+  export FZF_CTRL_T_COMMAND='fd --type f --hidden --exclude .git'
+  export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
+fi
+export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:200 {}'"
+export FZF_ALT_C_OPTS="--preview 'ls -1 --color=always {}'"
+export FZF_CTRL_R_OPTS="--preview 'echo {2..}' --preview-window=up:3:hidden:wrap --bind '?:toggle-preview'"
 _cached_source fzf             'fzf --zsh'
 _cached_source aws-cli-manager 'aws-cli-manager completion zsh'
 _cached_source kontext         'kontext completion zsh'
