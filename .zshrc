@@ -33,6 +33,12 @@ plugins=(
   zsh-syntax-highlighting # last: it wraps the widgets defined before it
 )
 
+# Updates only noted at startup, never asked: the prompt would block a new pane
+zstyle ':omz:update' mode reminder
+# Suggest from completions too when the history has nothing; skip long lines (pastes)
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+
 source $ZSH/oh-my-zsh.sh
 
 # --- History ---
