@@ -15,6 +15,7 @@ The folders with more than a config file have their own README.
   - [`sketchybar/`](.config/sketchybar/README.md): bottom status bar; its plugins, and the per-machine `aws_profiles` and `checks`
   - [`ghostty/`](.config/ghostty/README.md), [`tmux/`](.config/tmux/README.md): terminal; every Ghostty window runs inside tmux, and the ⌘ shortcuts are tmux's (the tmux README lists them, and how to copy)
   - [`nvim/`](.config/nvim/README.md), `yazi/`: editor, file manager
+  - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI's config, plugins (stern, `kubectl neat`, dive) and read-only on production
   - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync`, `local-backup`, `ws`, `plugins-outdated`)
   - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
   - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the obsolete files list, `local-files`
@@ -22,7 +23,7 @@ The folders with more than a config file have their own README.
   - `git/ignore`: global gitignore: macOS and editor files, tool state (`.direnv/`, `.terraform/`), and env files as a safety net (`.env`, `.env.*`, but not `.env.example`; `git add -f` overrides)
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
 - `.gitconfig*`: git config, with personal/work identities. Defaults: `pull` rebases (autostash), `fetch` prunes, conflicts in `zdiff3` with `rerere`, histogram diffs with moved lines colored, branches and tags newest first, `main` for new repos
-- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig`: gitleaks, actionlint and `glab ci lint` on the staged CI config, the Go commit-msg hook
+- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig`: gitleaks, actionlint and `glab ci lint` on the staged CI config, `tofu fmt` on the staged Terraform files, the Go commit-msg hook
 - [`claude/`](claude/README.md): Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
   - `settings.json`: no co-author trailer, deny rules, hooks, plugins
   - `hooks/deny-sensitive-reads/`: a Go PreToolUse hook that blocks Bash commands and reads of what is really private (keys, credentials, env files); while it is not built, Claude Code's Bash and Read are blocked
@@ -49,6 +50,7 @@ Day to day (details in the [zsh README](.config/zsh/README.md)):
 - Tab completes in an fzf list (fzf-tab), hidden files included
 - Ctrl+T picks a file, Ctrl+G a folder, Ctrl+R a history entry, with previews
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick
+- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s opens read-only (`kube-guard.zsh`)
 - Esc Esc adds `sudo`, Ctrl+O copies the line, `copypath`, `extract`, `ofd` / `cdf` (Finder)
 - the Oh My Zsh plugins (zsh-autosuggestions, fzf-tab, zsh-syntax-highlighting)
   are cloned at pinned commits by the playbook; `plugins-outdated` shows which

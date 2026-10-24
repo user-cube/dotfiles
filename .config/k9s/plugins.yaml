@@ -1,0 +1,33 @@
+# k9s plugins: a key on the selected resource runs a tool. They show up in the
+# header (and ?) of the views in `scopes`.
+plugins:
+  # Ctrl-L: logs of every pod of a deployment / statefulset / daemonset (or of
+  # the pod) together, through stern, newest 100 lines then follow
+  stern:
+    shortCut: Ctrl-L
+    description: Logs (stern)
+    scopes: [pods, deployments, statefulsets, daemonsets]
+    command: stern
+    background: false
+    args: [--tail, "100", --context, $CONTEXT, -n, $NAMESPACE, $NAME]
+
+  # Ctrl-N: the resource's YAML without managedFields, status and defaults
+  # (kubectl neat, from krew), for copying into a manifest
+  neat:
+    shortCut: Ctrl-N
+    description: YAML (neat)
+    scopes: [all]
+    command: sh
+    background: false
+    args:
+      - -c
+      - kubectl get "$RESOURCE_NAME" "$NAME" -n "$NAMESPACE" --context "$CONTEXT" -o yaml | kubectl neat | less
+
+  # Ctrl-I on a container: its image's layers (dive; pulls through Docker / Colima)
+  dive:
+    shortCut: Ctrl-I
+    description: Image layers (dive)
+    scopes: [containers]
+    command: dive
+    background: false
+    args: [$COL-IMAGE]

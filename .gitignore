@@ -9,5 +9,8 @@ claude/hooks/deny-sensitive-reads/deny-sensitive-reads
 .config/sketchybar/checks
 .config/tmux/plugins/
 .config/nvim/lua/plugins_local/
+.config/k9s/clusters/
+.config/k9s/k9s.log
+.config/k9s/screen-dumps/
 # Downloaded by .config/sketchybar/fetch-icon-map.sh
 .config/sketchybar/plugins/icon_map.sh*

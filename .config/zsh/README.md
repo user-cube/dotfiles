@@ -12,6 +12,7 @@ Shared shell functions: `.zshrc` sources every `*.zsh` here, before
 | `dotfiles.zsh` | `dotfiles-sync`, `dotfiles-diff [-p]` | update this machine from `~/dotfiles` without Ansible, or see what that would change |
 | `local-files.zsh` | `local-backup`, `local-restore [machine]` | the per-machine files (never in git) to and from Bitwarden |
 | `vscode-workspaces.zsh` | `ws` | open or create a VS Code workspace in `~/workspaces` (templates, Hue colors) |
+| `kube-guard.zsh` | `kubectl`, `kubecolor` (`k`), `helm`, `k9s` | on a production context (`prod` / `prd`, `KUBE_PROD_REGEX`) asks before a command that changes the cluster (apply, delete, edit, scale, rollout restart, drain, helm upgrade, …); reads pass. `KUBE_GUARD=0` skips it once. k9s opens read-only there |
 | `plugins-outdated.zsh` | `plugins-outdated` | the zsh/tmux plugins the playbook pins that master has moved past; every 14 days a background check and a macOS notification |
 
 The details are in each file's header comment and in the [main README](../../README.md).
@@ -32,6 +33,7 @@ The details are in each file's header comment and in the [main README](../../REA
 - fzf: Ctrl+T files, Ctrl+G folders, Ctrl+R history, listed with `fd`
   (hidden files in, `.gitignore` respected) and previewed with `bat` / `ls`
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick; `z` still works
+- `~/.krew/bin` on PATH: `kubectl neat`, `tree`, `view-secret`, `who-can`
 - `k` = kubecolor; `vim` = nvim; `lz` / `lzd` = lazygit / lazydocker; `ktx` = kontext
 - startup around 0.1 s (`time zsh -i -c exit`): nvm loads on first use, and
   the pyenv/zoxide/fzf inits and tool completions are cached in `~/.cache/zsh`,

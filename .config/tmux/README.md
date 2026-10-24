@@ -17,7 +17,7 @@ when a shortcut is added.
 | ⌘O | `C-b f` | open a repo under `~/work` as a session (`sessionizer.sh`) |
 | ⌘⇧O | `C-b O` | open an ssh host in a new tab (`ssh-picker.sh`) |
 | ⌘⇧S, — | `C-b s`, `C-b S` | switch session, manage sessions (`sessions.sh`) |
-| ⌘G, ⌘⇧G, ⌘E, ⌘⇧L, ⌘K | `C-b g G e D K` | lazygit, diff (lumen), yazi, lazydocker, k9s, in popups |
+| ⌘G, ⌘⇧G, ⌘E, ⌘⇧L, ⌘K | `C-b g G e D K` | lazygit, diff (lumen), yazi, lazydocker, k9s (read-only on production), in popups |
 | ⌘J | `C-b J` | scratch terminal: its own tmux server (`scratch.conf`), keeps running |
 | ⌘Y, ⌘U | `C-b Y`, `C-b u` | copy a token on screen (tmux-fingers), open a URL from the pane |
 | ⌘A | `C-b a` | select the whole pane history (`y` copies) |
