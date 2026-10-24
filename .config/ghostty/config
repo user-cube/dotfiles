@@ -114,6 +114,11 @@ keybind = cmd+k=text:\x02K
 keybind = cmd+j=text:\x02J
 # select all (tmux copy mode over the whole pane history; y / enter copies)
 keybind = cmd+a=text:\x02a
+# copy the last command's output, without its prompt (in copy mode: the one at the cursor)
+keybind = cmd+shift+c=text:\x02y
+# previous / next command (tmux copy mode on its prompt; then ⌘⇧C copies its output)
+keybind = cmd+shift+up=text:\x02P
+keybind = cmd+shift+down=text:\x02N
 
 # Cheat sheet of all these shortcuts, in a popup
 keybind = cmd+shift+h=text:\x02?

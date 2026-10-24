@@ -1715,6 +1715,11 @@
   #               typed after changing current working directory.
   typeset -g POWERLEVEL9K_TRANSIENT_PROMPT=off
 
+  # Mark each prompt and the start of each command's output (OSC 133, invisible).
+  # tmux keeps the marks: [ / ] jump between prompts in copy mode, and ⌘⇧C copies
+  # a command's output (tmux.conf).
+  typeset -g POWERLEVEL9K_TERM_SHELL_INTEGRATION=true
+
   # Instant prompt mode.
   #
   #   - off:     Disable instant prompt. Choose this if you've tried instant prompt and found

@@ -34,7 +34,10 @@ entries=(
   'C-b Y	copy	⌘Y	copy a token on screen'
   'C-b u	copy	⌘U	open a URL from the pane'
   'C-b a	copy	⌘A	select all'
-  'C-b [	copy	C-b [	copy mode (or scroll up): v selects, wheel extends, y copies'
+  'C-b y	copy	⌘⇧C	copy the last command'"'"'s output (or the one ⌘⇧↑ / ⌘⇧↓ went to)'
+  'C-b P	copy	⌘⇧↑	previous command (first: the one before the last)'
+  'C-b N	copy	⌘⇧↓	next command'
+  'C-b [	copy	C-b [	copy mode (or scroll up): v selects, wheel extends, y copies, [ ] jump between commands'
   'F12	other	F12	nested tmux on / off'
 )
 
