@@ -1,3 +1,19 @@
-# Global gitignore (git reads ~/.config/git/ignore when core.excludesFile is unset)
+# Global gitignore (git reads ~/.config/git/ignore when core.excludesFile is unset).
+# A repo that does want one of these: git add -f
 .DS_Store
 **/.claude/settings.local.json
+
+# Editors
+.idea/
+*.swp
+*.swo
+*~
+
+# Tool state, never source
+.direnv/
+.terraform/
+
+# Env files hold secrets: a safety net on top of each repo's own .gitignore
+.env
+.env.*
+!.env.example

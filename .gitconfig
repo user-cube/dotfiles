@@ -38,3 +38,30 @@
     command = ~/git_hooks/go/commit-msg/commit-msg
 [push]
     autoSetupRemote = true
+    followTags = true            # annotated tags of the pushed commits go along
+
+[init]
+    defaultBranch = main
+[pull]
+    rebase = true                # no merge commit for "the remote moved"
+[rebase]
+    autoStash = true             # uncommitted changes are stashed and put back
+    autoSquash = true            # fixup!/squash! commits land in place
+[fetch]
+    prune = true                 # branches deleted on the remote go here too
+    pruneTags = true
+[merge]
+    conflictStyle = zdiff3       # conflicts show the common ancestor as well
+[rerere]
+    enabled = true               # a conflict resolved once resolves itself next time
+[diff]
+    algorithm = histogram        # more readable hunks than the default myers
+    colorMoved = default         # moved lines in another color
+[branch]
+    sort = -committerdate        # git branch: most recent first
+[tag]
+    sort = -version:refname      # git tag: newest version first
+[column]
+    ui = auto                    # git branch / tag / status lists in columns
+[help]
+    autocorrect = prompt         # a mistyped command offers the right one

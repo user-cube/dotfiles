@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   lint:
-    name: shellcheck + bash 3.2 + zsh and JSON syntax + go tools + gitleaks
+    name: shellcheck + bash 3.2 + zsh and JSON syntax + nvim + go tools + gitleaks
     # macOS on purpose: scripts run with /bin/bash 3.2, which only macOS ships
     runs-on: macos-latest
 
@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0 # gitleaks scans the whole history
 
       - name: Install tooling
-        run: brew install shellcheck gitleaks go jq
+        run: brew install shellcheck gitleaks go jq neovim tree-sitter-cli
 
       - name: List shell scripts
         run: git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' > "$RUNNER_TEMP/scripts.txt"
@@ -37,6 +37,11 @@ jobs:
       - name: shellcheck
         run: xargs shellcheck -x -S warning < "$RUNNER_TEMP/scripts.txt"
 
+      # Unquoted variables too (an info-level check): a value with a space or a *
+      # would split or glob. Where splitting is wanted, use an array
+      - name: shellcheck (quoting)
+        run: xargs shellcheck -x -S info -i SC2086 < "$RUNNER_TEMP/scripts.txt"
+
       - name: zsh syntax
         run: |
           rc=0
@@ -49,6 +54,16 @@ jobs:
           rc=0
           while IFS= read -r -d '' f; do jq empty "$f" || { echo "invalid JSON: $f"; rc=1; }; done < <(git ls-files -z '*.json')
           exit $rc
+
+      # The nvim config starts clean with the plugins at lazy-lock.json. nvim exits
+      # 0 even on a Lua error, so any output on startup fails the step
+      - name: nvim starts without errors
+        run: |
+          export XDG_CONFIG_HOME="$PWD/.config" XDG_DATA_HOME="$RUNNER_TEMP/nvim/data" \
+            XDG_STATE_HOME="$RUNNER_TEMP/nvim/state" XDG_CACHE_HOME="$RUNNER_TEMP/nvim/cache"
+          nvim --headless "+Lazy! restore" +qa
+          out=$(nvim --headless +qa 2>&1)
+          if [ -n "$out" ]; then echo "$out"; exit 1; fi
 
       # Every work commit runs this hook: a broken build blocks them all
       - name: commit-msg hook (go vet + test)
