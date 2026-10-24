@@ -13,6 +13,7 @@ Shared shell functions: `.zshrc` sources every `*.zsh` here, before
 | `local-files.zsh` | `local-backup`, `local-restore [machine]` | the per-machine files (never in git) to and from Bitwarden |
 | `vscode-workspaces.zsh` | `ws` | open or create a VS Code workspace in `~/workspaces` (templates, Hue colors) |
 | `kube-guard.zsh` | `kubectl`, `kubecolor` (`k`), `helm`, `k9s` | on a production context (`prod` / `prd`, `KUBE_PROD_REGEX`) asks before a command that changes the cluster (apply, delete, edit, scale, rollout restart, drain, helm upgrade, …); reads pass. `KUBE_GUARD=0` skips it once. k9s opens read-only there |
+| `loki.zsh` | `logcli` | Loki's logs (deleted pods and finished jobs too): without `LOKI_ADDR`, port-forwards to `LOKI_SERVICE` (default `monitoring/loki`) for the command |
 | `plugins-outdated.zsh` | `plugins-outdated` | the zsh/tmux plugins the playbook pins that master has moved past; every 14 days a background check and a macOS notification |
 
 The details are in each file's header comment and in the [main README](../../README.md).

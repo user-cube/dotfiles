@@ -47,6 +47,18 @@ plugins:
       - -c
       - krr simple -q -c "$CONTEXT" -n "$NAMESPACE" --width "$(tput cols)" 2>&1 | LESSCHARSET=utf-8 less -R
 
+  # Ctrl-U on a workload or pod: popeye's report on its namespace (missing
+  # limits / probes, latest tags, orphans...), in less. k9s no longer has :popeye
+  popeye:
+    shortCut: Ctrl-U
+    description: Sanity (popeye)
+    scopes: [pods, deployments, statefulsets, daemonsets]
+    command: sh
+    background: false
+    args:
+      - -c
+      - popeye --context "$CONTEXT" -n "$NAMESPACE" --force-exit-zero 2>&1 | LESSCHARSET=utf-8 less -R
+
   # Ctrl-B on a container: a debug container (busybox) next to it, sharing its
   # processes: a shell for images that have none (distroless)
   debug:

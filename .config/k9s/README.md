@@ -34,6 +34,7 @@ favorite namespace.
 | Ctrl-N | any resource | its YAML through `kubectl neat` (no managedFields, status, defaults), in `less` |
 | Ctrl-O | containers | dive on the container's image: its layers, what each adds, the space wasted (pulls through Docker / Colima) |
 | Ctrl-T | deployments, statefulsets, daemonsets | krr: CPU / memory requests and limits recommended from Prometheus usage, for the workloads of its namespace, in `less` |
+| Ctrl-U | pods, deployments, statefulsets, daemonsets | popeye's report on its namespace: missing limits / probes, `latest` tags, orphans (k9s no longer has `:popeye`) |
 | Ctrl-B | containers | `kubectl debug`: a busybox container next to it, sharing its processes (a shell for distroless images) |
 | Ctrl-F, Ctrl-G | Argo CD applications | refresh, hard refresh (the `argocd.argoproj.io/refresh` annotation) |
 | Ctrl-Y | Argo CD applications | sync, after a confirmation (a patch of `operation.sync`) |
@@ -43,7 +44,7 @@ and krew (`kubectl neat`) come from the playbook.
 
 Keys that are already something else to a terminal don't work, and k9s then
 loads none of the plugins: Ctrl-H (Backspace), Ctrl-I (Tab), Ctrl-J and Ctrl-M
-(Enter).
+(Enter). Ctrl-P never reaches a plugin either.
 
 ## Production
 
