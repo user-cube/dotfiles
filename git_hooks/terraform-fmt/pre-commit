@@ -1,0 +1,20 @@
+#!/bin/bash
+# Global pre-commit hook (hook.terraform-fmt in .gitconfig): the staged *.tf,
+# *.tfvars and *.tftest.hcl files, as staged (not as in the working tree),
+# through `tofu fmt` (`terraform fmt` without tofu). One that isn't formatted
+# shows its diff and stops the commit. Does nothing when none is staged or
+# neither tool is installed. Skip once with `git commit --no-verify`.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+tf=$(command -v tofu || command -v terraform) || exit 0
+
+rc=0
+while IFS= read -r -d '' f; do
+  # -diff prints nothing for a formatted file, the diff otherwise; invalid HCL fails
+  if ! out=$(git show ":$f" | "$tf" fmt -no-color -diff - 2>&1) || [ -n "$out" ]; then
+    echo "${out//<stdin>/$f}"
+    rc=1
+  fi
+done < <(git diff --cached --name-only -z --diff-filter=ACMR -- '*.tf' '*.tfvars' '*.tftest.hcl')
+
+[ $rc -eq 0 ] || echo "terraform-fmt: run \`$(basename "$tf") fmt\` and stage the files again, or commit with --no-verify" >&2
+exit $rc

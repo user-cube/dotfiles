@@ -31,6 +31,11 @@
     event = pre-commit
     command = ~/git_hooks/gitlab-ci-lint/pre-commit
 
+# Staged *.tf / *.tfvars through tofu fmt (git_hooks/terraform-fmt)
+[hook "terraform-fmt"]
+    event = pre-commit
+    command = ~/git_hooks/terraform-fmt/pre-commit
+
 # Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
 # Built by dotfiles-sync / the playbook; disabled for personal repos (.gitconfig-personal)
 [hook "commit-msg-go"]

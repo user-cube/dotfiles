@@ -10,6 +10,7 @@ one once with `git commit --no-verify`, or for a repo with
 | `gitleaks` (`hook.gitleaks`) | pre-commit | scans the staged changes for secrets |
 | `actionlint/pre-commit` (`hook.actionlint`) | pre-commit | the staged GitHub Actions workflows, as staged, through actionlint (their `run:` steps through shellcheck); nothing without actionlint |
 | `gitlab-ci-lint/pre-commit` (`hook.gitlab-ci-lint`) | pre-commit | the staged `.gitlab-ci.yml` through the GitLab API (`glab ci lint`, resolves `include:` and templates), in repos whose host glab is logged in to; GitLab unreachable only warns |
+| `terraform-fmt/pre-commit` (`hook.terraform-fmt`) | pre-commit | the staged `*.tf`, `*.tfvars` and `*.tftest.hcl`, as staged, through `tofu fmt` (`terraform fmt` without tofu): shows the diff of an unformatted file and stops the commit; run `tofu fmt` and stage again |
 | `go/commit-msg/` (`hook.commit-msg-go`) | commit-msg | Conventional Commit prefix and the issue key from the branch; blocks commits on main/master/develop. Off for personal repos (`.gitconfig-personal`). [Its README](go/commit-msg/README.md) |
 
 The commit-msg hook is Go, built by `.config/dotfiles/install.sh`; CI runs its
