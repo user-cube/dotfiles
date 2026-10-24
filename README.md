@@ -16,7 +16,7 @@ The folders with more than a config file have their own README.
   - [`ghostty/`](.config/ghostty/README.md), [`tmux/`](.config/tmux/README.md): terminal; every Ghostty window runs inside tmux, and the ⌘ shortcuts are tmux's (the tmux README lists them, and how to copy)
   - [`nvim/`](.config/nvim/README.md), `yazi/`: editor, file manager
   - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
-  - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, debug, Argo CD sync / refresh), read-only on production
+  - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, debug, Argo CD sync / refresh), read-only on production
   - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync`, `local-backup`, `ws`, `plugins-outdated`)
   - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
   - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the obsolete files list, `local-files`

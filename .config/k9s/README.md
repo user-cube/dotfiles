@@ -32,13 +32,16 @@ favorite namespace.
 |---|---|---|
 | Ctrl-L | pods, deployments, statefulsets, daemonsets | stern: the logs of all its pods together |
 | Ctrl-N | any resource | its YAML through `kubectl neat` (no managedFields, status, defaults), in `less` |
-| Ctrl-I | containers | dive on the container's image: its layers (pulls through Docker / Colima) |
 | Ctrl-B | containers | `kubectl debug`: a busybox container next to it, sharing its processes (a shell for distroless images) |
 | Ctrl-F, Ctrl-G | Argo CD applications | refresh, hard refresh (the `argocd.argoproj.io/refresh` annotation) |
 | Ctrl-Y | Argo CD applications | sync, after a confirmation (a patch of `operation.sync`) |
 
-The Argo CD ones go through `kubectl`, so they need no `argocd login`. stern,
-krew (`kubectl neat`) and dive come from the playbook.
+The Argo CD ones go through `kubectl`, so they need no `argocd login`. stern
+and krew (`kubectl neat`) come from the playbook.
+
+Keys that are already something else to a terminal don't work, and k9s then
+loads none of the plugins: Ctrl-H (Backspace), Ctrl-I (Tab), Ctrl-J and Ctrl-M
+(Enter).
 
 ## Production
 

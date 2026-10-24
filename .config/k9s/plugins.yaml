@@ -23,15 +23,6 @@ plugins:
       - -c
       - kubectl get "$RESOURCE_NAME" "$NAME" -n "$NAMESPACE" --context "$CONTEXT" -o yaml | kubectl neat | less
 
-  # Ctrl-I on a container: its image's layers (dive; pulls through Docker / Colima)
-  dive:
-    shortCut: Ctrl-I
-    description: Image layers (dive)
-    scopes: [containers]
-    command: dive
-    background: false
-    args: [$COL-IMAGE]
-
   # Ctrl-B on a container: a debug container (busybox) next to it, sharing its
   # processes: a shell for images that have none (distroless)
   debug:
