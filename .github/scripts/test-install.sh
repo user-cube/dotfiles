@@ -63,6 +63,8 @@ done
 grep -q '__icon_map()' "$H/.config/sketchybar/plugins/icon_map.sh" 2>/dev/null && pass "icon map downloaded" || fail "no icon map"
 [ -f "$t/hue-installed" ] && pass "Hue installed" || fail "Hue not installed"
 [ ! -e "$H/.config/cmux/settings.json" ] && pass "obsolete file removed" || fail "obsolete file still there"
+lg="$H/Library/Application Support/lazygit/config.yml"
+[ "$(readlink "$lg")" = "$H/.config/lazygit/config.yml" ] && pass "lazygit config linked" || fail "lazygit config not linked"
 
 echo "== second run: nothing to do"
 out=$(sync); rc=$?

@@ -15,6 +15,9 @@ The folders with more than a config file have their own README.
   - [`sketchybar/`](.config/sketchybar/README.md): bottom status bar; its plugins, and the per-machine `aws_profiles` and `checks`
   - [`ghostty/`](.config/ghostty/README.md), [`tmux/`](.config/tmux/README.md): terminal; every Ghostty window runs inside tmux, and the ⌘ shortcuts are tmux's (the tmux README lists them, and how to copy)
   - [`nvim/`](.config/nvim/README.md), `yazi/`: editor, file manager
+  - `bat/`: bat's theme (Monokai Extended) and style, for `cat` and the fzf previews
+  - `lazygit/`: lazygit's Monokai theme, file tree and Nerd Font icons; `install.sh` links
+    `~/Library/Application Support/lazygit/config.yml` (where lazygit reads it on macOS) to it
   - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
   - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, krr, debug, Argo CD sync / refresh), read-only on production
   - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync`, `local-backup`, `ws`, `plugins-outdated`)
@@ -174,6 +177,7 @@ says how many commits the clone is behind.
   `local-files`, the SketchyBar checks and the Claude Code hook
 - downloads the SketchyBar icon map for the installed font version
 - installs the Hue VS Code extension when it changed
+- links lazygit's macOS config file to `.config/lazygit/config.yml` (unless one was written there by hand)
 - removes the files the repo no longer installs (`.config/dotfiles/obsolete`:
   rsync never deletes; add a line when a file leaves the repo)
 

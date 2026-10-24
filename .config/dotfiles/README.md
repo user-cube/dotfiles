@@ -5,7 +5,7 @@ and the playbook: a new step goes in `install.sh`, in this repo only.
 
 | File | |
 |---|---|
-| `install.sh` | builds the Go tools whose sources changed, downloads the SketchyBar icon map, installs the Hue VS Code extension, removes obsolete files; prints a line per change, nothing when all was up to date, fails when a build fails |
+| `install.sh` | builds the Go tools whose sources changed, downloads the SketchyBar icon map, installs the Hue VS Code extension, links lazygit's config, removes obsolete files; prints a line per change, nothing when all was up to date, fails when a build fails |
 | `obsolete` | files this repo used to install, relative to `$HOME`: rsync never deletes, so they are removed here. Add a line when a file leaves the repo (never a directory, a glob or a path outside `$HOME`) |
 | `remove-obsolete.sh` | removes them (only files and symlinks, then the folder when it is left empty) |
 | `local-files/` | `local-backup` / `local-restore`: a Go tool, see below |

@@ -1,0 +1,29 @@
+# lazygit (⌘G opens it in a tmux popup). On macOS lazygit reads
+# ~/Library/Application Support/lazygit/config.yml: install.sh links that to
+# this file. The default config: lazygit --config
+gui:
+  nerdFontsVersion: "3" # file and branch icons (the terminal font is a Nerd Font)
+  showFileTree: true # changed files as a tree, not a flat list
+  showRandomTip: false
+  # The Monokai of tmux, Ghostty, SketchyBar and k9s
+  theme:
+    activeBorderColor: ["#a6e22e", bold]
+    inactiveBorderColor: ["#75715e"]
+    searchingActiveBorderColor: ["#fd971f", bold]
+    optionsTextColor: ["#66d9ef"]
+    selectedLineBgColor: ["#3e3d32"]
+    inactiveViewSelectedLineBgColor: [bold]
+    cherryPickedCommitFgColor: ["#272822"]
+    cherryPickedCommitBgColor: ["#ae81ff"]
+    markedBaseCommitFgColor: ["#272822"]
+    markedBaseCommitBgColor: ["#e6db74"]
+    unstagedChangesColor: ["#f92672"]
+    defaultFgColor: [default]
+
+os:
+  editPreset: nvim # e on a file: nvim, inside the popup
+
+git:
+  # The commit-msg hook (git_hooks/go) already adds the prefix and issue key
+  commit:
+    signOff: false

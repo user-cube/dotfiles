@@ -1,0 +1,14 @@
+# bat: `cat` in .zshrc (bat --pager=never), and the fzf / fzf-tab previews.
+# Its own options, one per line; `bat --config-file` shows where it reads this.
+
+# The Monokai of tmux, Ghostty, SketchyBar and k9s
+--theme="Monokai Extended"
+
+# Line numbers, git changes in the margin and the file name, without the grid
+# around them (in a pipe or a redirect bat prints the plain file anyway)
+--style="numbers,changes,header"
+
+# Syntax for the files bat doesn't recognize by name
+--map-syntax=".envrc:Bourne Again Shell (bash)"
+--map-syntax="*.tftpl:HCL"
+--map-syntax="Tiltfile:Python"

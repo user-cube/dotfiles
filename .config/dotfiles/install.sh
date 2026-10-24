@@ -34,5 +34,19 @@ done
 # VS Code: the Hue extension (skips when unchanged or without `code`)
 "$HOME/.config/vscode/extensions/hue/install.sh"
 
+# lazygit reads ~/Library/Application Support/lazygit on macOS, also from the
+# tmux popup, which never sees an env var from .zshrc: a link to the dotfiles'
+# config. A config written there by hand is left alone (and said so)
+lg_link="$HOME/Library/Application Support/lazygit/config.yml"
+if [ ! -L "$lg_link" ]; then
+  if [ -s "$lg_link" ]; then
+    echo "lazygit: $lg_link has its own config, not linked to ~/.config/lazygit" >&2
+  else
+    mkdir -p "$(dirname "$lg_link")"
+    ln -sf "$HOME/.config/lazygit/config.yml" "$lg_link"
+    echo "linked lazygit config"
+  fi
+fi
+
 # Files the repo no longer installs (rsync never deletes): ./obsolete
 "$HOME/.config/dotfiles/remove-obsolete.sh"
