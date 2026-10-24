@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   lint:
-    name: shellcheck + bash 3.2 + zsh syntax + go tools + gitleaks
+    name: shellcheck + bash 3.2 + zsh and JSON syntax + go tools + gitleaks
     # macOS on purpose: scripts run with /bin/bash 3.2, which only macOS ships
     runs-on: macos-latest
 
@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0 # gitleaks scans the whole history
 
       - name: Install tooling
-        run: brew install shellcheck gitleaks go
+        run: brew install shellcheck gitleaks go jq
 
       - name: List shell scripts
         run: git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' > "$RUNNER_TEMP/scripts.txt"
@@ -41,6 +41,13 @@ jobs:
         run: |
           rc=0
           for f in .zshrc .config/zsh/*.zsh; do zsh -n "$f" || rc=1; done
+          exit $rc
+
+      # A broken claude/settings.json breaks Claude Code; a broken template, `ws -t`
+      - name: JSON syntax
+        run: |
+          rc=0
+          while IFS= read -r -d '' f; do jq empty "$f" || { echo "invalid JSON: $f"; rc=1; }; done < <(git ls-files -z '*.json')
           exit $rc
 
       # Every work commit runs this hook: a broken build blocks them all

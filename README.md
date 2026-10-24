@@ -48,9 +48,9 @@ Shared shell functions live in `.config/zsh/*.zsh` and are all sourced before
 `export BW_USER=<email>` in `~/.zshrc.local`).
 
 Startup is kept fast: nvm loads on first use, `pyenv init` skips the rehash
-(run `pyenv rehash` after installing a package with commands), and completions
-are cached in `~/.cache/zsh` (regenerated when the tool is upgraded; delete the
-folder to force it). Measure with `time zsh -i -c exit`.
+(run `pyenv rehash` after installing a package with commands), and the
+pyenv/zoxide/fzf inits and the completions are cached in `~/.cache/zsh`
+(regenerated when the tool is upgraded; delete the folder to force it). Measure with `time zsh -i -c exit`.
 
 ## SOPS age keys
 

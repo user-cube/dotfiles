@@ -46,7 +46,8 @@ source ~/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # --- Exports ---
-export GPG_TTY=$(tty)
+# $TTY, not $(tty): under p10k instant prompt `tty` prints "not a tty"
+export GPG_TTY=$TTY
 export GOBIN=$HOME/go/bin
 # git commit, kubectl edit, crontab -e, lazygit/k9s `e` open nvim
 export EDITOR=nvim
@@ -75,14 +76,9 @@ fi
 # --- PATH ---
 export PATH=${PATH}:$GOBIN
 
-# --- Evals ---
-eval "$(pyenv init - --no-rehash zsh)"
-eval "$(zoxide init zsh)"
-source <(fzf --zsh)
-
 # --- Aliases ---
 alias vim="nvim"
-alias cat="bat --pager=never"
+(( $+commands[bat] )) && alias cat="bat --pager=never"
 alias lz="lazygit"
 alias lzd="lazydocker"
 alias tmux-sessions="~/.config/tmux/preload-sessions.sh" # after editing ~/.config/tmux/sessions.local
@@ -93,23 +89,29 @@ alias k=kubecolor
 compdef kubecolor=kubectl
 setNS() { kubectl config set-context --current --namespace="$@" ; }
 
-# --- Completions ---
-# Cached in ~/.cache/zsh; regenerated when the binary is newer than the cache
-_cached_completion() {
+# --- Inits and completions ---
+# Cached in ~/.cache/zsh, skipped when the tool is missing. Regenerated when the
+# binary is newer than the cache or resolves to another path (a brew upgrade:
+# pyenv's init sources a file under its versioned Cellar directory)
+_cached_source() {
   (( $+commands[$1] )) || return
-  local f="$HOME/.cache/zsh/$1.zsh"
-  if [[ ! -s $f || ${commands[$1]} -nt $f ]]; then
+  local f="$HOME/.cache/zsh/$1.zsh" bin=${commands[$1]:A} first
+  [[ -s $f ]] && read -r first < $f
+  if [[ $first != "# $bin" || $bin -nt $f ]]; then
     mkdir -p ${f:h}
-    eval "$2" >| $f
+    { print -r -- "# $bin"; eval "$2" } >| $f
   fi
   source $f
 }
-_cached_completion aws-cli-manager 'aws-cli-manager completion zsh'
-_cached_completion kontext         'kontext completion zsh'
-_cached_completion helm            'helm completion zsh'
-_cached_completion tenv            'tenv completion zsh'
-_cached_completion task            'task --completion zsh'
-unfunction _cached_completion
+_cached_source pyenv           'pyenv init - --no-rehash zsh'
+_cached_source zoxide          'zoxide init zsh'
+_cached_source fzf             'fzf --zsh'
+_cached_source aws-cli-manager 'aws-cli-manager completion zsh'
+_cached_source kontext         'kontext completion zsh'
+_cached_source helm            'helm completion zsh'
+_cached_source tenv            'tenv completion zsh'
+_cached_source task            'task --completion zsh'
+unfunction _cached_source
 
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
