@@ -29,6 +29,7 @@ var files = []string{
 	".config/sketchybar/checks",
 	".config/sketchybar/aws_profiles",
 	".kube/config",
+	".config/kubernetes-mcp-server/config.toml",
 	".terraformrc",
 	".terraform.d/credentials.tfrc.json",
 	"workspaces/*.code-workspace", // VS Code workspaces, see `ws`
