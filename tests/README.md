@@ -10,8 +10,8 @@ python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt
 .venv/bin/pytest tests/ -k guard   # only the tests whose name has "guard"
 ```
 
-They need `tmux`, `zsh`, `bat` and `tofu` (or `terraform`; without either the
-hook's tests are skipped).
+They need `tmux`, `zsh`, `bat`, `fzf` (without it the Ctrl+R test is skipped)
+and `tofu` (or `terraform`; without either the hook's tests are skipped).
 
 | File | Checks |
 |---|---|
@@ -22,6 +22,7 @@ hook's tests are skipped).
 | `test_terraform_fmt_hook.py` | the `tofu fmt` pre-commit hook on staged files, in a throwaway repo |
 | `test_kubectl_complete.py` | the Tab completion scripts of krew and its plugins |
 | `test_plugins_outdated.py` | the pins read from the playbook, which master moved past, and the 14-day notification |
+| `test_zsh_history.py` | ↑ (both cursor modes) and Ctrl+R see what another shell ran since the last prompt, and ↑ keeps its prefix search going; two zsh in terminals (pexpect) on a throwaway history |
 
 `.github/scripts/test-install.sh` is the other test: `dotfiles-sync` end to end
 into an empty fake HOME.

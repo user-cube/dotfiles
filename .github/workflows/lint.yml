@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0 # gitleaks scans the whole history
 
       - name: Install tooling
-        run: brew install shellcheck gitleaks go jq neovim tree-sitter-cli tmux bat opentofu
+        run: brew install shellcheck gitleaks go jq neovim tree-sitter-cli tmux bat opentofu fzf
 
       - name: List shell scripts
         run: git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' > "$RUNNER_TEMP/scripts.txt"
@@ -67,7 +67,8 @@ jobs:
 
       # tests/: the shortcuts in Ghostty, tmux and the cheat sheet agree, k9s keys
       # and plugins, every config parses, and the behaviour of kube-guard, the
-      # tofu fmt hook, the krew completions and plugins-outdated (fake commands)
+      # tofu fmt hook, the krew completions and plugins-outdated (fake commands);
+      # ↑ / Ctrl+R read the other shells' history (fzf)
       - name: pytest
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
