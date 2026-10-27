@@ -150,6 +150,31 @@ export FZF_CTRL_R_OPTS="--preview 'echo {2..}' --preview-window=up:3:hidden:wrap
 _cached_source fzf             'fzf --zsh'
 # Folders on Ctrl+G, not fzf's Alt+C: Option+letter belongs to AeroSpace
 (( $+widgets[fzf-cd-widget] )) && bindkey '^G' fzf-cd-widget
+# ↑ and Ctrl+R first read what the other panes / sessions ran since this one's
+# last prompt (SHARE_HISTORY reads the file only when a prompt is drawn). Only
+# from the line being typed (reading mid-browse would shift the entries) and
+# only when the file grew since that prompt: an fc -RI with nothing new to read
+# breaks the next ↑'s prefix search. Same widget names, so up-line-or-beginning-search
+# still sees itself as the last widget and keeps the prefix search going
+zmodload -F zsh/stat b:zstat
+autoload -Uz add-zsh-hook
+typeset -ga _history_seen
+_history_mark() { zstat -A _history_seen +size -- $HISTFILE 2>/dev/null }
+add-zsh-hook precmd _history_mark
+_history_read_new() {
+  (( HISTNO == HISTCMD )) || return
+  local -a size
+  zstat -A size +size -- $HISTFILE 2>/dev/null || return
+  [[ $size[1] == $_history_seen[1] ]] && return
+  fc -RI
+  _history_seen=($size)
+}
+_history_up_search() { _history_read_new; up-line-or-beginning-search "$@" }
+_history_up() { _history_read_new; zle .up-line-or-history "$@" }
+_history_fzf() { _history_read_new; fzf-history-widget "$@" }
+(( $+widgets[up-line-or-beginning-search] )) && zle -N up-line-or-beginning-search _history_up_search
+zle -N up-line-or-history _history_up
+(( $+widgets[fzf-history-widget] )) && zle -N fzf-history-widget _history_fzf
 _cached_source aws-cli-manager 'aws-cli-manager completion zsh'
 _cached_source kontext         'kontext completion zsh'
 _cached_source helm            'helm completion zsh'

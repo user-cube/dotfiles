@@ -31,6 +31,8 @@ The details are in each file's header comment and in the [main README](../../REA
   this folder in Finder, `cdf` goes to Finder's, `quick-look FILE` previews
 - history: 100000 lines shared between panes, with start time and duration
   (`history -i`), no duplicates, `!!` expanded before it runs
+  - ↑ and Ctrl+R read what other panes / sessions ran first, without waiting
+    for a new prompt in this one
 - fzf: Ctrl+T files, Ctrl+G folders, Ctrl+R history, listed with `fd`
   (hidden files in, `.gitignore` respected) and previewed with `bat` / `ls`
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick; `z` still works
