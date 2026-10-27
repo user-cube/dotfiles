@@ -9,12 +9,12 @@
       "**/roles/*/handlers/*.yaml": "ansible"
     },
     "ansible.validation.enabled": true,
-    "ansible.validation.lint.enabled": true,
-    "[ansible]": {
-      "editor.tabSize": 2,
-      "editor.insertSpaces": true,
-      "editor.formatOnSave": true
-    }
+    "ansible.validation.lint.enabled": true
   },
-  "extensions": { "recommendations": ["redhat.ansible", "redhat.vscode-yaml"] }
+  "extensions": {
+    "recommendations": [
+      "redhat.ansible",
+      "redhat.vscode-yaml"
+    ]
+  }
 }

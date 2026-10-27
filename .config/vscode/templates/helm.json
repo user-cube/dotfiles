@@ -7,16 +7,18 @@
       "https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json": "*_test.yaml"
     },
     "yaml.validate": true,
-    "yaml.format.enable": true,
     "yaml.hover": true,
     "yaml.completion": true,
-    "files.associations": { "*.tpl": "helm", "values.yaml": "yaml" },
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true,
-    "editor.formatOnSave": true,
-    "[yaml]": { "editor.defaultFormatter": "redhat.vscode-yaml" }
+    "files.associations": {
+      "*.tpl": "helm",
+      "values.yaml": "yaml"
+    }
   },
   "extensions": {
-    "recommendations": ["redhat.vscode-yaml", "tim-koehler.helm-intellisense", "ms-kubernetes-tools.vscode-kubernetes-tools"]
+    "recommendations": [
+      "redhat.vscode-yaml",
+      "tim-koehler.helm-intellisense",
+      "ms-kubernetes-tools.vscode-kubernetes-tools"
+    ]
   }
 }

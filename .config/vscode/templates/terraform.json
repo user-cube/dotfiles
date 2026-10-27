@@ -1,16 +1,15 @@
 {
   "settings": {
-    "editor.insertSpaces": true,
-    "editor.tabSize": 2,
-    "editor.formatOnSave": true,
-    "files.encoding": "utf8",
-    "files.eol": "\n",
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true,
-    "files.exclude": { ".terraform": true },
-    "search.exclude": { ".terraform": true },
-    "[terraform]": { "editor.formatOnSave": true }
+    "files.exclude": {
+      ".terraform": true
+    },
+    "search.exclude": {
+      ".terraform": true
+    }
   },
-  "extensions": { "recommendations": ["hashicorp.terraform"] }
+  "extensions": {
+    "recommendations": [
+      "hashicorp.terraform"
+    ]
+  }
 }

@@ -1,24 +1,28 @@
 {
   "settings": {
     "go.useLanguageServer": true,
-    "go.formatTool": "gofmt",
     "go.lintTool": "golangci-lint",
     "go.lintOnSave": "package",
     "go.vetOnSave": "package",
     "go.testOnSave": true,
     "go.coverOnSave": false,
-    "go.toolsEnvVars": { "GO111MODULE": "on" },
-    "go.toolsManagement.autoUpdate": true,
-    "[go]": {
-      "editor.formatOnSave": true,
-      "editor.codeActionsOnSave": { "source.organizeImports": "always" }
+    "go.toolsEnvVars": {
+      "GO111MODULE": "on"
     },
+    "go.toolsManagement.autoUpdate": true,
     "gopls": {
       "ui.semanticTokens": true,
       "ui.completion.usePlaceholders": true,
-      "analyses": { "unusedparams": true, "shadow": true },
+      "analyses": {
+        "unusedparams": true,
+        "shadow": true
+      },
       "staticcheck": true
     }
   },
-  "extensions": { "recommendations": ["golang.go"] }
+  "extensions": {
+    "recommendations": [
+      "golang.go"
+    ]
+  }
 }

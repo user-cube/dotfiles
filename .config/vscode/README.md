@@ -13,6 +13,9 @@ ws -n NAME -t terraform DIR:blue ... # create one from folders, then open it
   `~/Library/Application Support/Code/User` by `../dotfiles/install.sh` (a file
   VS Code had there is kept as `.bak`). Plain JSON, no comments: the tests
   parse it
+  - formatting is global, the same in every workspace: format on save, 2
+    spaces (4 for Python), LF, final newline, no trailing whitespace (kept in
+    Markdown), gofmt + organized imports for Go, Red Hat's formatter for YAML
 - `tmux.sh`: the default terminal profile (`tmux`), so the integrated terminal
   runs tmux with the same `tmux.conf` as Ghostty
   - one session per workspace folder, named like ⌘O names it; a second VS Code
@@ -27,7 +30,8 @@ ws -n NAME -t terraform DIR:blue ... # create one from folders, then open it
   the terminal has focus; `tests/test_shortcuts.py` checks they match). Left
   to VS Code: ⌘J (panel), ⌘K (chords, e.g. ⌘K ⌘S), ⌘O, ⌘⇧E, ⌘⇧F; in tmux use
   `C-b K`, `C-b f`, `C-b E`, `C-b z`. ⌘K ⌘S: Hue's jump between workspace folders
-- `templates/`: settings and recommended extensions `ws -n ... -t TPL` merges
+- `templates/`: settings (tooling only: linters, schemas, file associations;
+  never formatting) and recommended extensions `ws -n ... -t TPL` merges
   into a new workspace: `ansible`, `golang`, `helm`, `opentofu`, `terraform`;
   repeat `-t` to combine
 - `extensions/hue/`: Hue, a small extension outside the marketplace, installed
