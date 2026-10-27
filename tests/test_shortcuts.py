@@ -129,9 +129,19 @@ def test_vscode_keys_match_ghostty():
     import json
     ghostty = ghostty_keybinds()
     for b in json.loads(VSCODE_KEYBINDINGS.read_text()):
-        if b["command"] != "workbench.action.terminal.sendSequence":
+        if b["command"] != "workbench.action.terminal.sendSequence" or not b["args"]["text"].startswith("\x02"):
             continue
         assert b.get("when") == "terminalFocus", f"{b['key']} would also fire outside the terminal"
         assert ghostty.get(b["key"]) == b["args"]["text"].removeprefix("\x02"), (
             f"VS Code's {b['key']} sends {b['args']['text']!r}; Ghostty's sends {ghostty.get(b['key'])!r}"
         )
+
+
+def test_vscode_shift_enter_is_a_newline():
+    """VS Code's terminal sends Shift+Enter as a plain Enter. As ESC + Enter
+    (Alt+Enter) it reaches the app through tmux, and Claude Code takes it as
+    a newline, as it takes Ghostty's extended Shift+Enter."""
+    import json
+    binds = {b["key"]: b for b in json.loads(VSCODE_KEYBINDINGS.read_text())}
+    b = binds.get("shift+enter")
+    assert b and b["args"]["text"] == "\x1b\r" and b["when"] == "terminalFocus", b
