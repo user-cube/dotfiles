@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   lint:
-    name: shellcheck + bash 3.2 + zsh and JSON syntax + nvim + go tools + pytest + gitleaks
+    name: shellcheck + bash 3.2 + zsh and JSON syntax + nvim + go tools + pytest + Hue + gitleaks
     # macOS on purpose: scripts run with /bin/bash 3.2, which only macOS ships
     runs-on: macos-latest
 
@@ -74,6 +74,11 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install -q -r tests/requirements.txt
           "$RUNNER_TEMP/venv/bin/pytest" tests/ -q
+
+      # Hue's colors, danger places and colorCustomizations, and extension.js
+      # with a fake vscode (node ships with the runner)
+      - name: Hue extension (node --test)
+        run: node --test .config/vscode/extensions/hue/
 
       # Every work commit runs this hook: a broken build blocks them all
       - name: commit-msg hook (go vet + test)

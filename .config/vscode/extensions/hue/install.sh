@@ -7,7 +7,7 @@ dir=$(cd "$(dirname "$0")" && pwd)
 command -v code >/dev/null || { echo "hue: 'code' not on PATH, skipped"; exit 0; }
 
 stamp_file="$HOME/.cache/hue.sha"
-sha=$(cat "$dir/package.json" "$dir/extension.js" "$dir/README.md" "$dir/icon.png" | shasum | cut -d' ' -f1)
+sha=$(cat "$dir/package.json" "$dir/extension.js" "$dir/colors.js" "$dir/README.md" "$dir/icon.png" | shasum | cut -d' ' -f1)
 if [[ -f $stamp_file && $(cat "$stamp_file") == "$sha" ]] && code --list-extensions | grep -ix 'rui.hue' >/dev/null; then
   exit 0
 fi
@@ -19,7 +19,7 @@ version=$(jq -r .version "$dir/package.json")
 # A .vsix is a zip: the manifest, the content types and the files under extension/
 # (@html escapes the text that lands in XML)
 mkdir -p "$tmp/vsix/extension"
-cp "$dir/package.json" "$dir/extension.js" "$dir/README.md" "$dir/icon.png" "$tmp/vsix/extension/"
+cp "$dir/package.json" "$dir/extension.js" "$dir/colors.js" "$dir/README.md" "$dir/icon.png" "$tmp/vsix/extension/"
 jq -r '"<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <PackageManifest Version=\"2.0.0\" xmlns=\"http://schemas.microsoft.com/developer/vsx-schema/2011\">
   <Metadata>

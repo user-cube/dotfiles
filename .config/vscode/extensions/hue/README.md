@@ -73,3 +73,12 @@ ws -n homelab infra:purple'!hetzner/prod' docs:teal
 Not on the marketplace. `.config/vscode/extensions/hue/install.sh` packages it as a
 `.vsix` and installs it with `code --install-extension`; `dotfiles-sync` runs it
 when something changed. Reload the VS Code windows afterwards.
+
+## Code
+
+- `extension.js`: the VS Code side (settings, events, commands, status bar)
+- `colors.js`: the rest, without VS Code: a folder's color, the palette of
+  each part, the danger places, the `colorCustomizations` they make
+- `colors.test.js`: `node --test .config/vscode/extensions/hue/` (CI runs it),
+  including `extension.js` loaded with a fake `vscode`. A new file the
+  extension needs goes into `install.sh`'s list too; a test checks it

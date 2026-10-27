@@ -24,5 +24,9 @@ and `tofu` (or `terraform`; without either the hook's tests are skipped).
 | `test_plugins_outdated.py` | the pins read from the playbook, which master moved past, and the 14-day notification |
 | `test_zsh_history.py` | ↑ (both cursor modes) and Ctrl+R see what another shell ran since the last prompt, and ↑ keeps its prefix search going; two zsh in terminals (pexpect) on a throwaway history |
 
+Hue, the VS Code extension, has its own: `node --test .config/vscode/extensions/hue/`
+(`colors.test.js`: its colors, the danger places, the colorCustomizations it
+writes, and `extension.js` loaded with a fake `vscode`).
+
 `.github/scripts/test-install.sh` is the other test: `dotfiles-sync` end to end
 into an empty fake HOME.
