@@ -56,7 +56,8 @@ keyboard.
 | `scratch.conf` | the ⌘J scratch server: only ⌘J bound, no plugins |
 | `cheatsheet.sh` | ⌘⇧H: every ⌘ shortcut in fzf |
 | `sessionizer.sh`, `sessions.sh`, `ssh-picker.sh`, `rename-window.sh`, `split.sh` | the popups and helpers above |
-| `preload-sessions.sh` | creates the sessions in `sessions.local` (run by `tmux-start.sh`, and `tmux-sessions` after editing it) |
+| `start-server.sh` | starts tmux with the `main` session when it isn't running: restores the last tmux-resurrect save, then preloads `sessions.local` (run by Ghostty's `tmux-start.sh` and VS Code's `tmux.sh`) |
+| `preload-sessions.sh` | creates the sessions in `sessions.local` (run by `start-server.sh`, and `tmux-sessions` after editing it) |
 | `sessions.local.example` | the format of `~/.config/tmux/sessions.local` (per machine, never committed) |
 
 ## Plugins
