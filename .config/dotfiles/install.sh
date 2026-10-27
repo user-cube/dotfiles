@@ -48,5 +48,20 @@ if [ ! -L "$lg_link" ]; then
   fi
 fi
 
+# VS Code user settings and keybindings (terminal runs tmux, ⌘ shortcuts send
+# the tmux prefix like Ghostty's): links to ~/.config/vscode. A file VS Code
+# wrote there before is kept as .bak
+for f in settings.json keybindings.json; do
+  link="$HOME/Library/Application Support/Code/User/$f"
+  [ -L "$link" ] && continue
+  mkdir -p "$(dirname "$link")"
+  if [ -s "$link" ]; then
+    mv "$link" "$link.bak"
+    echo "VS Code: kept the old $f as $f.bak"
+  fi
+  ln -sf "$HOME/.config/vscode/$f" "$link"
+  echo "linked VS Code $f"
+done
+
 # Files the repo no longer installs (rsync never deletes): ./obsolete
 "$HOME/.config/dotfiles/remove-obsolete.sh"

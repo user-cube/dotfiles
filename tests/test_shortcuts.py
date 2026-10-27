@@ -118,3 +118,20 @@ def test_cheatsheet_shortcut_matches_ghostty(keys, shortcut):
         f"the cheat sheet says {shortcut} is {keys}; Ghostty's {trigger} sends "
         f"{ghostty_keybinds().get(trigger)!r}"
     )
+
+
+VSCODE_KEYBINDINGS = CONFIG / "vscode" / "keybindings.json"
+
+
+def test_vscode_keys_match_ghostty():
+    """VS Code's terminal runs tmux too (vscode/tmux.sh): its ⌘ shortcuts send
+    the same C-b + key as Ghostty's, never a different one."""
+    import json
+    ghostty = ghostty_keybinds()
+    for b in json.loads(VSCODE_KEYBINDINGS.read_text()):
+        if b["command"] != "workbench.action.terminal.sendSequence":
+            continue
+        assert b.get("when") == "terminalFocus", f"{b['key']} would also fire outside the terminal"
+        assert ghostty.get(b["key"]) == b["args"]["text"].removeprefix("\x02"), (
+            f"VS Code's {b['key']} sends {b['args']['text']!r}; Ghostty's sends {ghostty.get(b['key'])!r}"
+        )

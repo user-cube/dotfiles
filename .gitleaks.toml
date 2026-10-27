@@ -1,0 +1,12 @@
+# gitleaks (pre-commit hook, hook.gitleaks in .gitconfig): the default rules,
+# minus a false positive.
+[extend]
+useDefault = true
+
+# VS Code keybindings: "key": "cmd+shift+down" reads as a generic API key
+[[allowlists]]
+description = "VS Code keybinding keys"
+paths = ['''^\.config/vscode/keybindings\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"key": "[a-z0-9+ ]+",$''']
+condition = "AND"
