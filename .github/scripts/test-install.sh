@@ -30,12 +30,13 @@ g -C "$t/dotfiles" remote set-url origin "$t/origin.git"
 g -C "$t/dotfiles" fetch -q
 g -C "$t/dotfiles" branch -q -u "origin/$(g -C "$t/dotfiles" branch --show-current)"
 
-# A fake VS Code CLI (Hue's install.sh): lists rui.hue once installed
+# A fake VS Code CLI: lists rui.hue once Hue's install.sh installed its .vsix,
+# and the marketplace ids installed since (install-extensions.sh)
 cat >"$t/bin/code" <<EOF
 #!/bin/sh
 case "\$1" in
-  --list-extensions) [ -f "$t/hue-installed" ] && echo rui.hue; exit 0 ;;
-  --install-extension) touch "$t/hue-installed" ;;
+  --list-extensions) [ -f "$t/hue-installed" ] && echo rui.hue; cat "$t/extensions" 2>/dev/null; exit 0 ;;
+  --install-extension) case "\$2" in *.vsix) touch "$t/hue-installed" ;; *) echo "\$2" >>"$t/extensions" ;; esac ;;
 esac
 EOF
 chmod +x "$t/bin/code"
@@ -63,6 +64,12 @@ done
 grep -q '__icon_map()' "$H/.config/sketchybar/plugins/icon_map.sh" 2>/dev/null && pass "icon map downloaded" || fail "no icon map"
 [ -f "$t/hue-installed" ] && pass "Hue installed" || fail "Hue not installed"
 [ ! -e "$H/.config/cmux/settings.json" ] && pass "obsolete file removed" || fail "obsolete file still there"
+want=$(grep -vE '^[[:space:]]*(#|$)' "$repo/.config/vscode/extensions.txt" | sort)
+[ "$(sort "$t/extensions" 2>/dev/null)" = "$want" ] && pass "VS Code extensions installed" || fail "VS Code extensions: got $(cat "$t/extensions" 2>/dev/null)"
+for f in settings.json keybindings.json; do
+  vs="$H/Library/Application Support/Code/User/$f"
+  [ "$(readlink "$vs")" = "$H/.config/vscode/$f" ] && pass "VS Code $f linked" || fail "VS Code $f not linked"
+done
 lg="$H/Library/Application Support/lazygit/config.yml"
 [ "$(readlink "$lg")" = "$H/.config/lazygit/config.yml" ] && pass "lazygit config linked" || fail "lazygit config not linked"
 

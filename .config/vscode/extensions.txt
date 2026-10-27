@@ -1,0 +1,50 @@
+# VS Code extensions, installed by install-extensions.sh (dotfiles-sync) when
+# missing. One id per line, as `code --list-extensions` prints it. Never
+# uninstalls: one installed by hand stays, add it here to keep it everywhere.
+# Hue (rui.hue) is not here: extensions/hue/install.sh builds and installs it.
+
+# Look
+pkief.material-icon-theme
+usernamehw.errorlens
+
+# Git
+eamodio.gitlens
+mhutchie.git-graph
+fabiospampinato.vscode-diff
+github.vscode-pull-request-github
+github.vscode-github-actions
+gitlab.gitlab-workflow
+
+# Languages
+golang.go
+ms-python.python
+ms-python.debugpy
+ms-python.vscode-python-envs
+dbaeumer.vscode-eslint
+esbenp.prettier-vscode
+ms-vscode.makefile-tools
+llvm-vs-code-extensions.lldb-dap
+
+# Infra: YAML (the global formatter, settings.json), Terraform / OpenTofu,
+# Ansible, Kubernetes, Helm, SOPS
+redhat.vscode-yaml
+kennylong.kubernetes-yaml-formatter
+hashicorp.terraform
+hashicorp.hcl
+opentofu.vscode-opentofu
+redhat.ansible
+ms-kubernetes-tools.vscode-kubernetes-tools
+tim-koehler.helm-intellisense
+signageos.signageos-vscode-sops
+
+# Containers and remotes
+docker.docker
+ms-azuretools.vscode-docker
+ms-azuretools.vscode-containers
+ms-vscode-remote.remote-containers
+ms-vscode-remote.remote-ssh
+ms-vscode-remote.remote-ssh-edit
+ms-vscode.remote-explorer
+
+# AI
+anthropic.claude-code

@@ -1,8 +1,9 @@
 #!/bin/bash
 # The steps after the dotfiles are copied into place (~/.config, ~/git_hooks,
 # ~/.claude): build the Go tools, download the SketchyBar icon map, install the
-# Hue VS Code extension, remove what the repo no longer installs. The one list
-# of them, run by dotfiles-sync and by the playbook: a new step goes here.
+# VS Code extensions (Hue, extensions.txt), link the VS Code and lazygit
+# configs, remove what the repo no longer installs. The one list of them, run
+# by dotfiles-sync and by the playbook: a new step goes here.
 #
 # Prints a line for each thing it changed ("built", "downloaded", "installed",
 # "removed"); nothing when all was up to date. Fails when a build fails.
@@ -31,8 +32,10 @@ done
 # offline keeps the current one
 "$HOME/.config/sketchybar/fetch-icon-map.sh" || echo "icon_map.sh: kept the current one" >&2
 
-# VS Code: the Hue extension (skips when unchanged or without `code`)
+# VS Code: the Hue extension (skips when unchanged or without `code`), then the
+# missing ones from vscode/extensions.txt
 "$HOME/.config/vscode/extensions/hue/install.sh"
+"$HOME/.config/vscode/install-extensions.sh"
 
 # lazygit reads ~/Library/Application Support/lazygit on macOS, also from the
 # tmux popup, which never sees an env var from .zshrc: a link to the dotfiles'

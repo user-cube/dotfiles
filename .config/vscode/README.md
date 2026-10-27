@@ -16,6 +16,10 @@ ws -n NAME -t terraform DIR:blue ... # create one from folders, then open it
   - formatting is global, the same in every workspace: format on save, 2
     spaces (4 for Python), LF, final newline, no trailing whitespace (kept in
     Markdown), gofmt + organized imports for Go, Red Hat's formatter for YAML
+- `extensions.txt`: the extensions `install-extensions.sh` (run by
+  `../dotfiles/install.sh`) installs when missing; it never uninstalls, so
+  add one you installed by hand to have it on every machine
+  (`code --list-extensions` prints the ids)
 - `tmux.sh`: the default terminal profile (`tmux`), so the integrated terminal
   runs tmux with the same `tmux.conf` as Ghostty
   - one session per workspace folder, named like ⌘O names it; a second VS Code
