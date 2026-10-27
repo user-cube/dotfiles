@@ -77,6 +77,18 @@ echo "== second run: nothing to do"
 out=$(sync); rc=$?
 [ $rc -eq 0 ] && [ -z "$out" ] && pass "no changes" || fail "rc=$rc, output: $out"
 
+echo "== the clone has a branch or uncommitted changes: said on stderr"
+grep -qE 'installing branch|uncommitted' "$t/stderr" && fail "warned on a clean main: $(cat "$t/stderr")" || pass "no warning on a clean clone"
+echo scratch >"$t/dotfiles/scratch.txt"
+sync >/dev/null
+grep -q 'has uncommitted changes' "$t/stderr" && pass "warns about uncommitted changes" || fail "no warning: $(cat "$t/stderr")"
+rm "$t/dotfiles/scratch.txt"
+g -C "$t/dotfiles" switch -q -c topic --track "$(g -C "$t/dotfiles" rev-parse --abbrev-ref '@{u}')" # pull needs an upstream
+sync >/dev/null
+grep -q "installing branch 'topic'" "$t/stderr" && pass "warns about a branch" || fail "no branch warning: $(cat "$t/stderr")"
+g -C "$t/dotfiles" switch -q -
+g -C "$t/dotfiles" branch -q -D topic
+
 echo "== a .go file changes: only its tool is rebuilt"
 touch "$t/dotfiles/.config/sketchybar/plugins/check/main.go"
 out=$(sync)
@@ -121,6 +133,11 @@ out=$(diff_)
 [[ $out == *"1 commit(s) ahead of the clone"* && $out == *"changed  ~/.config/git/ignore"* ]] &&
   pass "compares with the upstream the sync pulls" || fail "upstream: $out"
 g -C "$t/dotfiles" pull -q --ff-only # back in step for the rest
+echo "# not pushed" >>"$t/dotfiles/.config/git/ignore"
+g -C "$t/dotfiles" commit -qam "not pushed"
+out=$(diff_)
+[[ $out == *"Compared with $(g -C "$t/dotfiles" branch --show-current) "* && $out == *"changed  ~/.config/git/ignore"* ]] &&
+  pass "compares with HEAD when the clone is ahead" || fail "ahead: $out"
 
 echo "== a broken build fails the sync"
 echo 'not go' >>"$t/dotfiles/.config/dotfiles/local-files/main.go"

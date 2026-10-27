@@ -1,11 +1,20 @@
 # dotfiles-sync: update this machine from the dotfiles repo without Ansible.
 # Mirrors the playbook's `dotfiles` tag: pull, sync .config, copy the home
-# files, then reload whatever is running. DOTFILES_DIR overrides ~/dotfiles.
+# files, then reload whatever is running. DOTFILES_DIR overrides ~/dotfiles: it
+# can be the clone being edited, set in ~/.zshrc.local (a branch or uncommitted
+# changes there are installed as they are, and said so).
 dotfiles-sync() {
   local repo=${DOTFILES_DIR:-$HOME/dotfiles}
   [[ -d $repo/.git ]] || { echo "dotfiles-sync: $repo is not a git clone"; return 1; }
 
   git -C "$repo" pull --ff-only || return
+  # DOTFILES_DIR can be the clone being edited: it installs what is there, so
+  # say so when that is a branch or uncommitted changes
+  local branch=$(git -C "$repo" branch --show-current)
+  local default=$(git -C "$repo" symbolic-ref -q --short refs/remotes/origin/HEAD)
+  default=${default#origin/}
+  [[ $branch == ${default:-main} ]] || echo "dotfiles-sync: installing branch '${branch:-detached HEAD}' of $repo, not ${default:-main}" >&2
+  [[ -z $(git -C "$repo" status --porcelain) ]] || echo "dotfiles-sync: $repo has uncommitted changes, installed as they are" >&2
   rsync -a "$repo/.config/" "$HOME/.config/" || return
   rsync -a "$repo/git_hooks/" "$HOME/git_hooks/" || return
   cp "$repo/.zshrc" "$repo/.p10k.zsh" "$repo/.gitconfig" "$repo/.gitconfig-personal" "$HOME/" || return
@@ -30,17 +39,22 @@ dotfiles-sync() {
 # nothing: the files it would overwrite (changed here, or older), add (new) or
 # remove (obsolete). -p also shows the diffs, from this machine to the repo
 # (+ is what the sync brings). Compares with the upstream the sync would pull
-# (fetched, never merged; HEAD when there is none). The builds of install.sh
-# are not listed: they follow the sources.
+# (fetched, never merged), or HEAD when there is none or the clone is ahead of
+# it. Uncommitted changes are not compared. The builds of install.sh are not
+# listed: they follow the sources.
 dotfiles-diff() {
   local repo=${DOTFILES_DIR:-$HOME/dotfiles} patch=0
   [[ $1 == -p ]] && patch=1
   [[ -d $repo/.git ]] || { echo "dotfiles-diff: $repo is not a git clone"; return 1; }
   git -C "$repo" rev-parse -q --verify HEAD >/dev/null || { echo "dotfiles-diff: $repo has no commits"; return 1; }
 
+  # The upstream when the sync's pull would fast-forward to it; HEAD when the
+  # clone is ahead of it (commits not pushed yet: the sync installs those)
   local ref=HEAD
-  git -C "$repo" fetch -q 2>/dev/null && git -C "$repo" rev-parse -q --verify '@{u}' >/dev/null && ref='@{u}'
+  git -C "$repo" fetch -q 2>/dev/null && git -C "$repo" rev-parse -q --verify '@{u}' >/dev/null &&
+    git -C "$repo" merge-base --is-ancestor HEAD '@{u}' && ref='@{u}'
   local behind=$(git -C "$repo" rev-list --count "HEAD..$ref")
+  [[ -z $(git -C "$repo" status --porcelain) ]] || echo "dotfiles-diff: $repo has uncommitted changes, not compared (the sync installs them)"
   echo "Compared with $(git -C "$repo" rev-parse --abbrev-ref "$ref") ($(git -C "$repo" rev-parse --short "$ref"))$( ((behind)) && echo ", $behind commit(s) ahead of the clone: dotfiles-sync pulls them")"
 
   # The repo as dotfiles-sync would install it: its tracked files at $ref

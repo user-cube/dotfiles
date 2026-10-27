@@ -161,6 +161,11 @@ syncs `.config/`, `git_hooks/` and `claude/` (to `~/.claude/`), copies `.zshrc`,
 `.config/dotfiles/install.sh`, then reloads tmux, AeroSpace, SketchyBar and borders.
 Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
+To sync from the clone you edit instead of `~/dotfiles` (which the playbook
+keeps), set it in `~/.zshrc.local`: `export DOTFILES_DIR=~/work/github/dotfiles`.
+It installs what that clone has, so `dotfiles-sync` warns when that is a branch
+other than `main` or uncommitted changes.
+
 To see first what it would change, changing nothing:
 
 ```sh
@@ -169,7 +174,8 @@ dotfiles-diff -p   # and their diffs: - is this machine, + what the sync brings
 ```
 
 It compares with the upstream `dotfiles-sync` would pull (fetched, not merged), and
-says how many commits the clone is behind.
+says how many commits the clone is behind; with the clone's own HEAD when it is
+ahead (commits not pushed yet). Uncommitted changes are not compared.
 
 `install.sh` holds the steps after the files are in place, the same for
 `dotfiles-sync` and the playbook (a new step goes there, in one repo):
