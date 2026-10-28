@@ -89,6 +89,16 @@ grep -q "installing branch 'topic'" "$t/stderr" && pass "warns about a branch" |
 g -C "$t/dotfiles" switch -q -
 g -C "$t/dotfiles" branch -q -D topic
 
+echo "== Hue changed without a version bump: said on stderr"
+hue_version=$(jq -r .version "$repo/.config/vscode/extensions/hue/package.json")
+echo "an-older-sha $hue_version" >"$H/.cache/hue.sha"
+out=$(sync)
+[[ $out == "hue: installed $hue_version"* ]] && pass "reinstalled" || fail "not reinstalled: $out"
+grep -q "hue: changed but still $hue_version" "$t/stderr" && pass "asks for a version bump" || fail "no bump warning: $(cat "$t/stderr")"
+echo "an-older-sha" >"$H/.cache/hue.sha" # a stamp from before it held the version
+sync >/dev/null
+grep -q 'bump' "$t/stderr" && fail "warned with an old stamp" || pass "no warning with an old stamp"
+
 echo "== a .go file changes: only its tool is rebuilt"
 touch "$t/dotfiles/.config/sketchybar/plugins/check/main.go"
 out=$(sync)

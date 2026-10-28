@@ -2,7 +2,7 @@
   "name": "hue",
   "displayName": "Hue",
   "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders and protected branches.",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -42,6 +42,11 @@
       {
         "command": "hue.clear",
         "title": "Clear (remove colors and turn off)",
+        "category": "Hue"
+      },
+      {
+        "command": "hue.save",
+        "title": "Save (asks first in a PROD place)",
         "category": "Hue"
       }
     ],
@@ -133,6 +138,12 @@
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
         "when": "workspaceFolderCount > 0"
+      },
+      {
+        "command": "hue.save",
+        "key": "ctrl+s",
+        "mac": "cmd+s",
+        "when": "hue.dangerFile"
       }
     ]
   },

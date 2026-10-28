@@ -20,15 +20,32 @@ function activate(context) {
     return { ...DEFAULT_COLORS, ...(vscode.workspace.getConfiguration('hue').get('colors') || {}) };
   }
 
+  // A file uri's path inside `folder` (posix), or undefined (outside it, or the folder itself)
+  function relPathIn(folder, uri) {
+    if (!uri || !folder || uri.scheme !== 'file') return undefined;
+    const rel = path.relative(folder.uri.fsPath, uri.fsPath);
+    return !rel || rel.startsWith('..') || path.isAbsolute(rel) ? undefined : rel.split(path.sep).join('/');
+  }
+
   // The active file's path inside `folder` (posix), or undefined
   function activeRelPath(folder) {
     const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
-    if (!doc || !folder || doc.uri.scheme !== 'file') return undefined;
-    const rel = path.relative(folder.uri.fsPath, doc.uri.fsPath);
-    return rel.startsWith('..') || path.isAbsolute(rel) ? undefined : rel.split(path.sep).join('/');
+    return doc ? relPathIn(folder, doc.uri) : undefined;
   }
 
-  // Set by Go to Folder when the folder has no file to open; cleared by the next editor change
+  // Where a terminal is: its folder and the path inside it, from the shell's
+  // current directory (shell integration) or the one it was opened in. Inside
+  // tmux there is no shell integration: the directory it was opened in
+  function terminalPlace(terminal) {
+    let cwd = (terminal.shellIntegration && terminal.shellIntegration.cwd) || (terminal.creationOptions && terminal.creationOptions.cwd);
+    if (typeof cwd === 'string') cwd = vscode.Uri.file(cwd);
+    const folder = cwd && vscode.workspace.getWorkspaceFolder(cwd);
+    return folder ? { name: folder.name, rel: relPathIn(folder, cwd) } : undefined;
+  }
+
+  // The place the window follows instead of the active editor's file: a folder
+  // picked in Go to Folder (no file to open), or the active terminal's. Cleared
+  // by the next editor change. { name, rel }
   let forced;
   const lastFiles = () => context.workspaceState.get('lastFiles') || {};
   function rememberFile() {
@@ -40,7 +57,7 @@ function activate(context) {
   }
 
   function activeFolderName() {
-    if (forced) return forced;
+    if (forced) return forced.name;
     const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
     const active = doc && vscode.workspace.getWorkspaceFolder(doc.uri);
     if (active) return active.name;
@@ -103,7 +120,8 @@ function activate(context) {
     const kind = vscode.window.activeColorTheme.kind;
     const light = kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight;
     const k = STRENGTH[settings.get('strength')] || 1;
-    const dangerEntry = enabled ? isDanger(settings.get('danger') || [], name, activeRelPath(folder)) : undefined;
+    const rel = forced ? forced.rel : activeRelPath(folder);
+    const dangerEntry = enabled ? isDanger(settings.get('danger') || [], name, rel) : undefined;
     const danger = dangerEntry !== undefined;
     const protectedBranches = settings.get('protectedBranches') || [];
     const branch = enabled && folder && protectedBranches.length ? await branchOf(folder) : undefined;
@@ -120,6 +138,36 @@ function activate(context) {
     const next = nextCustomizations(current, { hue, light, k, parts: settings.get('parts') || PARTS, onProtected, danger });
     if (JSON.stringify(next) === JSON.stringify(current)) return;
     await cfg.update('colorCustomizations', Object.keys(next).length ? next : undefined, vscode.ConfigurationTarget.Workspace);
+  }
+
+  // ⌘S in a danger place asks first, once per place in a session. Only ⌘S (the
+  // hue.dangerFile context turns its keybinding on): VS Code can't stop a save
+  // that already started, from the menu or auto save
+  function activeFileDanger() {
+    const settings = vscode.workspace.getConfiguration('hue');
+    const doc = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
+    const folder = doc && doc.uri.scheme === 'file' && vscode.workspace.getWorkspaceFolder(doc.uri);
+    if (!folder || settings.get('enabled') === false || !vscode.workspace.workspaceFile) return undefined;
+    return isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder));
+  }
+  let dangerFile;
+  function updateSaveGuard() {
+    const now = activeFileDanger() !== undefined;
+    if (now !== dangerFile) {
+      dangerFile = now;
+      vscode.commands.executeCommand('setContext', 'hue.dangerFile', now);
+    }
+  }
+  const confirmed = new Set();
+  async function save() {
+    const entry = activeFileDanger();
+    if (entry !== undefined && !confirmed.has(entry)) {
+      const answer = await vscode.window.showWarningMessage(`You are editing PROD: ${entry}. Save anyway?`,
+        { modal: true, detail: 'Marked in hue.danger. Hue asks once per place until VS Code restarts.' }, 'Save');
+      if (answer !== 'Save') return;
+      confirmed.add(entry);
+    }
+    await vscode.commands.executeCommand('workbench.action.files.save');
   }
 
   // The folder a command acts on: the active editor's, else ask when there are several
@@ -226,7 +274,7 @@ function activate(context) {
         return;
       } catch (e) { /* the file is gone: reveal the folder instead */ }
     }
-    forced = pick.folder.name;
+    forced = { name: pick.folder.name };
     await vscode.commands.executeCommand('revealInExplorer', pick.folder.uri);
     apply();
   }
@@ -238,11 +286,16 @@ function activate(context) {
   }
 
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => { forced = undefined; rememberFile(); apply(); }),
+    vscode.window.onDidChangeActiveTextEditor(() => { forced = undefined; rememberFile(); updateSaveGuard(); apply(); }),
+    // A terminal in another folder takes the window there; one with no folder leaves it
+    vscode.window.onDidChangeActiveTerminal((terminal) => {
+      const place = terminal && terminalPlace(terminal);
+      if (place) { forced = place; apply(); }
+    }),
     vscode.window.onDidChangeActiveColorTheme(apply),
     vscode.workspace.onDidChangeWorkspaceFolders(apply),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('hue')) apply();
+      if (e.affectsConfiguration('hue')) { updateSaveGuard(); apply(); }
     }),
     vscode.commands.registerCommand('hue.setColor', setColor),
     vscode.commands.registerCommand('hue.toggleDanger', toggleDanger),
@@ -250,8 +303,10 @@ function activate(context) {
     vscode.commands.registerCommand('hue.goToFolder', goToFolder),
     vscode.commands.registerCommand('hue.clear', clear),
     vscode.commands.registerCommand('hue.refresh', apply),
+    vscode.commands.registerCommand('hue.save', save),
   );
   rememberFile();
+  updateSaveGuard();
   apply();
 }
 

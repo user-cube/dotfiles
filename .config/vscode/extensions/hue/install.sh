@@ -6,15 +6,23 @@ set -euo pipefail
 dir=$(cd "$(dirname "$0")" && pwd)
 command -v code >/dev/null || { echo "hue: 'code' not on PATH, skipped"; exit 0; }
 
+# The stamp: "sha version" of the last install (an older one holds the sha only)
 stamp_file="$HOME/.cache/hue.sha"
 sha=$(cat "$dir/package.json" "$dir/extension.js" "$dir/colors.js" "$dir/README.md" "$dir/icon.png" | shasum | cut -d' ' -f1)
-if [[ -f $stamp_file && $(cat "$stamp_file") == "$sha" ]] && code --list-extensions | grep -ix 'rui.hue' >/dev/null; then
+old_sha='' old_version=''
+[[ -f $stamp_file ]] && read -r old_sha old_version < "$stamp_file"
+if [[ $old_sha == "$sha" ]] && code --list-extensions | grep -ix 'rui.hue' >/dev/null; then
   exit 0
 fi
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 version=$(jq -r .version "$dir/package.json")
+# Changed since the last install but the same version: VS Code would show no
+# difference between the two
+if [[ -n $old_sha && $old_sha != "$sha" && $old_version == "$version" ]]; then
+  echo "hue: changed but still $version: bump \"version\" in package.json" >&2
+fi
 
 # A .vsix is a zip: the manifest, the content types and the files under extension/
 # (@html escapes the text that lands in XML)
@@ -50,5 +58,5 @@ XML
 
 code --install-extension "$tmp/hue.vsix" --force
 mkdir -p "$(dirname "$stamp_file")"
-echo "$sha" > "$stamp_file"
+echo "$sha $version" > "$stamp_file"
 echo "hue: installed $version; reload VS Code windows to pick it up"

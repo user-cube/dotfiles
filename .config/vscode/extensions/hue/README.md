@@ -14,11 +14,15 @@ the keys it owns, and removes them when they stop applying. A repo's own
 
 - **Folder colors.** `hue.folders` maps a folder name to a color. A folder with no
   color of its own gets a stable one from its name.
+- **Terminals count too.** Switching to a terminal of another folder takes the
+  window there (its current directory with shell integration, else the one it
+  was opened in, as inside tmux); the next editor change takes it back.
 - **Strength and parts.** Choose how saturated the tint is and which parts of the
   window are tinted (for example only the title and status bars).
 - **Dangerous places.** Folders, or paths inside them (`infra/hetzner/prod`, globs
   allowed), turn the title bar red and show `⚠ PROD` in the status bar while the
-  active file is in them.
+  active file is in them. ⌘S there asks first, once per place until VS Code
+  restarts (only ⌘S: VS Code can't stop a save from the menu or auto save).
 - **Protected branches.** The status bar turns amber on `main` / `master`
   (configurable).
 - **Terminals.** `⌘⌥T` opens a terminal in the folder of the active file, its tab in
@@ -35,6 +39,7 @@ the keys it owns, and removes them when they stop applying. A repo's own
 | Hue: Open Terminal in Folder (`⌘⌥T`) | Terminal in the active folder, colored tab |
 | Hue: Go to Folder | Jump to a workspace folder's last file |
 | Hue: Refresh | Apply the colors again |
+| Hue: Save (asks first in a PROD place) | What ⌘S runs in a danger place |
 | Hue: Clear | Remove all of Hue's colors from the workspace and turn it off there |
 
 ## Settings
@@ -82,3 +87,5 @@ when something changed. Reload the VS Code windows afterwards.
 - `colors.test.js`: `node --test .config/vscode/extensions/hue/` (CI runs it),
   including `extension.js` loaded with a fake `vscode`. A new file the
   extension needs goes into `install.sh`'s list too; a test checks it
+- bump `version` in `package.json` with every change, so VS Code shows which
+  one is installed: `install.sh` warns when the files changed and it didn't

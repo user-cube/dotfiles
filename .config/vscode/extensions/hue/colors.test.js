@@ -228,7 +228,7 @@ test('extension.js: activate, then the active folder\'s colors land in the works
     file: '/w/infra/prod/main.tf',
   });
   assert.deepEqual(Object.keys(ext.commands).sort(),
-    ['hue.clear', 'hue.goToFolder', 'hue.openTerminal', 'hue.refresh', 'hue.setColor', 'hue.toggleDanger']);
+    ['hue.clear', 'hue.goToFolder', 'hue.openTerminal', 'hue.refresh', 'hue.save', 'hue.setColor', 'hue.toggleDanger']);
   assert.equal(ext.updates.length, 1);
   assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.blue, parts: ['statusBar'], danger: true }));
   assert.ok(ext.prod, 'the PROD marker is shown');
@@ -269,4 +269,52 @@ test('extension.js: ⌘⌥T\'s terminal follows hue.auto and hue.enabled like th
   await ext.commands['hue.openTerminal']();
   assert.equal(ext.terminals[0].name, 'infra', 'no ⚠ with Hue off');
   assert.equal(ext.terminals[0].color, undefined, 'no color with Hue off');
+});
+
+test('extension.js: the window follows the active terminal\'s folder, until the next editor change', async () => {
+  const ext = await loadExtension({ hue: { folders: { infra: 'blue', app: 'green' }, danger: ['app/prod'] } });
+  assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.blue }));
+  await ext.focusTerminal({ cwd: '/w/app' });
+  assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.green }));
+  assert.ok(!ext.prod);
+  await ext.focusTerminal({ cwd: '/w/app', shellCwd: '/w/app/prod/eu' }); // cd'd into a danger place
+  assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.green, danger: true }));
+  assert.ok(ext.prod, 'PROD from the terminal\'s directory');
+  const writes = ext.updates.length;
+  await ext.focusTerminal({ cwd: '/tmp' }); // no folder: the window stays
+  assert.equal(ext.updates.length, writes);
+  await ext.open('/w/infra/main.tf');
+  assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.blue }));
+  assert.ok(!ext.prod);
+});
+
+test('extension.js: ⌘S in a danger place asks first, once per place', async () => {
+  const ext = await loadExtension({ hue: { danger: ['infra/prod', 'app'] }, file: '/w/infra/prod/main.tf' });
+  assert.equal(ext.context('hue.dangerFile'), true, 'the ⌘S keybinding is on');
+  ext.answer = undefined; // Cancel
+  await ext.commands['hue.save']();
+  assert.equal(ext.asked.length, 1);
+  assert.equal(ext.saves(), 0, 'cancelled: not saved');
+  ext.answer = 'Save';
+  await ext.commands['hue.save']();
+  assert.equal(ext.saves(), 1);
+  await ext.commands['hue.save']();
+  assert.equal(ext.asked.length, 2, 'not asked again for infra/prod');
+  assert.equal(ext.saves(), 2);
+  await ext.open('/w/app/main.go'); // another place: asks again
+  await ext.commands['hue.save']();
+  assert.equal(ext.asked.length, 3);
+  await ext.open('/w/infra/main.tf'); // not a danger place
+  assert.equal(ext.context('hue.dangerFile'), false, 'the ⌘S keybinding is off');
+  await ext.commands['hue.save']();
+  assert.equal(ext.asked.length, 3, 'saved without asking');
+  assert.equal(ext.saves(), 4);
+});
+
+test('extension.js: with Hue off, ⌘S never asks', async () => {
+  const ext = await loadExtension({ hue: { enabled: false, danger: ['infra'] } });
+  assert.equal(ext.context('hue.dangerFile'), false);
+  await ext.commands['hue.save']();
+  assert.equal(ext.asked.length, 0);
+  assert.equal(ext.saves(), 1);
 });
