@@ -12,6 +12,16 @@ the keys it owns, and removes them when they stop applying. A repo's own
 
 ## What it does
 
+- **Search.** `⌘K H` (**Hue: Search**) lists everything Hue does, filtered as
+  you type, like the command palette: go to a folder, a terminal in it, the
+  color of the folder you are in, PROD on or off for a folder or the current
+  file's place, the settings, the page.
+- **Its own page.** **Hue: Open** shows every folder with its color (a named one,
+  your own, or automatic, with a preview), its PROD switch and the PROD paths
+  inside it (**Add path…** picks one in the folder picker), and the settings
+  below as switches. It writes the workspace's settings, and follows them when
+  you edit the `.code-workspace` by hand.
+
 - **Folder colors.** `hue.folders` maps a folder name to a color. A folder with no
   color of its own gets a stable one from its name.
 - **Terminals count too.** Switching to a terminal of another folder takes the
@@ -38,6 +48,8 @@ the keys it owns, and removes them when they stop applying. A repo's own
 
 | Command | What it does |
 |---|---|
+| Hue: Search (`⌘K H`) | Everything below in one list you type to filter |
+| Hue: Open | The page: folders, colors, PROD places and settings |
 | Hue: Set Color | Pick the color of the active folder (or "Automatic") |
 | Hue: Toggle Danger (PROD) for Folder | Mark or unmark the folder, the active file's directory, or an existing entry |
 | Hue: Open Terminal in Folder (`⌘⌥T`) | Terminal in the active folder, colored tab |
@@ -89,6 +101,9 @@ when something changed. Reload the VS Code windows afterwards.
 - `extension.js`: the VS Code side (settings, events, commands, status bar)
 - `colors.js`: the rest, without VS Code: a folder's color, the palette of
   each part, the danger places, the `colorCustomizations` they make
+- `search.js`: what Hue: Search lists for the state Hue is in
+- `panel.js`: the page (Hue: Open): what it shows, the setting each message from
+  it changes (checked: it trusts nothing the page sends), its HTML
 - `colors.test.js`: `node --test .config/vscode/extensions/hue/` (CI runs it),
   including `extension.js` loaded with a fake `vscode`. A new file the
   extension needs goes into `install.sh`'s list too; a test checks it

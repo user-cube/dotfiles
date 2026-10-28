@@ -33,7 +33,10 @@ ws -n NAME -t terraform DIR:blue ... # create one from folders, then open it
 - ⌘ shortcuts in the terminal send the tmux prefix like Ghostty's (only while
   the terminal has focus; `tests/test_shortcuts.py` checks they match). Left
   to VS Code: ⌘J (panel), ⌘K (chords, e.g. ⌘K ⌘S), ⌘O, ⌘⇧E, ⌘⇧F; in tmux use
-  `C-b K`, `C-b f`, `C-b E`, `C-b z`. ⌘K ⌘S: Hue's jump between workspace folders
+  `C-b K`, `C-b f`, `C-b E`, `C-b z`. ⌘K ⌘S: Hue's jump between workspace folders.
+  VS Code's ⌘K = Terminal: Clear is taken out, so chords that start with ⌘K
+  (⌘K H Hue: Search, ⌘K ⌘S) work with the terminal focused too; clear tmux
+  with C-l or `clear`
 - Shift+Enter in the terminal sends ESC + Enter (Alt+Enter): VS Code would send
   a plain Enter, and Ghostty's extended Shift+Enter doesn't exist in VS Code.
   Through tmux it reaches the app, a newline in Claude Code (and in zsh)

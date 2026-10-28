@@ -8,6 +8,8 @@ const {
   DEFAULT_COLORS, OWNED, PARTS,
   hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations, readonlyGlobs, nextReadonly,
 } = require('./colors');
+const { panelState, applyMessage, panelHtml, WINDOW_PARTS } = require('./panel');
+const { searchItems } = require('./search');
 
 test('hueOfHex: the hue of a #rrggbb, any case; grey is 0; anything else undefined', () => {
   assert.equal(hueOfHex('#ff0000'), 0);
@@ -134,13 +136,18 @@ test('nextCustomizations: warnings win over the folder color, with or without on
   }
 });
 
-test('install.sh packages every local module extension.js and colors.js require', () => {
+test('install.sh packages every local module extension.js, colors.js and panel.js require', () => {
+  // the cp into the .vsix, and the sha that says when to reinstall
   const install = fs.readFileSync(path.join(__dirname, 'install.sh'), 'utf8');
-  for (const file of ['extension.js', 'colors.js']) {
+  const copied = install.split('\n').find((l) => l.startsWith('cp ') && l.includes('/vsix/extension/'));
+  const hashed = install.split('\n').find((l) => l.startsWith('sha=$(cat '));
+  assert.ok(copied && hashed, 'install.sh still has its cp and sha lines');
+  for (const file of ['extension.js', 'colors.js', 'panel.js']) {
     const src = fs.readFileSync(path.join(__dirname, file), 'utf8');
     for (const [, mod] of src.matchAll(/require\('\.\/([^']+)'\)/g)) {
       const name = mod.endsWith('.js') ? mod : `${mod}.js`;
-      assert.ok(install.includes(`"$dir/${name}"`), `${file} requires ./${mod}, which install.sh doesn't put in the .vsix`);
+      assert.ok(copied.includes(`"$dir/${name}"`), `${file} requires ./${mod}, which install.sh doesn't put in the .vsix`);
+      assert.ok(hashed.includes(`"$dir/${name}"`), `${file} requires ./${mod}, whose changes install.sh doesn't notice`);
     }
   }
 });
@@ -168,6 +175,107 @@ test('nextReadonly: Hue\'s old globs out, the new in, the user\'s left alone', (
   assert.deepEqual(nextReadonly({ '/w/infra/**': false }, [], ['/w/infra/**']).next, { '/w/infra/**': false }, 'a user\'s false wins');
 });
 
+// panel.js: the page's state and the settings its messages change
+const PAGE_SETTINGS = { folders: { infra: 'blue', app: '#00ff00' }, danger: ['infra', 'app/prod', 'app/eu/*/db', 'gone/x'] };
+
+test('panelState: each folder\'s color, preview and PROD places, and the settings with their defaults', () => {
+  const s = panelState(['infra', 'app', 'docs'], PAGE_SETTINGS, DEFAULT_COLORS);
+  assert.deepEqual(s.folders.map((f) => [f.name, f.color, f.prod, f.prodPaths]), [
+    ['infra', 'blue', true, []],
+    ['app', '#00ff00', false, ['prod', 'eu/*/db']],
+    ['docs', null, false, []],
+  ]);
+  assert.equal(s.folders[0].preview, palette(DEFAULT_COLORS.blue, false, 1).titleBar['titleBar.activeBackground']);
+  assert.equal(s.folders[2].preview, palette(autoHue('docs', DEFAULT_COLORS), false, 1).titleBar['titleBar.activeBackground'], 'automatic');
+  assert.equal(panelState(['docs'], { auto: false }, DEFAULT_COLORS).folders[0].preview, undefined, 'no color');
+  assert.deepEqual(s.settings, { enabled: true, auto: true, dangerReadonly: false, strength: 'normal', parts: WINDOW_PARTS, protectedBranches: ['main', 'master'] });
+  assert.deepEqual(s.colors.map((c) => c.name), Object.keys(DEFAULT_COLORS));
+  assert.ok(!WINDOW_PARTS.includes('tabs'), 'tabs are always tinted, not a choice');
+  assert.equal(s.folders[0].swatch, palette(DEFAULT_COLORS.blue, false, 1).activityBar['activityBar.activeBorder'], 'the bright color for the swatch');
+  assert.ok(s.colors.every((c) => /^#[0-9a-f]{6}$/.test(c.swatch)));
+  assert.equal(s.prodBar, '#8a1c1c');
+  assert.equal(panelState(['infra'], {}, DEFAULT_COLORS, true).prodBar, '#f5b5b5', 'pale in a light theme');
+});
+
+test('applyMessage: colors, PROD and settings, each to the setting it changes', () => {
+  const folders = ['infra', 'app'];
+  const apply = (m) => applyMessage(m, PAGE_SETTINGS, folders, DEFAULT_COLORS);
+  assert.deepEqual(apply({ type: 'setColor', folder: 'infra', value: 'teal' }), { key: 'folders', value: { infra: 'teal', app: '#00ff00' } });
+  assert.deepEqual(apply({ type: 'setColor', folder: 'app', value: null }), { key: 'folders', value: { infra: 'blue' } }, 'Automatic');
+  assert.deepEqual(apply({ type: 'setColor', folder: 'infra', value: '#123ABC' }).value.infra, '#123ABC');
+  assert.deepEqual(apply({ type: 'setProd', folder: 'infra', on: false }).value, ['app/prod', 'app/eu/*/db', 'gone/x'], 'the paths stay');
+  assert.deepEqual(apply({ type: 'setProd', folder: 'app', on: true }).value, [...PAGE_SETTINGS.danger, 'app']);
+  assert.deepEqual(apply({ type: 'addProdPath', folder: 'app', rel: 'k8s/prod/' }).value, [...PAGE_SETTINGS.danger, 'app/k8s/prod']);
+  assert.deepEqual(apply({ type: 'addProdPath', folder: 'app', rel: 'prod' }).value, PAGE_SETTINGS.danger, 'no duplicate');
+  assert.deepEqual(apply({ type: 'removeProdPath', folder: 'app', rel: 'eu/*/db' }).value, ['infra', 'app/prod', 'gone/x']);
+  assert.deepEqual(apply({ type: 'setSetting', key: 'dangerReadonly', value: true }), { key: 'dangerReadonly', value: true });
+  assert.deepEqual(apply({ type: 'setSetting', key: 'strength', value: 'strong' }), { key: 'strength', value: 'strong' });
+  assert.deepEqual(apply({ type: 'setSetting', key: 'parts', value: ['statusBar', 'titleBar'] }).value, ['titleBar', 'statusBar'], 'in their order');
+  assert.deepEqual(apply({ type: 'setSetting', key: 'protectedBranches', value: [' main', 'release ', '', 'main'] }).value, ['main', 'release']);
+  assert.deepEqual(PAGE_SETTINGS.folders, { infra: 'blue', app: '#00ff00' }, 'the settings given are not changed');
+});
+
+test('applyMessage: anything the page sends that Hue doesn\'t know changes nothing', () => {
+  const folders = ['infra', 'app'];
+  const bad = [
+    null, 'setColor', {}, { type: 'nope' },
+    { type: 'setColor', folder: 'gone', value: 'blue' },
+    { type: 'setColor', folder: 'infra', value: 'chartreuse' },
+    { type: 'setColor', folder: 'infra', value: '#12345' },
+    { type: 'setColor', folder: '__proto__', value: 'blue' },
+    { type: 'setProd', folder: 'infra', on: 'yes' },
+    { type: 'addProdPath', folder: 'app', rel: '../etc' },
+    { type: 'addProdPath', folder: 'app', rel: 'a/../../b' },
+    { type: 'addProdPath', folder: 'app', rel: '' },
+    { type: 'addProdPath', folder: 'app', rel: 'a//b' },
+    { type: 'removeProdPath', folder: 'app', rel: 'not-there' },
+    { type: 'setSetting', key: 'folders', value: {} },
+    { type: 'setSetting', key: 'danger', value: [] },
+    { type: 'setSetting', key: 'enabled', value: 'false' },
+    { type: 'setSetting', key: 'strength', value: 'max' },
+    { type: 'setSetting', key: 'parts', value: ['tabs'] },
+    { type: 'setSetting', key: 'parts', value: 'titleBar' },
+    { type: 'setSetting', key: 'protectedBranches', value: [1] },
+  ];
+  for (const m of bad) assert.equal(applyMessage(m, PAGE_SETTINGS, folders, DEFAULT_COLORS), undefined, JSON.stringify(m));
+});
+
+test('panelHtml: no remote content, script and style by nonce only, and a script that compiles', () => {
+  const html = panelHtml('n0nce');
+  const csp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)[1];
+  assert.equal(csp, "default-src 'none'; style-src 'nonce-n0nce'; script-src 'nonce-n0nce';");
+  assert.ok(!/https?:\/\//.test(html), 'nothing loaded from the network');
+  assert.equal((html.match(/<script nonce="n0nce">/g) || []).length, 1);
+  assert.equal((html.match(/<script/g) || []).length, 1, 'no script without the nonce');
+  assert.ok(!html.includes('innerHTML'), 'the page draws with DOM calls, never HTML strings');
+  const script = html.split('<script nonce="n0nce">')[1].split('</script>')[0];
+  new (require('node:vm').Script)(script);
+});
+
+test('searchItems: the page, each folder, the colors of the active one, PROD and the settings', () => {
+  const settings = { folders: { infra: 'blue' }, danger: ['app'], dangerReadonly: true, strength: 'subtle' };
+  const items = searchItems({ folders: ['infra', 'app'], active: 'infra', settings, colors: DEFAULT_COLORS });
+  const labels = items.map((i) => i.label || `-- ${i.separator}`);
+  assert.equal(labels[0], '$(window) Open Hue');
+  for (const label of ['$(arrow-right) Go to infra', '$(arrow-right) Go to app', '$(terminal) Terminal in app', '-- Color of infra',
+    '$(sync) Automatic', '$(warning) Mark infra as PROD', '$(warning) Unmark app as PROD', '$(eye-closed) Turn Hue off in this workspace',
+    '$(lock) Turn PROD read-only off', '$(sync) Turn automatic colors off', '$(color-mode) Strength: strong']) {
+    assert.ok(labels.includes(label), label);
+  }
+  assert.equal(items.find((i) => i.label === '$(circle-filled) blue').description, 'current');
+  assert.equal(items.find((i) => i.label === '$(color-mode) Strength: subtle').description, 'current');
+  assert.equal(items.find((i) => i.label === '$(arrow-right) Go to infra').description, 'you are here');
+  // every setting an item changes is one the page could change: applyMessage takes it
+  for (const item of items.filter((i) => i.message)) {
+    assert.ok(applyMessage(item.message, settings, ['infra', 'app'], DEFAULT_COLORS), item.label);
+  }
+  assert.ok(items.every((i) => i.separator || i.message || ['open', 'goTo', 'terminal', 'toggleDanger'].includes(i.run)));
+  // no active folder (a terminal elsewhere, nothing open): no colors to pick
+  const none = searchItems({ folders: ['infra'], active: undefined, settings: {}, colors: DEFAULT_COLORS });
+  assert.ok(!none.some((i) => i.separator && i.separator.startsWith('Color')));
+  assert.ok(none.some((i) => i.label === '$(eye) Turn Hue on in this workspace') === false, 'Hue is on by default');
+});
+
 // extension.js with a fake `vscode`: folders infra and app, an editor whose
 // file can be switched, the events and commands it registers, what it writes.
 // git: what vscode.extensions.getExtension('vscode.git') returns
@@ -176,7 +284,7 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
 async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git, readonly } = {}) {
   const Module = require('node:module');
   const folders = ['infra', 'app'].map((name) => ({ name, uri: { fsPath: `/w/${name}`, scheme: 'file' } }));
-  const ext = { updates: [], fileWrites: [], commands: {}, events: {}, terminals: [], folderWrites: 0, prod: false, executed: [], asked: [], answer: undefined };
+  const ext = { quickPicks: [], informed: [], hueWrites: [], posted: [], picked: undefined, warned: [], updates: [], fileWrites: [], commands: {}, events: {}, terminals: [], folderWrites: 0, prod: false, executed: [], asked: [], answer: undefined };
   const editor = (fsPath) => ({ document: { uri: { scheme: 'file', fsPath } } });
   const on = (name) => (cb) => { ext.events[name] = cb; return { dispose() {} }; };
   const settings = { auto: true, protectedBranches: [], ...hue };
@@ -188,7 +296,24 @@ async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git, readonl
       activeColorTheme: { kind: 2 },
       createStatusBarItem: () => ({ show() { ext.prod = true; }, hide() { ext.prod = false; }, dispose() {} }),
       createTerminal: (options) => { ext.terminals.push(options); return { show() {} }; },
-      showWarningMessage: async (message) => { ext.asked.push(message); return ext.answer; },
+      showWarningMessage: async (message, options) => {
+        if (options && options.modal) { ext.asked.push(message); return ext.answer; }
+        ext.warned.push(message);
+        return undefined;
+      },
+      showOpenDialog: async () => ext.picked,
+      // choose: picks from the list (by label), or cancels when it returns undefined
+      showQuickPick: async (items) => { ext.quickPicks.push(items); return ext.choose ? ext.choose(items) : undefined; },
+      showInformationMessage: (message) => { ext.informed.push(message); },
+      createWebviewPanel: (id, title, column, options) => {
+        const webview = {
+          html: '', options,
+          postMessage: async (m) => { ext.posted.push(m); return true; },
+          onDidReceiveMessage: (cb) => { ext.fromPage = async (m) => { await cb(m); await settle(); }; return { dispose() {} }; },
+        };
+        ext.panels = (ext.panels || 0) + 1;
+        return { webview, reveal() { ext.revealed = (ext.revealed || 0) + 1; }, onDidDispose: (cb) => { ext.closePanel = cb; } };
+      },
       onDidChangeActiveTextEditor: on('editor'), onDidChangeActiveColorTheme: on('theme'), onDidChangeActiveTerminal: on('terminal'),
     },
     workspace: {
@@ -196,7 +321,11 @@ async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git, readonl
       workspaceFolders: folders,
       getWorkspaceFolder: (uri) => folders.find((f) => uri.fsPath === f.uri.fsPath || uri.fsPath.startsWith(`${f.uri.fsPath}/`)),
       getConfiguration: (section) => section === 'hue'
-        ? { get: (key) => settings[key] }
+        ? {
+            get: (key) => settings[key],
+            // VS Code fires the config event after a write
+            update: async (key, value) => { settings[key] = value; ext.hueWrites.push([key, value]); ext.events.config({ affectsConfiguration: (s) => s === 'hue' }); },
+          }
         : {
             inspect: (key) => ({ workspaceValue: (config[section] || {})[key] }),
             update: async (key, value) => {
@@ -212,7 +341,7 @@ async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git, readonl
     },
     Uri: { file: (fsPath) => ({ scheme: 'file', fsPath }) },
     extensions: { getExtension: () => git },
-    StatusBarAlignment: { Left: 1 }, ColorThemeKind: { Light: 1, Dark: 2, HighContrast: 3, HighContrastLight: 4 },
+    ViewColumn: { Active: -1 }, QuickPickItemKind: { Separator: -1 }, StatusBarAlignment: { Left: 1 }, ColorThemeKind: { Light: 1, Dark: 2, HighContrast: 3, HighContrastLight: 4 },
     ConfigurationTarget: { Workspace: 2 },
     ThemeColor: class { constructor(id) { this.id = id; } },
     ThemeIcon: class { constructor(id) { this.id = id; } },
@@ -242,6 +371,14 @@ async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git, readonl
     await settle();
   };
   ext.readonly = () => config.files.readonlyInclude;
+  ext.workspace = fake.workspace;
+  // Hue: Search, picking the item whose label ends with `label`
+  ext.search = async (label) => {
+    ext.choose = (items) => items.find((i) => i.label.endsWith(label));
+    await ext.commands['hue.search']();
+    await settle();
+  };
+  ext.state = () => [...ext.posted].reverse().find((m) => m.type === 'state')?.state;
   // Change Hue's settings the way the settings UI does: then the config event
   ext.setHue = async (changes) => {
     Object.assign(settings, changes);
@@ -262,7 +399,7 @@ test('extension.js: activate, then the active folder\'s colors land in the works
     file: '/w/infra/prod/main.tf',
   });
   assert.deepEqual(Object.keys(ext.commands).sort(),
-    ['hue.clear', 'hue.goToFolder', 'hue.openTerminal', 'hue.refresh', 'hue.save', 'hue.setColor', 'hue.toggleDanger']);
+    ['hue.clear', 'hue.goToFolder', 'hue.open', 'hue.openTerminal', 'hue.refresh', 'hue.save', 'hue.search', 'hue.setColor', 'hue.toggleDanger']);
   assert.equal(ext.updates.length, 1);
   assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.blue, parts: ['statusBar'], danger: true }));
   assert.ok(ext.prod, 'the PROD marker is shown');
@@ -382,4 +519,81 @@ test('extension.js: the last Hue glob out removes the setting', async () => {
   assert.deepEqual(ext.readonly(), { '/w/infra/**': true });
   await ext.setHue({ danger: [] });
   assert.equal(ext.readonly(), undefined);
+});
+
+test('extension.js: Hue: Open shows the page, which changes the settings and follows them', async () => {
+  const ext = await loadExtension({ hue: { folders: { infra: 'blue' }, danger: ['app/prod'] } });
+  ext.commands['hue.open']();
+  assert.equal(ext.panels, 1);
+  ext.commands['hue.open']();
+  assert.equal(ext.panels, 1, 'one page: the second open reveals it');
+  assert.equal(ext.revealed, 1);
+  await ext.fromPage({ type: 'ready' });
+  assert.deepEqual(ext.state().folders.map((f) => [f.name, f.color, f.prodPaths]), [['infra', 'blue', []], ['app', null, ['prod']]]);
+
+  await ext.fromPage({ type: 'setColor', folder: 'app', value: 'pink' });
+  assert.deepEqual(ext.hueWrites.at(-1), ['folders', { infra: 'blue', app: 'pink' }]);
+  assert.equal(ext.state().folders[1].color, 'pink', 'the page is redrawn after the write');
+
+  await ext.fromPage({ type: 'setSetting', key: 'dangerReadonly', value: true });
+  assert.deepEqual(ext.readonly(), { '/w/app/prod': true, '/w/app/prod/**': true }, 'and the setting takes effect');
+
+  const writes = ext.hueWrites.length;
+  await ext.fromPage({ type: 'setSetting', key: 'danger', value: [] });
+  await ext.fromPage({ type: 'addProdPath', folder: 'app', rel: 'x' }); // only from the folder picker
+  assert.equal(ext.hueWrites.length, writes, 'nothing written for what the page may not send');
+
+  ext.closePanel();
+  ext.commands['hue.open']();
+  assert.equal(ext.panels, 2, 'closed: the next open makes a new one');
+});
+
+test('extension.js: Add path… marks what the folder picker gives, inside the folder only', async () => {
+  const ext = await loadExtension({ hue: { danger: [] } });
+  ext.commands['hue.open']();
+  ext.picked = [{ scheme: 'file', fsPath: '/w/app/k8s/prod' }];
+  await ext.fromPage({ type: 'pickProdPath', folder: 'app' });
+  assert.deepEqual(ext.hueWrites.at(-1), ['danger', ['app/k8s/prod']]);
+  ext.picked = [{ scheme: 'file', fsPath: '/w/infra/x' }]; // another folder
+  await ext.fromPage({ type: 'pickProdPath', folder: 'app' });
+  ext.picked = [{ scheme: 'file', fsPath: '/w/app' }]; // the folder itself
+  await ext.fromPage({ type: 'pickProdPath', folder: 'app' });
+  assert.equal(ext.hueWrites.length, 1);
+  assert.equal(ext.warned.length, 2);
+  ext.picked = undefined; // cancelled
+  await ext.fromPage({ type: 'pickProdPath', folder: 'app' });
+  assert.equal(ext.hueWrites.length, 1);
+  assert.equal(ext.warned.length, 2);
+});
+
+test('extension.js: Hue: Search runs what you pick', async () => {
+  const ext = await loadExtension({ hue: { folders: { infra: 'blue', app: 'green' } } });
+  await ext.search('$(circle-filled) teal');
+  assert.deepEqual(ext.hueWrites.at(-1), ['folders', { infra: 'teal', app: 'green' }], 'the color of the folder you are in');
+  await ext.search('Mark app as PROD');
+  assert.deepEqual(ext.hueWrites.at(-1), ['danger', ['app']]);
+  await ext.search('Strength: strong');
+  assert.deepEqual(ext.hueWrites.at(-1), ['strength', 'strong']);
+  await ext.search('Terminal in app');
+  assert.equal(ext.terminals.at(-1).name, '⚠ app', 'in app, which is PROD now');
+  await ext.search('Go to app');
+  assert.ok(ext.executed.some(([c, uri]) => c === 'revealInExplorer' && uri.fsPath === '/w/app'));
+  assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.green, k: 1.35, danger: true }), 'the window follows');
+  await ext.search('Open Hue');
+  assert.equal(ext.panels, 1);
+  const separators = ext.quickPicks[0].filter((i) => i.kind === -1).map((i) => i.label);
+  assert.deepEqual(separators, ['Folders', 'Color of infra', 'PROD', 'Settings']);
+
+  const writes = ext.hueWrites.length;
+  ext.choose = () => undefined; // Escape
+  await ext.commands['hue.search']();
+  assert.equal(ext.hueWrites.length, writes);
+});
+
+test('extension.js: Hue: Search outside a .code-workspace only says so', async () => {
+  const ext = await loadExtension();
+  ext.workspace.workspaceFile = undefined;
+  await ext.commands['hue.search']();
+  assert.equal(ext.quickPicks.length, 0);
+  assert.equal(ext.informed.length, 1);
 });

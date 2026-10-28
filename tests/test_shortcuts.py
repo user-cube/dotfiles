@@ -145,3 +145,14 @@ def test_vscode_shift_enter_is_a_newline():
     binds = {b["key"]: b for b in json.loads(VSCODE_KEYBINDINGS.read_text())}
     b = binds.get("shift+enter")
     assert b and b["args"]["text"] == "\x1b\r" and b["when"] == "terminalFocus", b
+
+
+def test_vscode_cmd_k_starts_chords_in_the_terminal():
+    """VS Code binds ⌘K to Terminal: Clear, which ate the chords that start with
+    it (⌘K H Hue: Search, ⌘K ⌘S Go to Folder) while the terminal had focus; in
+    tmux that clear did nothing anyway (C-l or `clear` there). Taken out, and
+    nothing else takes a bare ⌘K."""
+    import json
+    binds = json.loads(VSCODE_KEYBINDINGS.read_text())
+    assert any(b["key"] == "cmd+k" and b["command"] == "-workbench.action.terminal.clear" and "when" not in b for b in binds)
+    assert not [b for b in binds if b["key"] == "cmd+k" and not b["command"].startswith("-")]

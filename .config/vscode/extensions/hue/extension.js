@@ -10,10 +10,13 @@
 // hue.protectedBranches (the status bar turns amber on those branches).
 const vscode = require('vscode');
 const path = require('path');
+const crypto = require('crypto');
 
 const {
   DEFAULT_COLORS, STRENGTH, PARTS, hueOfHex, folderHue, ansiFor, isDanger, nextCustomizations, readonlyGlobs, nextReadonly,
 } = require('./colors');
+const { panelState, applyMessage, panelHtml } = require('./panel');
+const { searchItems } = require('./search');
 
 function activate(context) {
   function colorsSetting() {
@@ -189,6 +192,56 @@ function activate(context) {
     await vscode.commands.executeCommand('workbench.action.files.save');
   }
 
+  // Hue: Open, the page (panel.js): one at a time, redrawn when the settings or
+  // the theme change. A message from it goes through applyMessage, which checks
+  // it; a PROD path comes from the folder picker, never from the page itself
+  let panel;
+  const SETTING_KEYS = ['folders', 'danger', 'auto', 'enabled', 'dangerReadonly', 'strength', 'parts', 'protectedBranches'];
+  function hueSettings() {
+    const settings = vscode.workspace.getConfiguration('hue');
+    return Object.fromEntries(SETTING_KEYS.map((key) => [key, settings.get(key)]));
+  }
+  function postState() {
+    if (!panel) return;
+    if (!vscode.workspace.workspaceFile) {
+      panel.webview.postMessage({ type: 'state', state: { noWorkspace: true } });
+      return;
+    }
+    const kind = vscode.window.activeColorTheme.kind;
+    const light = kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight;
+    const names = (vscode.workspace.workspaceFolders || []).map((f) => f.name);
+    panel.webview.postMessage({ type: 'state', state: panelState(names, hueSettings(), colorsSetting(), light) });
+  }
+  async function onPanelMessage(message) {
+    if (!message || typeof message !== 'object') return;
+    if (message.type === 'ready') { postState(); return; }
+    if (!vscode.workspace.workspaceFile || message.type === 'addProdPath') return;
+    const folders = vscode.workspace.workspaceFolders || [];
+    if (message.type === 'pickProdPath') {
+      const folder = folders.find((f) => f.name === message.folder);
+      if (!folder) return;
+      const picked = await vscode.window.showOpenDialog({
+        defaultUri: folder.uri, canSelectFolders: true, canSelectFiles: true, canSelectMany: false, openLabel: 'Mark as PROD',
+      });
+      if (!picked || !picked.length) return;
+      const rel = relPathIn(folder, picked[0]);
+      if (!rel) {
+        vscode.window.showWarningMessage(`Hue: pick a path inside ${folder.name} (for all of it, tick PROD).`);
+        return;
+      }
+      message = { type: 'addProdPath', folder: folder.name, rel };
+    }
+    const change = applyMessage(message, hueSettings(), folders.map((f) => f.name), colorsSetting());
+    if (change) await vscode.workspace.getConfiguration('hue').update(change.key, change.value, vscode.ConfigurationTarget.Workspace);
+  }
+  function openPanel() {
+    if (panel) { panel.reveal(); return; }
+    panel = vscode.window.createWebviewPanel('hue', 'Hue', vscode.ViewColumn.Active, { enableScripts: true, localResourceRoots: [] });
+    panel.webview.html = panelHtml(crypto.randomBytes(16).toString('hex'));
+    const messages = panel.webview.onDidReceiveMessage(onPanelMessage);
+    panel.onDidDispose(() => { messages.dispose(); panel = undefined; });
+  }
+
   // The folder a command acts on: the active editor's, else ask when there are several
   async function commandFolder() {
     const folders = vscode.workspace.workspaceFolders || [];
@@ -256,7 +309,9 @@ function activate(context) {
   // A terminal in the folder, its tab in the folder's color (red with a warning in a danger place)
   async function openTerminal() {
     const folder = await commandFolder();
-    if (!folder) return;
+    if (folder) openTerminalIn(folder);
+  }
+  function openTerminalIn(folder) {
     const settings = vscode.workspace.getConfiguration('hue');
     const enabled = settings.get('enabled') !== false;
     const hue = folderHue(folder.name, { folders: settings.get('folders') || {}, colors: colorsSetting(), auto: settings.get('auto') !== false, enabled });
@@ -285,17 +340,45 @@ function activate(context) {
       folder: f,
     }));
     const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Go to folder', matchOnDetail: true });
-    if (!pick) return;
-    if (files[pick.folder.name]) {
+    if (pick) await goTo(pick.folder);
+  }
+
+  // Opens the last file you had in the folder, or reveals the folder
+  async function goTo(folder) {
+    const files = lastFiles();
+    if (files[folder.name]) {
       try {
-        const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(files[pick.folder.name]));
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(files[folder.name]));
         await vscode.window.showTextDocument(doc);
         return;
       } catch (e) { /* the file is gone: reveal the folder instead */ }
     }
-    forced = { name: pick.folder.name };
-    await vscode.commands.executeCommand('revealInExplorer', pick.folder.uri);
+    forced = { name: folder.name };
+    await vscode.commands.executeCommand('revealInExplorer', folder.uri);
     apply();
+  }
+
+  // Hue: Search (⌘K H): everything Hue does in one list (search.js). A setting
+  // changes through applyMessage, as from the page
+  async function search() {
+    const folders = vscode.workspace.workspaceFolders || [];
+    if (!vscode.workspace.workspaceFile || !folders.length) {
+      vscode.window.showInformationMessage('Hue: open a .code-workspace first.');
+      return;
+    }
+    const items = searchItems({ folders: folders.map((f) => f.name), active: activeFolderName(), settings: hueSettings(), colors: colorsSetting() })
+      .map((item) => (item.separator ? { label: item.separator, kind: vscode.QuickPickItemKind.Separator } : item));
+    const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Hue: folders, colors, PROD, settings', matchOnDescription: true });
+    if (!pick) return;
+    const folder = pick.folder && folders.find((f) => f.name === pick.folder);
+    if (pick.run === 'open') openPanel();
+    else if (pick.run === 'goTo' && folder) await goTo(folder);
+    else if (pick.run === 'terminal' && folder) openTerminalIn(folder);
+    else if (pick.run === 'toggleDanger') await toggleDanger();
+    else if (pick.message) {
+      const change = applyMessage(pick.message, hueSettings(), folders.map((f) => f.name), colorsSetting());
+      if (change) await vscode.workspace.getConfiguration('hue').update(change.key, change.value, vscode.ConfigurationTarget.Workspace);
+    }
   }
 
   // Take the colors out of the workspace and keep the extension off here
@@ -311,10 +394,10 @@ function activate(context) {
       const place = terminal && terminalPlace(terminal);
       if (place) { forced = place; apply(); }
     }),
-    vscode.window.onDidChangeActiveColorTheme(apply),
-    vscode.workspace.onDidChangeWorkspaceFolders(() => { applyReadonly(); apply(); }),
+    vscode.window.onDidChangeActiveColorTheme(() => { apply(); postState(); }),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => { applyReadonly(); apply(); postState(); }),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('hue')) { updateSaveGuard(); applyReadonly(); apply(); }
+      if (e.affectsConfiguration('hue')) { updateSaveGuard(); applyReadonly(); apply(); postState(); }
     }),
     vscode.commands.registerCommand('hue.setColor', setColor),
     vscode.commands.registerCommand('hue.toggleDanger', toggleDanger),
@@ -323,6 +406,8 @@ function activate(context) {
     vscode.commands.registerCommand('hue.clear', clear),
     vscode.commands.registerCommand('hue.refresh', apply),
     vscode.commands.registerCommand('hue.save', save),
+    vscode.commands.registerCommand('hue.open', openPanel),
+    vscode.commands.registerCommand('hue.search', search),
   );
   rememberFile();
   updateSaveGuard();

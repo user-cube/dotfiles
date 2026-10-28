@@ -2,7 +2,7 @@
   "name": "hue",
   "displayName": "Hue",
   "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders and protected branches.",
-  "version": "0.11.0",
+  "version": "0.13.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -14,6 +14,16 @@
   ],
   "contributes": {
     "commands": [
+      {
+        "command": "hue.open",
+        "title": "Open (folders, PROD, settings)",
+        "category": "Hue"
+      },
+      {
+        "command": "hue.search",
+        "title": "Search (folders, colors, PROD, settings)",
+        "category": "Hue"
+      },
       {
         "command": "hue.setColor",
         "title": "Set Color",
@@ -149,6 +159,11 @@
         "key": "ctrl+s",
         "mac": "cmd+s",
         "when": "hue.dangerFile"
+      },
+      {
+        "command": "hue.search",
+        "key": "ctrl+k h",
+        "mac": "cmd+k h"
       }
     ]
   },

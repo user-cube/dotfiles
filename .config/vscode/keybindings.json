@@ -5,6 +5,10 @@
     "when": "workspaceFolderCount > 0"
   },
   {
+    "key": "cmd+k",
+    "command": "-workbench.action.terminal.clear"
+  },
+  {
     "key": "shift+enter",
     "command": "workbench.action.terminal.sendSequence",
     "args": {
