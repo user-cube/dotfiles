@@ -12,7 +12,7 @@ const vscode = require('vscode');
 const path = require('path');
 
 const {
-  DEFAULT_COLORS, STRENGTH, PARTS, hueOfHex, hueOf, autoHue, ansiFor, isDanger, nextCustomizations,
+  DEFAULT_COLORS, STRENGTH, PARTS, hueOfHex, folderHue, ansiFor, isDanger, nextCustomizations,
 } = require('./colors');
 
 function activate(context) {
@@ -82,23 +82,24 @@ function activate(context) {
   dangerItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
   context.subscriptions.push(dangerItem);
 
+  // Each apply waits for git (the branch); one started later wins, so the colors
+  // of a folder you just left never land after the ones of the folder you are in
+  let latest = 0;
   async function apply() {
+    const run = ++latest;
     // Colors land in the .code-workspace file; never write a repo's .vscode/settings.json
     if (!vscode.workspace.workspaceFile) { dangerItem.hide(); return; }
     const folders = vscode.workspace.workspaceFolders || [];
     let name = activeFolderName();
     if (!name && folders.length) name = folders[0].name;
     if (!name) return;
-    context.workspaceState.update('folder', name);
+    // apply runs on every git state change: write only what changed
+    if (context.workspaceState.get('folder') !== name) context.workspaceState.update('folder', name);
     const folder = folders.find((f) => f.name === name);
 
     const settings = vscode.workspace.getConfiguration('hue');
-    const colors = colorsSetting();
-    const map = settings.get('folders') || {};
     const enabled = settings.get('enabled') !== false;
-    let hue = map[name] === undefined ? undefined : hueOf(map[name], colors);
-    if (hue === undefined && map[name] === undefined && settings.get('auto')) hue = autoHue(name, colors);
-    if (!enabled) hue = undefined;
+    const hue = folderHue(name, { folders: settings.get('folders') || {}, colors: colorsSetting(), auto: settings.get('auto') !== false, enabled });
     const kind = vscode.window.activeColorTheme.kind;
     const light = kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight;
     const k = STRENGTH[settings.get('strength')] || 1;
@@ -107,6 +108,7 @@ function activate(context) {
     const protectedBranches = settings.get('protectedBranches') || [];
     const branch = enabled && folder && protectedBranches.length ? await branchOf(folder) : undefined;
     const onProtected = !!branch && protectedBranches.includes(branch);
+    if (run !== latest) return;
 
     if (danger) {
       dangerItem.tooltip = `Hue: dangerous place (${dangerEntry})`;
@@ -189,11 +191,9 @@ function activate(context) {
     const folder = await commandFolder();
     if (!folder) return;
     const settings = vscode.workspace.getConfiguration('hue');
-    const map = settings.get('folders') || {};
-    const colors = colorsSetting();
-    let hue = map[folder.name] === undefined ? undefined : hueOf(map[folder.name], colors);
-    if (hue === undefined && map[folder.name] === undefined) hue = autoHue(folder.name, colors);
-    const danger = isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder)) !== undefined;
+    const enabled = settings.get('enabled') !== false;
+    const hue = folderHue(folder.name, { folders: settings.get('folders') || {}, colors: colorsSetting(), auto: settings.get('auto') !== false, enabled });
+    const danger = enabled && isDanger(settings.get('danger') || [], folder.name, activeRelPath(folder)) !== undefined;
     const red = new vscode.ThemeColor('terminal.ansiRed');
     vscode.window.createTerminal({
       name: danger ? `⚠ ${folder.name}` : folder.name,

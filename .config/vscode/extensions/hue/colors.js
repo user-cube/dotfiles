@@ -31,6 +31,14 @@ function autoHue(name, colors) {
   return hueOf(names[h % names.length], colors);
 }
 
+// A folder's hue: its own color (hue.folders), else one from its name when
+// hue.auto is on; none with Hue off (hue.enabled false)
+function folderHue(name, { folders = {}, colors, auto = true, enabled = true }) {
+  if (!enabled) return undefined;
+  if (folders[name] !== undefined) return hueOf(folders[name], colors);
+  return auto ? autoHue(name, colors) : undefined;
+}
+
 function hex(h, s, l) {
   s = Math.min(s, 100) / 100; l /= 100;
   const a = s * Math.min(l, 1 - l);
@@ -147,5 +155,5 @@ function nextCustomizations(current, { hue, light, k = 1, parts = PARTS, onProte
 
 module.exports = {
   DEFAULT_COLORS, STRENGTH, PARTS, OWNED,
-  hueOfHex, hueOf, autoHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations,
+  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations,
 };

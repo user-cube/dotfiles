@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const {
   DEFAULT_COLORS, OWNED, PARTS,
-  hueOfHex, hueOf, autoHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations,
+  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations,
 } = require('./colors');
 
 test('hueOfHex: the hue of a #rrggbb, any case; grey is 0; anything else undefined', () => {
@@ -36,6 +36,16 @@ test('autoHue: the same name always gets the same named color', () => {
     assert.equal(autoHue(name, DEFAULT_COLORS), h);
   }
   assert.equal(autoHue('dotfiles', {}), undefined);
+});
+
+test('folderHue: its own color, else one from its name with hue.auto, none with Hue off', () => {
+  const colors = DEFAULT_COLORS;
+  assert.equal(folderHue('infra', { folders: { infra: 'blue' }, colors }), DEFAULT_COLORS.blue);
+  assert.equal(folderHue('infra', { folders: {}, colors }), autoHue('infra', colors));
+  assert.equal(folderHue('infra', { folders: {}, colors, auto: false }), undefined);
+  assert.equal(folderHue('infra', { folders: { infra: 'blue' }, colors, auto: false }), DEFAULT_COLORS.blue);
+  assert.equal(folderHue('infra', { folders: { infra: 'nope' }, colors }), undefined, 'a bad color is not replaced by the automatic one');
+  assert.equal(folderHue('infra', { folders: { infra: 'blue' }, colors, enabled: false }), undefined);
 });
 
 test('hex: HSL to #rrggbb, saturation capped at 100', () => {
@@ -135,51 +145,128 @@ test('install.sh packages every local module extension.js and colors.js require'
   }
 });
 
-// extension.js with a fake `vscode`: activate registers the commands, and apply
-// writes the active folder's colors (and the danger red) to the workspace
-test('extension.js: activate, then the active folder\'s colors land in the workspace', async () => {
+// extension.js with a fake `vscode`: folders infra and app, an editor whose
+// file can be switched, the events and commands it registers, what it writes.
+// git: what vscode.extensions.getExtension('vscode.git') returns
+const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git } = {}) {
   const Module = require('node:module');
-  const updates = [];
-  let prodShown = false;
-  const folder = { name: 'infra', uri: { fsPath: '/w/infra', scheme: 'file' } };
-  const hue = { folders: { infra: 'blue' }, danger: ['infra/prod'], auto: true, protectedBranches: [], parts: ['statusBar'] };
-  const commands = [];
-  const event = () => () => ({ dispose() {} });
+  const folders = ['infra', 'app'].map((name) => ({ name, uri: { fsPath: `/w/${name}`, scheme: 'file' } }));
+  const ext = { updates: [], commands: {}, events: {}, terminals: [], folderWrites: 0, prod: false, executed: [], asked: [], answer: undefined };
+  const editor = (fsPath) => ({ document: { uri: { scheme: 'file', fsPath } } });
+  const on = (name) => (cb) => { ext.events[name] = cb; return { dispose() {} }; };
+  const settings = { auto: true, protectedBranches: [], ...hue };
+  let current = { 'editor.background': '#000000' };
   const fake = {
     window: {
-      activeTextEditor: { document: { uri: { scheme: 'file', fsPath: '/w/infra/prod/main.tf' } } },
+      activeTextEditor: editor(file),
       activeColorTheme: { kind: 2 },
-      createStatusBarItem: () => ({ show() { prodShown = true; }, hide() { prodShown = false; }, dispose() {} }),
-      onDidChangeActiveTextEditor: event(), onDidChangeActiveColorTheme: event(),
+      createStatusBarItem: () => ({ show() { ext.prod = true; }, hide() { ext.prod = false; }, dispose() {} }),
+      createTerminal: (options) => { ext.terminals.push(options); return { show() {} }; },
+      showWarningMessage: async (message) => { ext.asked.push(message); return ext.answer; },
+      onDidChangeActiveTextEditor: on('editor'), onDidChangeActiveColorTheme: on('theme'), onDidChangeActiveTerminal: on('terminal'),
     },
     workspace: {
       workspaceFile: { fsPath: '/w/x.code-workspace' },
-      workspaceFolders: [folder],
-      getWorkspaceFolder: () => folder,
+      workspaceFolders: folders,
+      getWorkspaceFolder: (uri) => folders.find((f) => uri.fsPath === f.uri.fsPath || uri.fsPath.startsWith(`${f.uri.fsPath}/`)),
       getConfiguration: (section) => section === 'hue'
-        ? { get: (key) => hue[key] }
-        : { inspect: () => ({ workspaceValue: { 'editor.background': '#000000' } }), update: async (key, value) => updates.push([key, value]) },
-      onDidChangeWorkspaceFolders: event(), onDidChangeConfiguration: event(),
+        ? { get: (key) => settings[key] }
+        : {
+            inspect: () => ({ workspaceValue: current }),
+            update: async (key, value) => { current = value || {}; ext.updates.push(value); },
+          },
+      onDidChangeWorkspaceFolders: on('folders'), onDidChangeConfiguration: on('config'),
     },
-    commands: { registerCommand: (name) => { commands.push(name); return { dispose() {} }; } },
-    extensions: { getExtension: () => undefined },
+    commands: {
+      registerCommand: (name, fn) => { ext.commands[name] = fn; return { dispose() {} }; },
+      executeCommand: async (...args) => { ext.executed.push(args); },
+    },
+    Uri: { file: (fsPath) => ({ scheme: 'file', fsPath }) },
+    extensions: { getExtension: () => git },
     StatusBarAlignment: { Left: 1 }, ColorThemeKind: { Light: 1, Dark: 2, HighContrast: 3, HighContrastLight: 4 },
-    ConfigurationTarget: { Workspace: 2 }, ThemeColor: class {}, ThemeIcon: class {},
+    ConfigurationTarget: { Workspace: 2 },
+    ThemeColor: class { constructor(id) { this.id = id; } },
+    ThemeIcon: class { constructor(id) { this.id = id; } },
+  };
+  const state = new Map();
+  const context = {
+    subscriptions: [],
+    workspaceState: { get: (k) => state.get(k), update: (k, v) => { if (k === 'folder') ext.folderWrites++; state.set(k, v); } },
   };
   const load = Module._load;
   Module._load = function (request, ...rest) { return request === 'vscode' ? fake : load.call(this, request, ...rest); };
   try {
     delete require.cache[require.resolve('./extension')];
-    const state = new Map();
-    require('./extension').activate({ subscriptions: [], workspaceState: { get: (k) => state.get(k), update: (k, v) => state.set(k, v) } });
-    await new Promise((resolve) => setImmediate(resolve));
+    require('./extension').activate(context);
   } finally {
     Module._load = load;
   }
-  assert.deepEqual(commands.sort(), ['hue.clear', 'hue.goToFolder', 'hue.openTerminal', 'hue.refresh', 'hue.setColor', 'hue.toggleDanger']);
-  assert.equal(updates.length, 1);
-  const [key, colors] = updates[0];
-  assert.equal(key, 'colorCustomizations');
-  assert.deepEqual(colors, nextCustomizations({ 'editor.background': '#000000' }, { hue: DEFAULT_COLORS.blue, light: false, parts: ['statusBar'], danger: true }));
-  assert.ok(prodShown, 'the PROD marker is shown');
+  await settle();
+  ext.open = async (fsPath) => { fake.window.activeTextEditor = editor(fsPath); ext.events.editor(); await settle(); };
+  ext.last = () => ext.updates[ext.updates.length - 1];
+  // A terminal becomes the active one: opened in cwd, or now in shellCwd (shell integration)
+  ext.focusTerminal = async ({ cwd, shellCwd } = {}) => {
+    ext.events.terminal({
+      creationOptions: { cwd: cwd && { scheme: 'file', fsPath: cwd } },
+      shellIntegration: shellCwd ? { cwd: { scheme: 'file', fsPath: shellCwd } } : undefined,
+    });
+    await settle();
+  };
+  ext.saves = () => ext.executed.filter(([c]) => c === 'workbench.action.files.save').length;
+  ext.context = (key) => [...ext.executed].reverse().find(([c, k]) => c === 'setContext' && k === key)?.[2];
+  return ext;
+}
+
+// What the workspace should hold for these options (dark theme)
+const expected = (options) => nextCustomizations({ 'editor.background': '#000000' }, { light: false, ...options });
+
+test('extension.js: activate, then the active folder\'s colors land in the workspace', async () => {
+  const ext = await loadExtension({
+    hue: { folders: { infra: 'blue' }, danger: ['infra/prod'], parts: ['statusBar'] },
+    file: '/w/infra/prod/main.tf',
+  });
+  assert.deepEqual(Object.keys(ext.commands).sort(),
+    ['hue.clear', 'hue.goToFolder', 'hue.openTerminal', 'hue.refresh', 'hue.setColor', 'hue.toggleDanger']);
+  assert.equal(ext.updates.length, 1);
+  assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.blue, parts: ['statusBar'], danger: true }));
+  assert.ok(ext.prod, 'the PROD marker is shown');
+});
+
+test('extension.js: switching folders while the git API loads ends on the new folder\'s colors', async () => {
+  let ready;
+  const gate = new Promise((resolve) => { ready = resolve; });
+  const api = { repositories: [], onDidOpenRepository: () => ({ dispose() {} }), getRepository: () => undefined };
+  const git = { isActive: false, activate: () => gate.then(() => ({ getAPI: () => api })) };
+  const ext = await loadExtension({ hue: { folders: { infra: 'blue', app: 'green' }, protectedBranches: ['main'] }, git });
+  await ext.open('/w/app/main.go'); // the first apply (infra) still waits for git
+  ready();
+  await settle(); await settle();
+  assert.deepEqual(ext.last(), expected({ hue: DEFAULT_COLORS.green }));
+});
+
+test('extension.js: a refresh with nothing changed writes nothing', async () => {
+  const ext = await loadExtension({ hue: { folders: { infra: 'blue' } } });
+  for (let i = 0; i < 3; i++) { await ext.commands['hue.refresh'](); }
+  await ext.open('/w/infra/other.tf');
+  assert.equal(ext.updates.length, 1, 'colorCustomizations written once');
+  assert.equal(ext.folderWrites, 1, 'the active folder saved once');
+  await ext.open('/w/app/main.go');
+  assert.equal(ext.folderWrites, 2, 'and again when it changes');
+});
+
+test('extension.js: ⌘⌥T\'s terminal follows hue.auto and hue.enabled like the window', async () => {
+  let ext = await loadExtension({ hue: { auto: false } });
+  await ext.commands['hue.openTerminal']();
+  assert.equal(ext.terminals[0].color, undefined, 'no folder color with hue.auto off');
+
+  ext = await loadExtension({ hue: { folders: { infra: 'blue' } } });
+  await ext.commands['hue.openTerminal']();
+  assert.equal(ext.terminals[0].color.id, 'terminal.ansiBlue');
+
+  ext = await loadExtension({ hue: { enabled: false, folders: { infra: 'blue' }, danger: ['infra'] } });
+  await ext.commands['hue.openTerminal']();
+  assert.equal(ext.terminals[0].name, 'infra', 'no ⚠ with Hue off');
+  assert.equal(ext.terminals[0].color, undefined, 'no color with Hue off');
 });
