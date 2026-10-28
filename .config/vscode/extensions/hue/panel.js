@@ -5,7 +5,7 @@
 // extension.js opens it and writes the settings; colors.test.js tests this.
 const { STRENGTH, PARTS, hueOfHex, hueOf, folderHue, palette } = require('./colors');
 
-const SWITCHES = ['enabled', 'auto', 'dangerReadonly'];
+const SWITCHES = ['enabled', 'auto', 'dangerReadonly', 'reuseTerminal'];
 const WINDOW_PARTS = PARTS.filter((p) => p !== 'tabs');
 
 // What the page shows. folders: the workspace folders' names; settings: Hue's
@@ -38,6 +38,7 @@ function panelState(folders, settings, colors, light = false) {
       enabled: settings.enabled !== false,
       auto,
       dangerReadonly: settings.dangerReadonly === true,
+      reuseTerminal: settings.reuseTerminal !== false,
       strength: STRENGTH[settings.strength] ? settings.strength : 'normal',
       parts: settings.parts || WINDOW_PARTS,
       protectedBranches: settings.protectedBranches || ['main', 'master'],
@@ -281,6 +282,8 @@ function panelHtml(nonce) {
           switchEl(s.auto, 'Automatic colors', (v) => post({ type: 'setSetting', key: 'auto', value: v }))),
         settingRow('PROD opens read-only', 'Also stops saves from the menu and auto save',
           switchEl(s.dangerReadonly, 'PROD opens read-only', (v) => post({ type: 'setSetting', key: 'dangerReadonly', value: v }), true)),
+        settingRow('One terminal per folder', 'The terminal button and ⌘⌥T show the one already open',
+          switchEl(s.reuseTerminal, 'One terminal per folder', (v) => post({ type: 'setSetting', key: 'reuseTerminal', value: v }))),
         settingRow('Strength', 'How saturated the tint is',
           el('div', { class: 'seg', role: 'radiogroup', aria: { label: 'Strength' } }, ...state.strengths.map((v) => el('button', {
             class: v === s.strength ? 'on' : '', textContent: v, role: 'radio', aria: { checked: String(v === s.strength) },

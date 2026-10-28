@@ -8,7 +8,7 @@ command -v code >/dev/null || { echo "hue: 'code' not on PATH, skipped"; exit 0;
 
 # The stamp: "sha version" of the last install (an older one holds the sha only)
 stamp_file="$HOME/.cache/hue.sha"
-sha=$(cat "$dir/package.json" "$dir/extension.js" "$dir/colors.js" "$dir/panel.js" "$dir/search.js" "$dir/README.md" "$dir/icon.png" | shasum | cut -d' ' -f1)
+sha=$(cat "$dir/package.json" "$dir/extension.js" "$dir/colors.js" "$dir/panel.js" "$dir/search.js" "$dir/README.md" "$dir/icon.png" "$dir/sidebar.svg" | shasum | cut -d' ' -f1)
 old_sha='' old_version=''
 [[ -f $stamp_file ]] && read -r old_sha old_version < "$stamp_file"
 if [[ $old_sha == "$sha" ]] && code --list-extensions | grep -ix 'rui.hue' >/dev/null; then
@@ -27,7 +27,7 @@ fi
 # A .vsix is a zip: the manifest, the content types and the files under extension/
 # (@html escapes the text that lands in XML)
 mkdir -p "$tmp/vsix/extension"
-cp "$dir/package.json" "$dir/extension.js" "$dir/colors.js" "$dir/panel.js" "$dir/search.js" "$dir/README.md" "$dir/icon.png" "$tmp/vsix/extension/"
+cp "$dir/package.json" "$dir/extension.js" "$dir/colors.js" "$dir/panel.js" "$dir/search.js" "$dir/README.md" "$dir/icon.png" "$dir/sidebar.svg" "$tmp/vsix/extension/"
 jq -r '"<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <PackageManifest Version=\"2.0.0\" xmlns=\"http://schemas.microsoft.com/developer/vsx-schema/2011\">
   <Metadata>
@@ -51,6 +51,7 @@ cat > "$tmp/vsix/[Content_Types].xml" <<'XML'
   <Default Extension=".js" ContentType="application/javascript"/>
   <Default Extension=".md" ContentType="text/markdown"/>
   <Default Extension=".png" ContentType="image/png"/>
+  <Default Extension=".svg" ContentType="image/svg+xml"/>
   <Default Extension=".vsixmanifest" ContentType="text/xml"/>
 </Types>
 XML

@@ -2,7 +2,7 @@
   "name": "hue",
   "displayName": "Hue",
   "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders and protected branches.",
-  "version": "0.14.1",
+  "version": "0.17.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -17,32 +17,38 @@
       {
         "command": "hue.open",
         "title": "Open (folders, PROD, settings)",
-        "category": "Hue"
+        "category": "Hue",
+        "icon": "$(window)"
       },
       {
         "command": "hue.search",
         "title": "Search (folders, colors, PROD, settings)",
-        "category": "Hue"
+        "category": "Hue",
+        "icon": "$(search)"
       },
       {
         "command": "hue.setColor",
         "title": "Set Color",
-        "category": "Hue"
+        "category": "Hue",
+        "icon": "$(symbol-color)"
       },
       {
         "command": "hue.refresh",
         "title": "Refresh",
-        "category": "Hue"
+        "category": "Hue",
+        "icon": "$(refresh)"
       },
       {
         "command": "hue.toggleDanger",
         "title": "Toggle Danger (PROD) for Folder",
-        "category": "Hue"
+        "category": "Hue",
+        "icon": "$(warning)"
       },
       {
         "command": "hue.openTerminal",
         "title": "Open Terminal in Folder",
-        "category": "Hue"
+        "category": "Hue",
+        "icon": "$(terminal)"
       },
       {
         "command": "hue.goToFolder",
@@ -58,6 +64,168 @@
         "command": "hue.save",
         "title": "Save (asks first in a PROD place)",
         "category": "Hue"
+      },
+      {
+        "command": "hue.removeProdPath",
+        "title": "Remove PROD Path",
+        "category": "Hue",
+        "icon": "$(close)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hue",
+          "title": "Hue",
+          "icon": "sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "hue": [
+        {
+          "id": "hue.folders",
+          "name": "Folders"
+        },
+        {
+          "id": "hue.settings",
+          "name": "Settings",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "hue.folders",
+        "contents": "Hue colors the folders of a .code-workspace. Open one to see them here."
+      },
+      {
+        "view": "hue.settings",
+        "contents": "Hue's settings live in a .code-workspace. Open one to change them here."
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "hue.search",
+          "when": "view == hue.folders",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hue.refresh",
+          "when": "view == hue.folders",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "hue.setColor",
+          "when": "view == hue.folders && viewItem == folder",
+          "group": "inline@1"
+        },
+        {
+          "command": "hue.toggleDanger",
+          "when": "view == hue.folders && viewItem == folder",
+          "group": "inline@2"
+        },
+        {
+          "command": "hue.openTerminal",
+          "when": "view == hue.folders && viewItem == folder",
+          "group": "inline@3"
+        },
+        {
+          "command": "hue.removeProdPath",
+          "when": "view == hue.folders && viewItem == prodPath",
+          "group": "inline@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "hue.removeProdPath",
+          "when": "false"
+        }
+      ]
+    },
+    "colors": [
+      {
+        "id": "hue.red",
+        "description": "Hue: a workspace folder colored red in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#e75f55",
+          "light": "#ad281f",
+          "highContrast": "#e75f55",
+          "highContrastLight": "#ad281f"
+        }
+      },
+      {
+        "id": "hue.orange",
+        "description": "Hue: a workspace folder colored orange in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#e79055",
+          "light": "#ad581f",
+          "highContrast": "#e79055",
+          "highContrastLight": "#ad581f"
+        }
+      },
+      {
+        "id": "hue.yellow",
+        "description": "Hue: a workspace folder colored yellow in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#e7c555",
+          "light": "#ad8c1f",
+          "highContrast": "#e7c555",
+          "highContrastLight": "#ad8c1f"
+        }
+      },
+      {
+        "id": "hue.green",
+        "description": "Hue: a workspace folder colored green in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#55e786",
+          "light": "#1fad4e",
+          "highContrast": "#55e786",
+          "highContrastLight": "#1fad4e"
+        }
+      },
+      {
+        "id": "hue.teal",
+        "description": "Hue: a workspace folder colored teal in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#55e7dd",
+          "light": "#1fada4",
+          "highContrast": "#55e7dd",
+          "highContrastLight": "#1fada4"
+        }
+      },
+      {
+        "id": "hue.blue",
+        "description": "Hue: a workspace folder colored blue in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#5599e7",
+          "light": "#1f61ad",
+          "highContrast": "#5599e7",
+          "highContrastLight": "#1f61ad"
+        }
+      },
+      {
+        "id": "hue.purple",
+        "description": "Hue: a workspace folder colored purple in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#9955e7",
+          "light": "#611fad",
+          "highContrast": "#9955e7",
+          "highContrastLight": "#611fad"
+        }
+      },
+      {
+        "id": "hue.pink",
+        "description": "Hue: a workspace folder colored pink in the Explorer (the nearest named color to its own)",
+        "defaults": {
+          "dark": "#e755a3",
+          "light": "#ad1f6b",
+          "highContrast": "#e755a3",
+          "highContrastLight": "#ad1f6b"
+        }
       }
     ],
     "configuration": {
@@ -128,6 +296,11 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Open the `hue.danger` places read-only (Hue adds them to the workspace's `files.readonlyInclude`), which also stops saves from the menu and auto save. Make a file writable for the session with **File: Set Active Editor Writeable in Session**."
+        },
+        "hue.reuseTerminal": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "The terminal button and `⌘⌥T` show the folder's terminal Hue already opened, instead of a new one each time."
         },
         "hue.protectedBranches": {
           "type": "array",

@@ -2,8 +2,10 @@
 // The top menu has one line per folder (its color as the icon, ⚠ for PROD;
 // Enter goes there, its buttons open a terminal, pick its color or flip PROD)
 // and Hue's own entries; Color… and Settings… are menus of their own, with a
-// way back. Without VS Code: the items of each menu (mainItems, colorItems,
-// settingsItems) and the icon of a color (swatchSvg). An item changes a
+// way back. The Hue views in the activity bar show the same lines: the
+// folders (sidebarItems) and the settings (settingsTree). Without VS Code: the
+// items of each menu (mainItems, colorItems, settingsItems), the views' lines
+// and the icon of a color (swatchSvg). An item changes a
 // setting (message: what the page would post, checked by applyMessage) or
 // runs something (run). icon: a codicon name, { swatch: '#rrggbb' } or
 // { prod: true }. extension.js shows the menus; colors.test.js tests this.
@@ -55,6 +57,38 @@ function mainItems({ folders, active, settings, colors, light = false }) {
   return items;
 }
 
+// The Folders view: the folder lines of the top menu (a click goes there; their
+// buttons are the view's own, in package.json), its branch after the color
+// (protected: on one of hue.protectedBranches) and, under it, its PROD paths
+// and a line to add one; last, a line to the page. branches: folder → branch
+function sidebarItems(state) {
+  const danger = state.settings.danger || [];
+  const protectedBranches = state.settings.protectedBranches || ['main', 'master'];
+  const branches = state.branches || {};
+  const folderLines = mainItems(state).filter((item) => item.run === 'goTo').map(({ buttons, ...item }) => {
+    const branch = branches[item.folder];
+    const parts = item.description.split(' · '); // the color (or PROD) first
+    if (branch) parts.splice(1, 0, branch);
+    const children = danger.filter((e) => e.startsWith(`${item.folder}/`)).map((e) => e.slice(item.folder.length + 1))
+      .map((rel) => ({ label: rel, icon: { prod: true }, folder: item.folder, rel }));
+    children.push({ label: 'Add PROD path…', icon: 'add', folder: item.folder, run: 'addProdPath' });
+    return { ...item, description: parts.join(' · '), branch, protectedBranch: !!branch && protectedBranches.includes(branch), children };
+  });
+  return [...folderLines, { label: 'Open the Hue page', icon: 'window', run: 'open' }];
+}
+
+// The Settings view: the lines of Settings…, each heading over its own
+function settingsTree(state) {
+  const tree = [];
+  let group;
+  for (const item of settingsItems(state)) {
+    if (item.separator === 'Settings') continue;
+    if (item.separator) tree.push(group = { label: item.separator, children: [] });
+    else (group ? group.children : tree).push(item);
+  }
+  return tree;
+}
+
 // "on · normal · read-only": the settings at a glance
 function settingsSummary(settings) {
   const strength = STRENGTH[settings.strength] ? settings.strength : 'normal';
@@ -84,6 +118,7 @@ function settingsItems({ settings }) {
   const enabled = settings.enabled !== false;
   const auto = settings.auto !== false;
   const readonly = settings.dangerReadonly === true;
+  const reuse = settings.reuseTerminal !== false;
   const strength = STRENGTH[settings.strength] ? settings.strength : 'normal';
   const parts = settings.parts || WINDOW_PARTS;
   const branches = settings.protectedBranches || ['main', 'master'];
@@ -95,6 +130,8 @@ function settingsItems({ settings }) {
       message: { type: 'setSetting', key: 'auto', value: !auto } },
     { label: 'PROD opens read-only', description: 'also stops saves from the menu and auto save', icon: check(readonly),
       message: { type: 'setSetting', key: 'dangerReadonly', value: !readonly } },
+    { label: 'One terminal per folder', description: 'the terminal button and ⌘⌥T show the one already open', icon: check(reuse),
+      message: { type: 'setSetting', key: 'reuseTerminal', value: !reuse } },
     { separator: 'Strength' },
     ...Object.keys(STRENGTH).map((value) => ({ label: value, description: value === strength ? 'current' : undefined,
       icon: value === strength ? 'circle-filled' : 'circle-outline', message: { type: 'setSetting', key: 'strength', value } })),
@@ -108,4 +145,4 @@ function settingsItems({ settings }) {
   return items;
 }
 
-module.exports = { mainItems, colorItems, settingsItems, swatchSvg };
+module.exports = { mainItems, colorItems, settingsItems, sidebarItems, settingsTree, swatchOf, swatchSvg };

@@ -99,6 +99,13 @@ function ansiFor(h) {
   return 'terminal.ansiBrightMagenta';
 }
 
+// The named default color nearest to a hue, around the circle: the Explorer
+// takes only the colors package.json declares (hue.red … hue.pink)
+function nearestNamed(h) {
+  const away = (name) => { const d = Math.abs(DEFAULT_COLORS[name] - h) % 360; return Math.min(d, 360 - d); };
+  return Object.keys(DEFAULT_COLORS).reduce((best, name) => (away(name) < away(best) ? name : best));
+}
+
 // Glob for a path inside a folder: ** crosses directories, * and ? do not
 function globRegex(glob) {
   const re = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/?/g, '\u0000').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]')
@@ -188,7 +195,18 @@ function nextCustomizations(current, { hue, light, k = 1, parts = PARTS, onProte
   return next;
 }
 
+// What the Explorer (and a file's tab) shows for a path of a workspace folder
+// (rel: inside it, undefined for the folder itself): P in red inside a PROD
+// place, the folder itself in its color (hue, undefined for none). color: a
+// theme color id
+function decorationOf({ danger, folderName, rel, hue }) {
+  const entry = isDanger(danger, folderName, rel);
+  if (entry !== undefined) return { badge: 'P', color: 'list.errorForeground', tooltip: `PROD: ${entry}` };
+  if (rel === undefined && hue !== undefined) return { color: `hue.${nearestNamed(hue)}` };
+  return undefined;
+}
+
 module.exports = {
   DEFAULT_COLORS, STRENGTH, PARTS, OWNED,
-  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations, readonlyGlobs, nextReadonly,
+  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, nearestNamed, globRegex, isDanger, decorationOf, nextCustomizations, readonlyGlobs, nextReadonly,
 };
