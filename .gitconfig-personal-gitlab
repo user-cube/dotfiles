@@ -2,7 +2,7 @@
 # noreply address links the commits to the account without showing an email
 [user]
 email = 3274773-user-cube@users.noreply.gitlab.com
-signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMTB9m96/tWZeDTjkO971Ye1nlp3cN3p21aQhH9shiij
+signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKqtsWbPgvRWBsyoPGmHpJDHgNdCUNtMVV8FWQYqjQUL
 
 [gpg]
 format = ssh
