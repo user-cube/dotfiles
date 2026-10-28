@@ -11,12 +11,13 @@
 const vscode = require('vscode');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 
 const {
   DEFAULT_COLORS, STRENGTH, PARTS, hueOfHex, folderHue, ansiFor, isDanger, nextCustomizations, readonlyGlobs, nextReadonly,
 } = require('./colors');
 const { panelState, applyMessage, panelHtml } = require('./panel');
-const { searchItems } = require('./search');
+const { mainItems, colorItems, settingsItems, swatchSvg } = require('./search');
 
 function activate(context) {
   function colorsSetting() {
@@ -358,27 +359,103 @@ function activate(context) {
     apply();
   }
 
-  // Hue: Search (⌘K H): everything Hue does in one list (search.js). A setting
-  // changes through applyMessage, as from the page
+  // Hue: Search (⌘K H): a menu you type to filter (search.js). The top one
+  // has a line per folder, with buttons; Color… and Settings… open in the same
+  // box, with Back. A setting changes through applyMessage, as from the page;
+  // the settings menu stays open so you can flip several
+  function iconOf(icon) {
+    if (!icon) return undefined;
+    if (typeof icon === 'string') return new vscode.ThemeIcon(icon);
+    if (icon.prod) return new vscode.ThemeIcon('warning', new vscode.ThemeColor('errorForeground'));
+    // a dot in the color: an svg in the extension's storage, written once
+    const file = path.join(context.globalStorageUri.fsPath, 'swatches', `${icon.swatch.slice(1).toLowerCase()}.svg`);
+    if (!fs.existsSync(file)) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, swatchSvg(icon.swatch));
+    }
+    return vscode.Uri.file(file);
+  }
+  function toQuickPick(items) {
+    return items.map((item) => (item.separator
+      ? { label: item.separator, kind: vscode.QuickPickItemKind.Separator }
+      : { ...item, iconPath: iconOf(item.icon),
+          buttons: (item.buttons || []).map((b) => ({ ...b, iconPath: new vscode.ThemeIcon(b.icon) })) }));
+  }
+  async function writeChange(message) {
+    const folders = vscode.workspace.workspaceFolders || [];
+    const change = applyMessage(message, hueSettings(), folders.map((f) => f.name), colorsSetting());
+    if (change) await vscode.workspace.getConfiguration('hue').update(change.key, change.value, vscode.ConfigurationTarget.Workspace);
+  }
+
   async function search() {
     const folders = vscode.workspace.workspaceFolders || [];
     if (!vscode.workspace.workspaceFile || !folders.length) {
       vscode.window.showInformationMessage('Hue: open a .code-workspace first.');
       return;
     }
-    const items = searchItems({ folders: folders.map((f) => f.name), active: activeFolderName(), settings: hueSettings(), colors: colorsSetting() })
-      .map((item) => (item.separator ? { label: item.separator, kind: vscode.QuickPickItemKind.Separator } : item));
-    const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Hue: folders, colors, PROD, settings', matchOnDescription: true });
-    if (!pick) return;
-    const folder = pick.folder && folders.find((f) => f.name === pick.folder);
-    if (pick.run === 'open') openPanel();
-    else if (pick.run === 'goTo' && folder) await goTo(folder);
-    else if (pick.run === 'terminal' && folder) openTerminalIn(folder);
-    else if (pick.run === 'toggleDanger') await toggleDanger();
-    else if (pick.message) {
-      const change = applyMessage(pick.message, hueSettings(), folders.map((f) => f.name), colorsSetting());
-      if (change) await vscode.workspace.getConfiguration('hue').update(change.key, change.value, vscode.ConfigurationTarget.Workspace);
+    const kind = vscode.window.activeColorTheme.kind;
+    const light = kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight;
+    const folderOf = (name) => folders.find((f) => f.name === name);
+    const qp = vscode.window.createQuickPick();
+    qp.matchOnDescription = true;
+    let menu = { name: 'main' };
+    function show(next = menu) {
+      menu = next;
+      const state = { folders: folders.map((f) => f.name), active: activeFolderName(), settings: hueSettings(), colors: colorsSetting(), light };
+      if (menu.name === 'color') {
+        qp.title = `Hue: color of ${menu.folder}`;
+        qp.placeholder = 'A color, Automatic, or Custom…';
+        qp.items = toQuickPick(colorItems({ ...state, folder: menu.folder }));
+      } else if (menu.name === 'settings') {
+        qp.title = 'Hue: settings';
+        qp.placeholder = 'Enter flips a switch; Back or Escape when done';
+        qp.items = toQuickPick(settingsItems(state));
+      } else {
+        qp.title = undefined;
+        qp.placeholder = 'Hue: a folder, a color, PROD or a setting';
+        qp.items = toQuickPick(mainItems(state));
+      }
+      qp.buttons = menu.name === 'main' ? [] : [vscode.QuickInputButtons.Back];
+      qp.value = '';
     }
+    async function act(item) {
+      const folder = item.folder && folderOf(item.folder);
+      if (item.run === 'colorMenu') return show({ name: 'color', folder: item.folder });
+      if (item.run === 'settingsMenu') return show({ name: 'settings' });
+      if (item.message) {
+        await writeChange(item.message);
+        if (menu.name === 'settings') return show(); // keep it open: flip another
+        return qp.hide();
+      }
+      qp.hide();
+      if (item.run === 'open') openPanel();
+      else if (item.run === 'goTo' && folder) await goTo(folder);
+      else if (item.run === 'terminal' && folder) openTerminalIn(folder);
+      else if (item.run === 'toggleDanger') await toggleDanger();
+      else if (item.run === 'customColor') {
+        const value = await vscode.window.showInputBox({ title: `Hue: color of ${item.folder}`, prompt: 'A color as #rrggbb', placeHolder: '#3366ff',
+          validateInput: (v) => (hueOfHex(v.trim()) === undefined ? 'Use #rrggbb' : undefined) });
+        if (value) await writeChange({ type: 'setColor', folder: item.folder, value: value.trim() });
+      } else if (item.run === 'branches') {
+        const value = await vscode.window.showInputBox({ title: 'Hue: protected branches', prompt: 'Branch names, separated by commas',
+          value: (hueSettings().protectedBranches || ['main', 'master']).join(', ') });
+        if (value !== undefined) await writeChange({ type: 'setSetting', key: 'protectedBranches', value: value.split(',') });
+      }
+    }
+    qp.onDidAccept(() => { const [item] = qp.selectedItems; if (item) act(item); });
+    qp.onDidTriggerButton(() => show({ name: 'main' })); // Back: the only title button
+    qp.onDidTriggerItemButton(async ({ item, button }) => {
+      if (button.id === 'terminal') return act({ run: 'terminal', folder: item.folder });
+      if (button.id === 'color') return show({ name: 'color', folder: item.folder });
+      if (button.id === 'prod') {
+        await writeChange({ type: 'setProd', folder: item.folder, on: !(hueSettings().danger || []).includes(item.folder) });
+        return show(); // stays open, the line now says PROD (or not)
+      }
+      return undefined;
+    });
+    qp.onDidHide(() => qp.dispose());
+    show();
+    qp.show();
   }
 
   // Take the colors out of the workspace and keep the extension off here

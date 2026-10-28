@@ -12,10 +12,12 @@ the keys it owns, and removes them when they stop applying. A repo's own
 
 ## What it does
 
-- **Search.** `⌘K H` (**Hue: Search**) lists everything Hue does, filtered as
-  you type, like the command palette: go to a folder, a terminal in it, the
-  color of the folder you are in, PROD on or off for a folder or the current
-  file's place, the settings, the page.
+- **Search.** `⌘K H` (**Hue: Search**): a line per folder, its color as the
+  dot (⚠ for PROD), what it is (color, PROD paths, you are here) beside it.
+  Enter goes there; its buttons open a terminal, pick its color, flip PROD (in
+  place). Below: the color of the folder you are in, PROD for this file's
+  place, **Settings…** (switches that stay open to flip several) and the page.
+  Type to filter by folder, color or PROD.
 - **Its own page.** **Hue: Open** shows every folder with its color (a named one,
   your own, or automatic, with a preview), its PROD switch and the PROD paths
   inside it (**Add path…** picks one in the folder picker), and the settings
@@ -101,7 +103,7 @@ when something changed. Reload the VS Code windows afterwards.
 - `extension.js`: the VS Code side (settings, events, commands, status bar)
 - `colors.js`: the rest, without VS Code: a folder's color, the palette of
   each part, the danger places, the `colorCustomizations` they make
-- `search.js`: what Hue: Search lists for the state Hue is in
+- `search.js`: the menus of Hue: Search (top, Color…, Settings…) and the svg dot of a color
 - `panel.js`: the page (Hue: Open): what it shows, the setting each message from
   it changes (checked: it trusts nothing the page sends), its HTML
 - `colors.test.js`: `node --test .config/vscode/extensions/hue/` (CI runs it),

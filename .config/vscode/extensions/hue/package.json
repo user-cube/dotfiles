@@ -2,7 +2,7 @@
   "name": "hue",
   "displayName": "Hue",
   "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders and protected branches.",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
