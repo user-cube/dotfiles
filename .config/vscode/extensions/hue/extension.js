@@ -12,7 +12,7 @@ const vscode = require('vscode');
 const path = require('path');
 
 const {
-  DEFAULT_COLORS, STRENGTH, PARTS, hueOfHex, folderHue, ansiFor, isDanger, nextCustomizations,
+  DEFAULT_COLORS, STRENGTH, PARTS, hueOfHex, folderHue, ansiFor, isDanger, nextCustomizations, readonlyGlobs, nextReadonly,
 } = require('./colors');
 
 function activate(context) {
@@ -138,6 +138,25 @@ function activate(context) {
     const next = nextCustomizations(current, { hue, light, k, parts: settings.get('parts') || PARTS, onProtected, danger });
     if (JSON.stringify(next) === JSON.stringify(current)) return;
     await cfg.update('colorCustomizations', Object.keys(next).length ? next : undefined, vscode.ConfigurationTarget.Workspace);
+  }
+
+  // hue.dangerReadonly: the danger places open read-only (files.readonlyInclude,
+  // in the workspace), which also stops the saves ⌘S can't: the menu, auto save.
+  // "File: Set Active Editor Writeable in Session" opens one up. Hue keeps the
+  // globs it added in workspaceState, so it takes out only those
+  async function applyReadonly() {
+    if (!vscode.workspace.workspaceFile) return;
+    const settings = vscode.workspace.getConfiguration('hue');
+    const on = settings.get('enabled') !== false && settings.get('dangerReadonly') === true;
+    const folders = (vscode.workspace.workspaceFolders || []).map((f) => ({ name: f.name, fsPath: f.uri.fsPath }));
+    const globs = on ? readonlyGlobs(settings.get('danger') || [], folders) : [];
+    const owned = context.workspaceState.get('readonlyGlobs') || [];
+    const files = vscode.workspace.getConfiguration('files');
+    const current = (files.inspect('readonlyInclude') || {}).workspaceValue || {};
+    const { next, owned: nowOwned } = nextReadonly(current, owned, globs);
+    if (JSON.stringify(nowOwned) !== JSON.stringify(owned)) context.workspaceState.update('readonlyGlobs', nowOwned);
+    if (JSON.stringify(next) === JSON.stringify(current)) return;
+    await files.update('readonlyInclude', Object.keys(next).length ? next : undefined, vscode.ConfigurationTarget.Workspace);
   }
 
   // ⌘S in a danger place asks first, once per place in a session. Only ⌘S (the
@@ -293,9 +312,9 @@ function activate(context) {
       if (place) { forced = place; apply(); }
     }),
     vscode.window.onDidChangeActiveColorTheme(apply),
-    vscode.workspace.onDidChangeWorkspaceFolders(apply),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => { applyReadonly(); apply(); }),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('hue')) { updateSaveGuard(); apply(); }
+      if (e.affectsConfiguration('hue')) { updateSaveGuard(); applyReadonly(); apply(); }
     }),
     vscode.commands.registerCommand('hue.setColor', setColor),
     vscode.commands.registerCommand('hue.toggleDanger', toggleDanger),
@@ -307,6 +326,7 @@ function activate(context) {
   );
   rememberFile();
   updateSaveGuard();
+  applyReadonly();
   apply();
 }
 

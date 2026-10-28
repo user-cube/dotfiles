@@ -2,7 +2,7 @@
   "name": "hue",
   "displayName": "Hue",
   "description": "Every workspace folder gets its own color, and the window follows the folder you work in. Warns on production folders and protected branches.",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "publisher": "rui",
   "license": "MIT",
   "engines": {
@@ -113,6 +113,11 @@
           },
           "default": [],
           "description": "Dangerous (production) places: a folder name (all of it) or `folder/path` (that path, `*` and `**` allowed). While the active file is in one, the title bar is red and the status bar shows PROD."
+        },
+        "hue.dangerReadonly": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Open the `hue.danger` places read-only (Hue adds them to the workspace's `files.readonlyInclude`), which also stops saves from the menu and auto save. Make a file writable for the session with **File: Set Active Editor Writeable in Session**."
         },
         "hue.protectedBranches": {
           "type": "array",

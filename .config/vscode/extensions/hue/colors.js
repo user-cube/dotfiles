@@ -127,6 +127,41 @@ const DANGER = { dark: ['#8a1c1c', '#4a1212'], light: ['#f5b5b5', '#f9d5d5'] };
 const PARTS = Object.keys(palette(0, false, 1));
 const OWNED = Object.values(palette(0, false, 1)).flatMap((p) => Object.keys(p));
 
+// files.readonlyInclude globs for the danger entries (hue.dangerReadonly): a
+// whole folder, or a path and everything under it, as absolute globs so each
+// one hits its folder only. folders: [{ name, fsPath }]; an entry for a folder
+// not in the workspace gives none
+function readonlyGlobs(entries, folders) {
+  const globs = [];
+  for (const entry of entries) {
+    const slash = entry.indexOf('/');
+    const name = slash === -1 ? entry : entry.slice(0, slash);
+    const folder = folders.find((f) => f.name === name);
+    if (!folder) continue;
+    const root = folder.fsPath.replace(/\/+$/, '');
+    const sub = slash === -1 ? '' : entry.slice(slash + 1).replace(/\/+$/, '');
+    if (sub) globs.push(`${root}/${sub}`, `${root}/${sub}/**`);
+    else globs.push(`${root}/**`);
+  }
+  return [...new Set(globs)];
+}
+
+// The workspace's files.readonlyInclude with these globs: the ones Hue added
+// before (owned) come out, the new ones go in. A glob already there that Hue
+// didn't add stays the user's: left alone and not taken over.
+// Returns { next, owned }: the setting and the globs Hue now owns
+function nextReadonly(current, owned, globs) {
+  const next = { ...current };
+  for (const key of owned) delete next[key];
+  const mine = [];
+  for (const glob of globs) {
+    if (glob in next) continue;
+    next[glob] = true;
+    mine.push(glob);
+  }
+  return { next, owned: mine };
+}
+
 // The workspace's colorCustomizations with Hue's keys for this state: every key
 // Hue owns comes out first (others are left alone), then the folder's palette
 // (the parts chosen, tabs always), then the warnings, which win over it.
@@ -155,5 +190,5 @@ function nextCustomizations(current, { hue, light, k = 1, parts = PARTS, onProte
 
 module.exports = {
   DEFAULT_COLORS, STRENGTH, PARTS, OWNED,
-  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations,
+  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations, readonlyGlobs, nextReadonly,
 };

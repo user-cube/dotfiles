@@ -23,6 +23,10 @@ the keys it owns, and removes them when they stop applying. A repo's own
   allowed), turn the title bar red and show `⚠ PROD` in the status bar while the
   active file is in them. ⌘S there asks first, once per place until VS Code
   restarts (only ⌘S: VS Code can't stop a save from the menu or auto save).
+  With `hue.dangerReadonly` they open read-only instead, which stops those
+  too: Hue adds them to the workspace's `files.readonlyInclude` (and takes out
+  only what it added); **File: Set Active Editor Writeable in Session** opens
+  one file up.
 - **Protected branches.** The status bar turns amber on `main` / `master`
   (configurable).
 - **Terminals.** `⌘⌥T` opens a terminal in the folder of the active file, its tab in
@@ -52,6 +56,7 @@ the keys it owns, and removes them when they stop applying. A repo's own
 | `hue.strength` | `normal` | `subtle`, `normal`, `strong` |
 | `hue.parts` | all | `titleBar`, `activityBar`, `sideBar`, `statusBar` |
 | `hue.danger` | `[]` | Folder names, or `folder/path` (`*` and `**` allowed) |
+| `hue.dangerReadonly` | `false` | Open the `hue.danger` places read-only |
 | `hue.protectedBranches` | `["main", "master"]` | `[]` to turn the amber status bar off |
 | `hue.enabled` | `true` | Off removes the colors from the workspace |
 

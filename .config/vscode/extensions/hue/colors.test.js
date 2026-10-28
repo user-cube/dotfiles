@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const {
   DEFAULT_COLORS, OWNED, PARTS,
-  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations,
+  hueOfHex, hueOf, autoHue, folderHue, hex, palette, ansiFor, globRegex, isDanger, nextCustomizations, readonlyGlobs, nextReadonly,
 } = require('./colors');
 
 test('hueOfHex: the hue of a #rrggbb, any case; grey is 0; anything else undefined', () => {
@@ -145,19 +145,43 @@ test('install.sh packages every local module extension.js and colors.js require'
   }
 });
 
+test('readonlyGlobs: absolute globs, a whole folder or a path and what is under it', () => {
+  const folders = [{ name: 'infra', fsPath: '/w/infra' }, { name: 'app', fsPath: '/w/app/' }];
+  assert.deepEqual(readonlyGlobs(['infra'], folders), ['/w/infra/**']);
+  assert.deepEqual(readonlyGlobs(['app/prod/'], folders), ['/w/app/prod', '/w/app/prod/**']);
+  assert.deepEqual(readonlyGlobs(['app/clusters/*/prod'], folders), ['/w/app/clusters/*/prod', '/w/app/clusters/*/prod/**']);
+  assert.deepEqual(readonlyGlobs(['gone', 'gone/x'], folders), [], 'a folder not in the workspace gives none');
+  assert.deepEqual(readonlyGlobs(['infra', 'infra'], folders), ['/w/infra/**']);
+  assert.deepEqual(readonlyGlobs([], folders), []);
+});
+
+test('nextReadonly: Hue\'s old globs out, the new in, the user\'s left alone', () => {
+  const user = { '/w/vendor/**': true };
+  let r = nextReadonly(user, [], ['/w/infra/**']);
+  assert.deepEqual(r, { next: { '/w/vendor/**': true, '/w/infra/**': true }, owned: ['/w/infra/**'] });
+  r = nextReadonly(r.next, r.owned, ['/w/app/prod', '/w/app/prod/**']);
+  assert.deepEqual(r.next, { '/w/vendor/**': true, '/w/app/prod': true, '/w/app/prod/**': true });
+  assert.deepEqual(nextReadonly(r.next, r.owned, []), { next: user, owned: [] });
+  // the user's own glob is not taken over, so turning Hue's off keeps it
+  r = nextReadonly(user, [], ['/w/vendor/**']);
+  assert.deepEqual(r, { next: user, owned: [] });
+  assert.deepEqual(nextReadonly({ '/w/infra/**': false }, [], ['/w/infra/**']).next, { '/w/infra/**': false }, 'a user\'s false wins');
+});
+
 // extension.js with a fake `vscode`: folders infra and app, an editor whose
 // file can be switched, the events and commands it registers, what it writes.
 // git: what vscode.extensions.getExtension('vscode.git') returns
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
-async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git } = {}) {
+async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git, readonly } = {}) {
   const Module = require('node:module');
   const folders = ['infra', 'app'].map((name) => ({ name, uri: { fsPath: `/w/${name}`, scheme: 'file' } }));
-  const ext = { updates: [], commands: {}, events: {}, terminals: [], folderWrites: 0, prod: false, executed: [], asked: [], answer: undefined };
+  const ext = { updates: [], fileWrites: [], commands: {}, events: {}, terminals: [], folderWrites: 0, prod: false, executed: [], asked: [], answer: undefined };
   const editor = (fsPath) => ({ document: { uri: { scheme: 'file', fsPath } } });
   const on = (name) => (cb) => { ext.events[name] = cb; return { dispose() {} }; };
   const settings = { auto: true, protectedBranches: [], ...hue };
-  let current = { 'editor.background': '#000000' };
+  // The workspace's settings, by section (what inspect().workspaceValue reads)
+  const config = { workbench: { colorCustomizations: { 'editor.background': '#000000' } }, files: { readonlyInclude: readonly } };
   const fake = {
     window: {
       activeTextEditor: editor(file),
@@ -174,8 +198,11 @@ async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git } = {}) 
       getConfiguration: (section) => section === 'hue'
         ? { get: (key) => settings[key] }
         : {
-            inspect: () => ({ workspaceValue: current }),
-            update: async (key, value) => { current = value || {}; ext.updates.push(value); },
+            inspect: (key) => ({ workspaceValue: (config[section] || {})[key] }),
+            update: async (key, value) => {
+              (config[section] = config[section] || {})[key] = value;
+              (section === 'workbench' ? ext.updates : ext.fileWrites).push(value);
+            },
           },
       onDidChangeWorkspaceFolders: on('folders'), onDidChangeConfiguration: on('config'),
     },
@@ -212,6 +239,13 @@ async function loadExtension({ hue = {}, file = '/w/infra/main.tf', git } = {}) 
       creationOptions: { cwd: cwd && { scheme: 'file', fsPath: cwd } },
       shellIntegration: shellCwd ? { cwd: { scheme: 'file', fsPath: shellCwd } } : undefined,
     });
+    await settle();
+  };
+  ext.readonly = () => config.files.readonlyInclude;
+  // Change Hue's settings the way the settings UI does: then the config event
+  ext.setHue = async (changes) => {
+    Object.assign(settings, changes);
+    ext.events.config({ affectsConfiguration: (section) => section === 'hue' });
     await settle();
   };
   ext.saves = () => ext.executed.filter(([c]) => c === 'workbench.action.files.save').length;
@@ -317,4 +351,35 @@ test('extension.js: with Hue off, ⌘S never asks', async () => {
   await ext.commands['hue.save']();
   assert.equal(ext.asked.length, 0);
   assert.equal(ext.saves(), 1);
+});
+
+test('extension.js: hue.dangerReadonly makes the danger places read-only, and takes out only its globs', async () => {
+  const ext = await loadExtension({
+    hue: { dangerReadonly: true, danger: ['infra', 'app/prod'] },
+    readonly: { '/w/vendor/**': true },
+  });
+  assert.deepEqual(ext.readonly(), { '/w/vendor/**': true, '/w/infra/**': true, '/w/app/prod': true, '/w/app/prod/**': true });
+  await ext.setHue({ danger: ['app/prod'] });
+  assert.deepEqual(ext.readonly(), { '/w/vendor/**': true, '/w/app/prod': true, '/w/app/prod/**': true });
+  const writes = ext.fileWrites.length;
+  await ext.setHue({ strength: 'strong' }); // nothing about danger changed
+  assert.equal(ext.fileWrites.length, writes, 'no write when the globs are the same');
+  await ext.setHue({ dangerReadonly: false });
+  assert.deepEqual(ext.readonly(), { '/w/vendor/**': true }, 'off: only the user\'s glob is left');
+  await ext.setHue({ dangerReadonly: true, enabled: false });
+  assert.deepEqual(ext.readonly(), { '/w/vendor/**': true }, 'Hue off: none either');
+});
+
+test('extension.js: without hue.dangerReadonly, files.readonlyInclude is never written', async () => {
+  const ext = await loadExtension({ hue: { danger: ['infra'] } });
+  await ext.setHue({ danger: ['infra', 'app'] });
+  assert.deepEqual(ext.fileWrites, []);
+  assert.equal(ext.readonly(), undefined);
+});
+
+test('extension.js: the last Hue glob out removes the setting', async () => {
+  const ext = await loadExtension({ hue: { dangerReadonly: true, danger: ['infra'] } });
+  assert.deepEqual(ext.readonly(), { '/w/infra/**': true });
+  await ext.setHue({ danger: [] });
+  assert.equal(ext.readonly(), undefined);
 });
