@@ -22,8 +22,11 @@ ws -n NAME -t terraform DIR:blue ... # create one from folders, then open it
   (`code --list-extensions` prints the ids)
 - `tmux.sh`: the default terminal profile (`tmux`), so the integrated terminal
   runs tmux with the same `tmux.conf` as Ghostty
-  - one session per workspace folder, named like ⌘O names it; a second VS Code
-    terminal on it gets a throwaway session
+  - one session per workspace folder, named like ⌘O names it: a VS Code reload
+    attaches it again, but it is marked `@vscode`, so tmux-resurrect doesn't
+    bring it back after a reboot (`../tmux/resurrect-drop.sh`)
+  - a terminal outside a folder (the home directory), or a second one on a
+    folder that is shown, gets a throwaway session, gone when it closes
   - starts tmux through `../tmux/start-server.sh` when it isn't running, so the
     tmux-resurrect save is restored whoever opens first
   - the other profiles stay in the terminal's + menu

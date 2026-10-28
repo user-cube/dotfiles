@@ -57,6 +57,7 @@ keyboard.
 | `cheatsheet.sh` | ⌘⇧H: every ⌘ shortcut in fzf |
 | `sessionizer.sh`, `sessions.sh`, `ssh-picker.sh`, `rename-window.sh`, `split.sh` | the popups and helpers above |
 | `start-server.sh` | starts tmux with the `main` session when it isn't running: restores the last tmux-resurrect save, then preloads `sessions.local` (run by Ghostty's `tmux-start.sh` and VS Code's `tmux.sh`) |
+| `resurrect-drop.sh` | tmux-resurrect's post-save hook: VS Code's sessions (`@vscode`) and throwaway ones (`destroy-unattached`) stay out of the save, so a reboot doesn't bring them back |
 | `preload-sessions.sh` | creates the sessions in `sessions.local` (run by `start-server.sh`, and `tmux-sessions` after editing it) |
 | `sessions.local.example` | the format of `~/.config/tmux/sessions.local` (per machine, never committed) |
 
