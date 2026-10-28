@@ -4,7 +4,7 @@
     process = git-lfs filter-process
     required = true
 [user]
-    name = Rui Coelho
+    name = Rui
 
 [includeIf "gitdir:~/work/"]
     path = ~/.gitconfig-work
