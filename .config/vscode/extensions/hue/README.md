@@ -106,7 +106,7 @@ when something changed. Reload the VS Code windows afterwards.
 - `search.js`: the menus of Hue: Search (top, Color…, Settings…) and the svg dot of a color
 - `panel.js`: the page (Hue: Open): what it shows, the setting each message from
   it changes (checked: it trusts nothing the page sends), its HTML
-- `colors.test.js`: `node --test .config/vscode/extensions/hue/` (CI runs it),
+- `colors.test.js`: `node --test .config/vscode/extensions/hue/colors.test.js` (CI runs it),
   including `extension.js` loaded with a fake `vscode`. A new file the
   extension needs goes into `install.sh`'s list too; a test checks it
 - bump `version` in `package.json` with every change, so VS Code shows which

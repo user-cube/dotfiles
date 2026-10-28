@@ -25,7 +25,7 @@ and `tofu` (or `terraform`; without either the hook's tests are skipped).
 | `test_tmux_sessions.py` | the sessions VS Code's terminal makes (one per folder, marked; throwaway at home or for a second terminal; attached again after a reload), and the resurrect hook that keeps them out of the save; on a tmux server of its own |
 | `test_zsh_history.py` | ↑ (both cursor modes) and Ctrl+R see what another shell ran since the last prompt, and ↑ keeps its prefix search going; two zsh in terminals (pexpect) on a throwaway history |
 
-Hue, the VS Code extension, has its own: `node --test .config/vscode/extensions/hue/`
+Hue, the VS Code extension, has its own: `node --test .config/vscode/extensions/hue/colors.test.js`
 (`colors.test.js`: its colors, the danger places, the colorCustomizations it
 writes, and `extension.js` loaded with a fake `vscode`).
 

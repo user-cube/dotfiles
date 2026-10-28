@@ -77,8 +77,10 @@ jobs:
 
       # Hue's colors, danger places and colorCustomizations, and extension.js
       # with a fake vscode (node ships with the runner)
+      # The file, not the folder: Node 24 runs a folder given to --test as a
+      # module (its package.json main, extension.js, which needs VS Code)
       - name: Hue extension (node --test)
-        run: node --test .config/vscode/extensions/hue/
+        run: node --test .config/vscode/extensions/hue/colors.test.js
 
       # Every work commit runs this hook: a broken build blocks them all
       - name: commit-msg hook (go vet + test)
