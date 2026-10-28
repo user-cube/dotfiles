@@ -1,6 +1,7 @@
 {
   "workbench.iconTheme": "material-icon-theme",
   "workbench.colorTheme": "Monokai",
+  "workbench.activityBar.compact": true,
   "docker.extension.enableComposeLanguageServer": false,
   "github.copilot.nextEditSuggestions.enabled": true,
   "chat.viewSessions.orientation": "stacked",

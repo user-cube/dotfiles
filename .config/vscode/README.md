@@ -9,10 +9,13 @@ ws NAME                              # open NAME.code-workspace
 ws -n NAME -t terraform DIR:blue ... # create one from folders, then open it
 ```
 
-- `settings.json`, `keybindings.json`: the user settings, linked into
-  `~/Library/Application Support/Code/User` by `../dotfiles/install.sh` (a file
-  VS Code had there is kept as `.bak`). Plain JSON, no comments: the tests
-  parse it
+- `settings.json`, `keybindings.json`: the user settings.
+  `../dotfiles/install.sh` links `~/Library/Application Support/Code/User` to
+  them in the clone itself (`DOTFILES_DIR`, else `~/dotfiles`), not the copy
+  in `~/.config`: a setting changed in VS Code's UI lands in the repo, shows
+  in `git status` to commit, and no `dotfiles-sync` copies over it (a file
+  VS Code had there before is kept as `.bak`). Plain JSON, no comments: the
+  tests parse it
   - formatting is global, the same in every workspace: format on save, 2
     spaces (4 for Python), LF, final newline, no trailing whitespace (kept in
     Markdown), gofmt + organized imports for Go, Red Hat's formatter for YAML

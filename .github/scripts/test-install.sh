@@ -68,7 +68,7 @@ want=$(grep -vE '^[[:space:]]*(#|$)' "$repo/.config/vscode/extensions.txt" | sor
 [ "$(sort "$t/extensions" 2>/dev/null)" = "$want" ] && pass "VS Code extensions installed" || fail "VS Code extensions: got $(cat "$t/extensions" 2>/dev/null)"
 for f in settings.json keybindings.json; do
   vs="$H/Library/Application Support/Code/User/$f"
-  [ "$(readlink "$vs")" = "$H/.config/vscode/$f" ] && pass "VS Code $f linked" || fail "VS Code $f not linked"
+  [ "$(readlink "$vs")" = "$t/dotfiles/.config/vscode/$f" ] && pass "VS Code $f linked into the clone" || fail "VS Code $f: $(readlink "$vs")"
 done
 lg="$H/Library/Application Support/lazygit/config.yml"
 [ "$(readlink "$lg")" = "$H/.config/lazygit/config.yml" ] && pass "lazygit config linked" || fail "lazygit config not linked"
@@ -98,6 +98,17 @@ grep -q "hue: changed but still $hue_version" "$t/stderr" && pass "asks for a ve
 echo "an-older-sha" >"$H/.cache/hue.sha" # a stamp from before it held the version
 sync >/dev/null
 grep -q 'bump' "$t/stderr" && fail "warned with an old stamp" || pass "no warning with an old stamp"
+
+echo "== VS Code linked to the ~/.config copy (an older install): moved into the clone"
+for f in settings.json keybindings.json; do ln -sfn "$H/.config/vscode/$f" "$H/Library/Application Support/Code/User/$f"; done
+out=$(sync)
+[[ $out == *"linked VS Code settings.json to $t/dotfiles/.config/vscode"* && $out == *"linked VS Code keybindings.json"* ]] &&
+  pass "both links moved" || fail "links not moved: $out"
+[[ $out != *".bak"* ]] && pass "a link isn't kept as .bak" || fail "made a .bak of a link: $out"
+echo '{"from": "the VS Code UI"}' >"$H/Library/Application Support/Code/User/settings.json" # VS Code writes a setting
+[[ $(g -C "$t/dotfiles" status --porcelain -- .config/vscode/settings.json) == " M "* ]] &&
+  pass "a setting written in VS Code shows in the clone's git status" || fail "not in the clone"
+g -C "$t/dotfiles" checkout -q -- .config/vscode/settings.json
 
 echo "== a .go file changes: only its tool is rebuilt"
 touch "$t/dotfiles/.config/sketchybar/plugins/check/main.go"

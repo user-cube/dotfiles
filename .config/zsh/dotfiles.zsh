@@ -24,8 +24,9 @@ dotfiles-sync() {
   # .gitconfig-work holds a placeholder in the repo: only seed it, never overwrite
   [[ -f $HOME/.gitconfig-work ]] || cp "$repo/.gitconfig-work" "$HOME/"
 
-  # Go tools, SketchyBar icon map, Hue, obsolete files: the same steps as the playbook
-  "$HOME/.config/dotfiles/install.sh" || return
+  # Go tools, SketchyBar icon map, Hue, obsolete files: the same steps as the
+  # playbook; it gets the clone, as VS Code's settings link into it
+  DOTFILES_DIR=$repo "$HOME/.config/dotfiles/install.sh" || return
 
   tmux source-file "$HOME/.config/tmux/tmux.conf" 2>/dev/null && echo "tmux: reloaded"
   pgrep -xq AeroSpace && aerospace reload-config && echo "AeroSpace: reloaded"

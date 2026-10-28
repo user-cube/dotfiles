@@ -52,18 +52,24 @@ if [ ! -L "$lg_link" ]; then
 fi
 
 # VS Code user settings and keybindings (terminal runs tmux, ⌘ shortcuts send
-# the tmux prefix like Ghostty's): links to ~/.config/vscode. A file VS Code
-# wrote there before is kept as .bak
+# the tmux prefix like Ghostty's): links into the dotfiles clone itself
+# (DOTFILES_DIR, which dotfiles-sync passes; ~/dotfiles for the playbook), not
+# the copy in ~/.config: what VS Code writes (a setting changed in its UI)
+# lands in the repo, shows in git status, and no sync copies over it. A link
+# elsewhere (the ~/.config one before) is moved; a file VS Code wrote there
+# before is kept as .bak
+vscode_src="${DOTFILES_DIR:-$HOME/dotfiles}/.config/vscode"
+[ -f "$vscode_src/settings.json" ] || vscode_src="$HOME/.config/vscode" # no clone: the copy
 for f in settings.json keybindings.json; do
   link="$HOME/Library/Application Support/Code/User/$f"
-  [ -L "$link" ] && continue
+  [ "$(readlink "$link" 2>/dev/null)" = "$vscode_src/$f" ] && continue
   mkdir -p "$(dirname "$link")"
-  if [ -s "$link" ]; then
+  if [ -s "$link" ] && [ ! -L "$link" ]; then
     mv "$link" "$link.bak"
     echo "VS Code: kept the old $f as $f.bak"
   fi
-  ln -sf "$HOME/.config/vscode/$f" "$link"
-  echo "linked VS Code $f"
+  ln -sfn "$vscode_src/$f" "$link"
+  echo "linked VS Code $f to $vscode_src"
 done
 
 # Files the repo no longer installs (rsync never deletes): ./obsolete
