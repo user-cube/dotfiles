@@ -1,0 +1,4 @@
+# Who signed what, for git log --show-signature (gpg.ssh.allowedSignersFile in
+# .gitconfig): the key of .gitconfig-personal-github / -gitlab, by address
+33549232+user-cube@users.noreply.github.com namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMTB9m96/tWZeDTjkO971Ye1nlp3cN3p21aQhH9shiij
+3274773-user-cube@users.noreply.gitlab.com namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMTB9m96/tWZeDTjkO971Ye1nlp3cN3p21aQhH9shiij

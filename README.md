@@ -26,8 +26,8 @@ The folders with more than a config file have their own README.
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore: macOS and editor files, tool state (`.direnv/`, `.terraform/`), and env files as a safety net (`.env`, `.env.*`, but not `.env.example`; `git add -f` overrides)
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
-- `.gitconfig*`: git config, with personal/work identities. Defaults: `pull` rebases (autostash), `fetch` prunes, conflicts in `zdiff3` with `rerere`, histogram diffs with moved lines colored, branches and tags newest first, `main` for new repos
-- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig`: gitleaks, actionlint and `glab ci lint` on the staged CI config, `tofu fmt` on the staged Terraform files, the Go commit-msg hook
+- `.gitconfig*`: git config, with the identities of my GitHub and GitLab accounts (by the remote) and of work. Defaults: `pull` rebases (autostash), `fetch` prunes, conflicts in `zdiff3` with `rerere` (staged when it resolves one), histogram diffs with moved lines colored, branches and tags newest first, `main` for new repos, `status` through fsmonitor, the diff in the commit editor, my signatures verified locally (`.config/git/allowed_signers`)
+- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig-hooks` (included from `.gitconfig`): gitleaks, actionlint and `glab ci lint` on the staged CI config, `tofu fmt` on the staged Terraform files, the Go commit-msg hook
 - [`tests/`](tests/README.md): pytest, run by CI: the shortcuts agree across Ghostty, tmux and the cheat sheet, k9s keys, every config parses, and the behaviour of kube-guard, the hooks and the zsh functions
 - [`claude/`](claude/README.md): Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
   - `settings.json`: no co-author trailer, deny rules, hooks, plugins
@@ -122,7 +122,7 @@ before committing (gitleaks also runs as a pre-commit hook).
 | File | Purpose |
 |---|---|
 | `~/.zshrc.local` | machine-specific shell config (secrets: see [Secrets](#secrets-tokens-api-keys)) |
-| `~/.gitconfig-hook` | optional: per-repo `default_action` of the commit-msg hook (see `git_hooks/go/commit-msg/README.md`) |
+| `~/.config/git/commit-msg.yaml` | optional: per-repo `default_action` of the commit-msg hook (see `git_hooks/go/commit-msg/README.md`; it was `~/.gitconfig-hook`, still read while not moved) |
 | `~/.config/nvim/lua/plugins_local/*.lua` | optional: nvim plugins only for this machine (lazy.nvim specs, e.g. vim-be-good) |
 | `~/.config/tmux/sessions.local` | repos preloaded as tmux sessions (see `.config/tmux/sessions.local.example`; `tmux-sessions` after editing) |
 | `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |

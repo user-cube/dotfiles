@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global pre-commit hook (hook.actionlint in .gitconfig): runs actionlint on the
+# Global pre-commit hook (hook.actionlint in .gitconfig-hooks): runs actionlint on the
 # staged GitHub Actions workflows, as staged (not as in the working tree); their
 # `run:` steps go through shellcheck too. Does nothing when no workflow is staged or
 # actionlint isn't installed. Skip once with `git commit --no-verify`.

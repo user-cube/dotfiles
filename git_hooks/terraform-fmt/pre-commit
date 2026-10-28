@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global pre-commit hook (hook.terraform-fmt in .gitconfig): the staged *.tf,
+# Global pre-commit hook (hook.terraform-fmt in .gitconfig-hooks): the staged *.tf,
 # *.tfvars and *.tftest.hcl files, as staged (not as in the working tree),
 # through `tofu fmt` (`terraform fmt` without tofu). One that isn't formatted
 # shows its diff and stops the commit. Does nothing when none is staged or

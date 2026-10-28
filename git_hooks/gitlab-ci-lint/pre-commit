@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global pre-commit hook (hook.gitlab-ci-lint in .gitconfig): validates the
+# Global pre-commit hook (hook.gitlab-ci-lint in .gitconfig-hooks): validates the
 # staged .gitlab-ci.yml with the GitLab API (`glab ci lint`), which resolves
 # include:, extends: and templates. The staged version is checked, not the
 # working tree. Does nothing when the file isn't staged, glab isn't installed, or

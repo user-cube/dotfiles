@@ -24,7 +24,8 @@ import (
 var files = []string{
 	".zshrc.local",
 	".gitconfig-work",
-	".gitconfig-hook",
+	".config/git/commit-msg.yaml",
+	".gitconfig-hook", // its old place: a backup made before the move still restores
 	".config/tmux/sessions.local",
 	".config/sketchybar/checks",
 	".config/sketchybar/aws_profiles",

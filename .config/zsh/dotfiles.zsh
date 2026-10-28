@@ -17,7 +17,7 @@ dotfiles-sync() {
   [[ -z $(git -C "$repo" status --porcelain) ]] || echo "dotfiles-sync: $repo has uncommitted changes, installed as they are" >&2
   rsync -a "$repo/.config/" "$HOME/.config/" || return
   rsync -a "$repo/git_hooks/" "$HOME/git_hooks/" || return
-  cp "$repo/.zshrc" "$repo/.p10k.zsh" "$repo/.gitconfig" "$repo/.gitconfig-personal" "$HOME/" || return
+  cp "$repo/.zshrc" "$repo/.p10k.zsh" "$repo/.gitconfig" "$repo/.gitconfig-hooks" "$repo/.gitconfig-personal-github" "$repo/.gitconfig-personal-gitlab" "$HOME/" || return
   # Claude Code: settings, global instructions, hooks (claude/ and not .claude/,
   # which Claude Code would read as this repo's own project settings)
   mkdir -p "$HOME/.claude" && rsync -a "$repo/claude/" "$HOME/.claude/" || return
@@ -76,7 +76,7 @@ dotfiles-diff() {
       done < <(rsync -nai --checksum "$snap/$src/" "$dst/")
     done
     # The files it copies to ~ (.gitconfig-work only when missing)
-    for f in .zshrc .p10k.zsh .gitconfig .gitconfig-personal; do
+    for f in .zshrc .p10k.zsh .gitconfig .gitconfig-hooks .gitconfig-personal-github .gitconfig-personal-gitlab; do
       if [[ ! -e $HOME/$f ]]; then
         rows+=("new      $HOME/$f")
       elif ! cmp -s "$snap/$f" "$HOME/$f"; then

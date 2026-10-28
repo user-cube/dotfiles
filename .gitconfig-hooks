@@ -1,0 +1,28 @@
+# The hooks every repo runs (git 2.54+ config-based hooks, next to each repo's
+# own .git/hooks), included from .gitconfig. The scripts: ~/git_hooks
+
+[hook "gitleaks"]
+    event = pre-commit
+    command = gitleaks git --staged --redact --verbose
+
+# Staged GitHub Actions workflows through actionlint (git_hooks/actionlint)
+[hook "actionlint"]
+    event = pre-commit
+    command = ~/git_hooks/actionlint/pre-commit
+
+# Staged .gitlab-ci.yml through the GitLab API, glab ci lint (git_hooks/gitlab-ci-lint)
+[hook "gitlab-ci-lint"]
+    event = pre-commit
+    command = ~/git_hooks/gitlab-ci-lint/pre-commit
+
+# Staged *.tf / *.tfvars through tofu fmt (git_hooks/terraform-fmt)
+[hook "terraform-fmt"]
+    event = pre-commit
+    command = ~/git_hooks/terraform-fmt/pre-commit
+
+# Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
+# Built by dotfiles-sync / the playbook; off in my own repos (.gitconfig-personal-github / -gitlab).
+# Its per-repo settings: ~/.config/git/commit-msg.yaml (git_hooks/go/commit-msg)
+[hook "commit-msg-go"]
+    event = commit-msg
+    command = ~/git_hooks/go/commit-msg/commit-msg

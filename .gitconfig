@@ -9,38 +9,25 @@
 [includeIf "gitdir:~/work/"]
     path = ~/.gitconfig-work
 
-[includeIf "gitdir:~/personal/"]
-    path = ~/.gitconfig-personal
+# My own repos, by the remote: the account's address on GitHub or GitLab. They
+# live under ~/work/ too, so these come after it and win
+[includeIf "hasconfig:remote.*.url:git@github.com:user-cube/**"]
+    path = ~/.gitconfig-personal-github
+[includeIf "hasconfig:remote.*.url:https://github.com/user-cube/**"]
+    path = ~/.gitconfig-personal-github
+[includeIf "hasconfig:remote.*.url:ssh://git@github.com/user-cube/**"]
+    path = ~/.gitconfig-personal-github
+[includeIf "hasconfig:remote.*.url:git@gitlab.com:user-cube/**"]
+    path = ~/.gitconfig-personal-gitlab
+[includeIf "hasconfig:remote.*.url:https://gitlab.com/user-cube/**"]
+    path = ~/.gitconfig-personal-gitlab
+[includeIf "hasconfig:remote.*.url:ssh://git@gitlab.com/user-cube/**"]
+    path = ~/.gitconfig-personal-gitlab
 
-# Personal GitHub repos live under ~/work/ too, so match on the remote rather
-# than the path. Listed last so it wins over the gitdir conditions above.
-[includeIf "hasconfig:remote.*.url:*:user-cube/**"]
-    path = ~/.gitconfig-personal
+# The global hooks: their own file, .gitconfig-hooks
+[include]
+    path = ~/.gitconfig-hooks
 
-[hook "gitleaks"]
-    event = pre-commit
-    command = gitleaks git --staged --redact --verbose
-
-# Staged GitHub Actions workflows through actionlint (git_hooks/actionlint)
-[hook "actionlint"]
-    event = pre-commit
-    command = ~/git_hooks/actionlint/pre-commit
-
-# Staged .gitlab-ci.yml through the GitLab API, glab ci lint (git_hooks/gitlab-ci-lint)
-[hook "gitlab-ci-lint"]
-    event = pre-commit
-    command = ~/git_hooks/gitlab-ci-lint/pre-commit
-
-# Staged *.tf / *.tfvars through tofu fmt (git_hooks/terraform-fmt)
-[hook "terraform-fmt"]
-    event = pre-commit
-    command = ~/git_hooks/terraform-fmt/pre-commit
-
-# Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
-# Built by dotfiles-sync / the playbook; disabled for personal repos (.gitconfig-personal)
-[hook "commit-msg-go"]
-    event = commit-msg
-    command = ~/git_hooks/go/commit-msg/commit-msg
 [push]
     autoSetupRemote = true
     followTags = true            # annotated tags of the pushed commits go along
@@ -59,6 +46,14 @@
     conflictStyle = zdiff3       # conflicts show the common ancestor as well
 [rerere]
     enabled = true               # a conflict resolved once resolves itself next time
+    autoUpdate = true            # and lands staged, no git add
+[core]
+    fsmonitor = true             # git status asks a file watcher, not the whole tree
+    untrackedCache = true
+[commit]
+    verbose = true               # the diff under the message, in the editor
+[gpg "ssh"]
+    allowedSignersFile = ~/.config/git/allowed_signers   # git log --show-signature verifies my commits
 [diff]
     algorithm = histogram        # more readable hunks than the default myers
     colorMoved = default         # moved lines in another color

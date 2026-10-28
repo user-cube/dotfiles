@@ -58,7 +58,7 @@ tools="git_hooks/go/commit-msg/commit-msg .config/dotfiles/local-files/local-fil
 for b in $tools; do
   if [ -x "$H/$b" ]; then pass "built ~/$b"; else fail "not built: ~/$b"; fi
 done
-for f in .zshrc .p10k.zsh .gitconfig .gitconfig-personal .gitconfig-work .claude/settings.json; do
+for f in .zshrc .p10k.zsh .gitconfig .gitconfig-hooks .gitconfig-personal-github .gitconfig-personal-gitlab .gitconfig-work .claude/settings.json; do
   [ -f "$H/$f" ] && pass "copied ~/$f" || fail "not copied: ~/$f"
 done
 grep -q '__icon_map()' "$H/.config/sketchybar/plugins/icon_map.sh" 2>/dev/null && pass "icon map downloaded" || fail "no icon map"

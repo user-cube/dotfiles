@@ -10,8 +10,8 @@ Git hook that automatically formats commit messages with a Conventional Commit p
 go build -o commit-msg commit-msg.go
 ```
 
-`.gitconfig` runs it in every repo as a config-based hook (git 2.54+), next to
-each repo's own `.git/hooks`:
+`.gitconfig-hooks` (included from `.gitconfig`) runs it in every repo as a
+config-based hook (git 2.54+), next to each repo's own `.git/hooks`:
 
 ```ini
 [hook "commit-msg-go"]
@@ -19,7 +19,7 @@ each repo's own `.git/hooks`:
     command = ~/git_hooks/go/commit-msg/commit-msg
 ```
 
-`.gitconfig-personal` sets `enabled = false` for personal repos. To skip it in
+`.gitconfig-personal-github` and `.gitconfig-personal-gitlab` set `enabled = false` in my own repos. To skip it in
 another repo: `git config hook.commit-msg-go.enabled false`.
 
 ## Behavior
@@ -58,7 +58,9 @@ Recognized prefixes: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `perf`
 
 ## Configuration
 
-`~/.gitconfig-hook` defines per-repository behaviour using the repository's full path:
+`~/.config/git/commit-msg.yaml` defines per-repository behaviour using the repository's
+full path (a machine's own, never committed; until it is moved there,
+`~/.gitconfig-hook` is read):
 
 ```yaml
 repos:

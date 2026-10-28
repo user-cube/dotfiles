@@ -1,3 +1,5 @@
+# My repos on GitHub (user-cube), matched by the remote in .gitconfig. The
+# noreply address links the commits to the account without showing an email
 [user]
 email = 33549232+user-cube@users.noreply.github.com
 signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMTB9m96/tWZeDTjkO971Ye1nlp3cN3p21aQhH9shiij
@@ -8,6 +10,5 @@ format = ssh
 [commit]
 gpgsign = true
 
-# Personal repos commit straight to main: skip the work commit-msg hook
 [hook "commit-msg-go"]
 enabled = false

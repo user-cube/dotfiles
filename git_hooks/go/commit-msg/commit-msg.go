@@ -22,20 +22,42 @@ var (
 // Messages git writes itself (or autosquash relies on): left as they are
 var passthroughPrefixes = []string{"fixup!", "squash!", "amend!", "merge ", "revert \""}
 
-// loadDefaultAction reads ~/.gitconfig-hook and returns the default_action for
-// the given repo path. Falls back to "feat" if the repo is not listed.
+// The per-repo settings (YAML): ~/.config/git/commit-msg.yaml, or the
+// ~/.gitconfig-hook it was before, while that one is not moved yet
+var settingsPaths = []string{".config/git/commit-msg.yaml", ".gitconfig-hook"}
+
+// settingsFile is the first of settingsPaths under home that exists, or ""
+func settingsFile(home string) string {
+	for _, p := range settingsPaths {
+		if _, err := os.Stat(filepath.Join(home, p)); err == nil {
+			return filepath.Join(home, p)
+		}
+	}
+	return ""
+}
+
+// loadDefaultAction returns the default_action for the given repo path from
+// the settings file. Falls back to "feat" if the repo is not listed.
 func loadDefaultAction(repoPath string) string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "feat"
 	}
-	data, err := os.ReadFile(filepath.Join(home, ".gitconfig-hook"))
+	file := settingsFile(home)
+	if file == "" {
+		return "feat"
+	}
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return "feat"
 	}
+	return actionFor(string(data), repoPath)
+}
 
+// actionFor reads the default_action of repoPath from the settings' YAML
+func actionFor(data, repoPath string) string {
 	var currentPath string
-	for _, line := range strings.Split(string(data), "\n") {
+	for _, line := range strings.Split(data, "\n") {
 		trimmed := strings.TrimSpace(line)
 		if after, ok := strings.CutPrefix(trimmed, "- path:"); ok {
 			currentPath = strings.TrimSpace(after)

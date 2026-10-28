@@ -7,6 +7,7 @@ claude/hooks/deny-sensitive-reads/deny-sensitive-reads
 .config/tmux/sessions.local
 .config/sketchybar/aws_profiles
 .config/sketchybar/checks
+.config/git/commit-msg.yaml
 .config/tmux/plugins/
 .config/nvim/lua/plugins_local/
 .config/k9s/clusters/

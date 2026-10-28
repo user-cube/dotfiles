@@ -9,3 +9,4 @@ git_hooks/bash/commit-msg
 git_hooks/bash/pre-push
 git_hooks/go/commit-msg/Makefile
 git_hooks/go/commit-msg/taskfile.yaml
+.gitconfig-personal

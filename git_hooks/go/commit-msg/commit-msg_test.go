@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestIssueKey(t *testing.T) {
 	cases := map[string]string{
@@ -46,6 +50,39 @@ func TestFormatHeader(t *testing.T) {
 	for _, c := range cases {
 		if got := formatHeader(c.header, "PROJ-5", c.action); got != c.want {
 			t.Errorf("formatHeader(%q, %q) = %q, want %q", c.header, c.action, got, c.want)
+		}
+	}
+}
+
+func TestSettingsFile(t *testing.T) {
+	home := t.TempDir()
+	if got := settingsFile(home); got != "" {
+		t.Errorf("no file: got %q", got)
+	}
+	old := filepath.Join(home, ".gitconfig-hook")
+	os.WriteFile(old, nil, 0o644)
+	if got := settingsFile(home); got != old {
+		t.Errorf("only the old one: got %q, want %q", got, old)
+	}
+	moved := filepath.Join(home, ".config", "git", "commit-msg.yaml")
+	os.MkdirAll(filepath.Dir(moved), 0o755)
+	os.WriteFile(moved, nil, 0o644)
+	if got := settingsFile(home); got != moved {
+		t.Errorf("both: got %q, want the new one %q", got, moved)
+	}
+}
+
+func TestActionFor(t *testing.T) {
+	data := `repos:
+  - path: /w/infra
+    default_action: disabled
+  - path: /w/base
+    default_action: chore
+`
+	cases := map[string]string{"/w/infra": "disabled", "/w/base": "chore", "/w/other": "feat", "/w": "feat"}
+	for repo, want := range cases {
+		if got := actionFor(data, repo); got != want {
+			t.Errorf("actionFor(%q) = %q, want %q", repo, got, want)
 		}
 	}
 }
