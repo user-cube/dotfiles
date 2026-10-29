@@ -20,6 +20,21 @@
     event = pre-commit
     command = ~/git_hooks/terraform-fmt/pre-commit
 
+# Staged shell scripts through shellcheck, warning level as in CI (git_hooks/shellcheck)
+[hook "shellcheck"]
+    event = pre-commit
+    command = ~/git_hooks/shellcheck/pre-commit
+
+# Staged Dockerfiles / Containerfiles through hadolint (git_hooks/hadolint)
+[hook "hadolint"]
+    event = pre-commit
+    command = ~/git_hooks/hadolint/pre-commit
+
+# Staged files sops should have encrypted, in cleartext (git_hooks/sops-guard)
+[hook "sops-guard"]
+    event = pre-commit
+    command = ~/git_hooks/sops-guard/pre-commit
+
 # Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
 # Built by dotfiles-sync / the playbook; off in my own repos (.gitconfig-personal-github / -gitlab).
 # Its per-repo settings: ~/.config/git/commit-msg.yaml (git_hooks/go/commit-msg)

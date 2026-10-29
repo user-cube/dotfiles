@@ -1,0 +1,36 @@
+#!/bin/bash
+# Global pre-commit hook (hook.sops-guard in .gitconfig-hooks): stops the commit of
+# a file sops should have encrypted but that is staged in cleartext. Such a file is
+# one named *.sops.* / *.enc.* (secrets.sops.yaml, app.enc.env...) or one a
+# path_regex of the repo's .sops.yaml matches (read as POSIX ERE, as staged). It is
+# encrypted when it carries sops's MAC (mac: ENC[...], "mac": "ENC[...",
+# sops_mac=ENC[...). Needs no sops. Skip once with `git commit --no-verify`.
+
+regexes=()
+if git cat-file -e :.sops.yaml 2>/dev/null; then
+  while IFS= read -r re; do
+    [ -n "$re" ] && regexes+=("$re")
+  done < <(git show :.sops.yaml | sed -nE "s/^[[:space:]-]*path_regex:[[:space:]]*['\"]?([^'\"]*)['\"]?[[:space:]]*(#.*)?$/\1/p")
+fi
+
+should_be_encrypted() {
+  case ${1##*/} in *.sops.* | *.enc.*) return 0 ;; esac
+  local re
+  for re in "${regexes[@]}"; do
+    grep -qE -- "$re" <<< "$1" 2>/dev/null && return 0
+  done
+  return 1
+}
+
+bad=()
+while IFS= read -r -d '' f; do
+  [ "$f" = .sops.yaml ] && continue
+  should_be_encrypted "$f" || continue
+  git show ":$f" | grep -aqE 'mac"?[[:space:]]*[:=][[:space:]]*"?ENC\[' || bad+=("$f")
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+[ ${#bad[@]} -eq 0 ] && exit 0
+echo "sops-guard: not encrypted, but sops should have encrypted them:" >&2
+printf '  %s\n' "${bad[@]}" >&2
+echo "sops-guard: \`sops encrypt -i FILE\` and stage again, or commit with --no-verify" >&2
+exit 1

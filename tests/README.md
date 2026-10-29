@@ -11,7 +11,8 @@ python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt
 ```
 
 They need `tmux`, `zsh`, `bat`, `fzf` (without it the Ctrl+R test is skipped)
-and `tofu` (or `terraform`; without either the hook's tests are skipped).
+`tofu` (or `terraform`; without either the hook's tests are skipped),
+`shellcheck` and `hadolint` (each hook's tests skipped without its tool).
 
 | File | Checks |
 |---|---|
@@ -20,6 +21,7 @@ and `tofu` (or `terraform`; without either the hook's tests are skipped).
 | `test_config_files.py` | every TOML, YAML and JSON file parses; `tmux.conf` loads without errors; bat's theme exists |
 | `test_kube_guard.py` | on production, kubectl / kubecolor / helm ask before changing the cluster (answered y or n in a terminal, through pexpect), reads pass, `--context` anywhere, a piped manifest still reaches kubectl; k9s read-only |
 | `test_terraform_fmt_hook.py` | the `tofu fmt` pre-commit hook on staged files, in a throwaway repo |
+| `test_lint_hooks.py` | the shellcheck, hadolint and sops-guard pre-commit hooks on staged files (shebang detection, the staged `.sops.yaml`'s `path_regex`, encrypted formats), in a throwaway repo |
 | `test_kubectl_complete.py` | the Tab completion scripts of krew and its plugins |
 | `test_plugins_outdated.py` | the pins read from the playbook, which master moved past, and the 14-day notification |
 | `test_tmux_sessions.py` | the sessions VS Code's terminal makes (one per folder, marked; throwaway at home or for a second terminal; attached again after a reload), and the resurrect hook that keeps them out of the save; on a tmux server of its own |

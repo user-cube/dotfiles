@@ -1,0 +1,28 @@
+#!/bin/bash
+# Global pre-commit hook (hook.shellcheck in .gitconfig-hooks): the staged shell
+# scripts, as staged (not as in the working tree), through shellcheck at warning
+# level, as CI does. A script is a *.sh / *.bash file or one with a sh / bash
+# shebang; zsh is left out (shellcheck doesn't read it). Does nothing when none is
+# staged or shellcheck isn't installed. Skip once with `git commit --no-verify`.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+command -v shellcheck >/dev/null || exit 0
+
+# a sh or bash shebang: #!/bin/sh, #!/usr/bin/env bash, #!/bin/bash -e
+shebang='(^|[/ ])(ba)?sh([[:space:]]|$)'
+
+rc=0
+while IFS= read -r -d '' f; do
+  first=$(git show ":$f" | head -c 200 | head -1)
+  case $first in
+    '#!'*) [[ $first =~ $shebang ]] || continue; shell=() ;;
+    *) case $f in *.sh | *.bash) shell=(-s bash) ;; *) continue ;; esac ;;
+  esac
+  # stdin is "-" in shellcheck's output: put the file's name back
+  if ! out=$(git show ":$f" | shellcheck -S warning "${shell[@]}" - 2>&1); then
+    echo "${out//In - line/In $f line}"
+    rc=1
+  fi
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+[ $rc -eq 0 ] || echo "shellcheck: fix the scripts above, or commit with --no-verify" >&2
+exit $rc

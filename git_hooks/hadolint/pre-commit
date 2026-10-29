@@ -1,0 +1,20 @@
+#!/bin/bash
+# Global pre-commit hook (hook.hadolint in .gitconfig-hooks): the staged
+# Dockerfiles and Containerfiles, as staged (not as in the working tree), through
+# hadolint (their RUN steps through shellcheck too). Warnings and errors stop the
+# commit; info and style are only shown. The repo's .hadolint.yaml applies. Does
+# nothing when none is staged or hadolint isn't installed. Skip once with
+# `git commit --no-verify`.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+command -v hadolint >/dev/null || exit 0
+
+rc=0
+while IFS= read -r -d '' f; do
+  out=$(git show ":$f" | hadolint --no-color --failure-threshold warning - 2>&1) || rc=1
+  # stdin is "-" in hadolint's output: put the file's name back
+  [ -z "$out" ] || printf '%s\n' "$out" | sed "s|^-:|$f:|"
+done < <(git diff --cached --name-only -z --diff-filter=ACMR -- \
+  '*Dockerfile' '*Dockerfile.*' '*.dockerfile' '*Containerfile' '*Containerfile.*')
+
+[ $rc -eq 0 ] || echo "hadolint: fix the Dockerfiles above, or commit with --no-verify" >&2
+exit $rc
