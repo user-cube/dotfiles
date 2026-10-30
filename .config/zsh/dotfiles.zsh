@@ -29,6 +29,9 @@ dotfiles-sync() {
   DOTFILES_DIR=$repo "$HOME/.config/dotfiles/install.sh" || return
 
   tmux source-file "$HOME/.config/tmux/tmux.conf" 2>/dev/null && echo "tmux: reloaded"
+  # rex is only on the PATH inside Rex; no server running: nothing to reload
+  local rex="$HOME/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex"
+  [[ -x $rex ]] && "$rex" --autostart=false config reload >/dev/null 2>&1 && echo "Rex: reloaded"
   pgrep -xq AeroSpace && aerospace reload-config && echo "AeroSpace: reloaded"
   pgrep -xq sketchybar && sketchybar --reload && echo "SketchyBar: reloaded"
   pgrep -xq borders && brew services restart borders >/dev/null && echo "borders: restarted"
