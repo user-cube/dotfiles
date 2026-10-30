@@ -12,17 +12,6 @@
   "terminal.integrated.cursorStyle": "line",
   "terminal.integrated.cursorBlinking": true,
   "terminal.integrated.copyOnSelection": true,
-  "terminal.integrated.profiles.osx": {
-    "tmux": {
-      "path": "/bin/bash",
-      "args": [
-        "-c",
-        "exec \"$HOME/.config/vscode/tmux.sh\""
-      ],
-      "icon": "terminal-tmux"
-    }
-  },
-  "terminal.integrated.defaultProfile.osx": "tmux",
   "claudeCode.preferredLocation": "panel",
   "yaml.disableSchemaDetection": [
     "**/.github/workflows/*.yml",

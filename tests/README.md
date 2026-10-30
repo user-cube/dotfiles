@@ -24,7 +24,7 @@ They need `tmux`, `zsh`, `bat`, `fzf` (without it the Ctrl+R test is skipped)
 | `test_lint_hooks.py` | the shellcheck, hadolint and sops-guard pre-commit hooks on staged files (shebang detection, the staged `.sops.yaml`'s `path_regex`, encrypted formats), in a throwaway repo |
 | `test_kubectl_complete.py` | the Tab completion scripts of krew and its plugins |
 | `test_plugins_outdated.py` | the pins read from the playbook, which master moved past, and the 14-day notification |
-| `test_tmux_sessions.py` | the sessions VS Code's terminal makes (one per folder, marked; throwaway at home or for a second terminal; attached again after a reload), and the resurrect hook that keeps them out of the save; on a tmux server of its own |
+| `test_tmux_sessions.py` | the resurrect hook that keeps throwaway sessions (a second Ghostty window) out of the save; on a tmux server of its own |
 | `test_zsh_history.py` | ↑ (both cursor modes) and Ctrl+R see what another shell ran since the last prompt, and ↑ keeps its prefix search going; two zsh in terminals (pexpect) on a throwaway history |
 
 Hue, the VS Code extension, has its own: `node --test .config/vscode/extensions/hue/colors.test.js`

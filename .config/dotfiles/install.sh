@@ -51,8 +51,7 @@ if [ ! -L "$lg_link" ]; then
   fi
 fi
 
-# VS Code user settings and keybindings (terminal runs tmux, ⌘ shortcuts send
-# the tmux prefix like Ghostty's): links into the dotfiles clone itself
+# VS Code user settings and keybindings: links into the dotfiles clone itself
 # (DOTFILES_DIR, which dotfiles-sync passes; ~/dotfiles for the playbook), not
 # the copy in ~/.config: what VS Code writes (a setting changed in its UI)
 # lands in the repo, shows in git status, and no sync copies over it. A link

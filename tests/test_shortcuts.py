@@ -123,24 +123,10 @@ def test_cheatsheet_shortcut_matches_ghostty(keys, shortcut):
 VSCODE_KEYBINDINGS = CONFIG / "vscode" / "keybindings.json"
 
 
-def test_vscode_keys_match_ghostty():
-    """VS Code's terminal runs tmux too (vscode/tmux.sh): its ⌘ shortcuts send
-    the same C-b + key as Ghostty's, never a different one."""
-    import json
-    ghostty = ghostty_keybinds()
-    for b in json.loads(VSCODE_KEYBINDINGS.read_text()):
-        if b["command"] != "workbench.action.terminal.sendSequence" or not b["args"]["text"].startswith("\x02"):
-            continue
-        assert b.get("when") == "terminalFocus", f"{b['key']} would also fire outside the terminal"
-        assert ghostty.get(b["key"]) == b["args"]["text"].removeprefix("\x02"), (
-            f"VS Code's {b['key']} sends {b['args']['text']!r}; Ghostty's sends {ghostty.get(b['key'])!r}"
-        )
-
-
 def test_vscode_shift_enter_is_a_newline():
     """VS Code's terminal sends Shift+Enter as a plain Enter. As ESC + Enter
-    (Alt+Enter) it reaches the app through tmux, and Claude Code takes it as
-    a newline, as it takes Ghostty's extended Shift+Enter."""
+    (Alt+Enter) Claude Code takes it as a newline, as it takes Ghostty's
+    extended Shift+Enter."""
     import json
     binds = {b["key"]: b for b in json.loads(VSCODE_KEYBINDINGS.read_text())}
     b = binds.get("shift+enter")
@@ -149,9 +135,9 @@ def test_vscode_shift_enter_is_a_newline():
 
 def test_vscode_cmd_k_starts_chords_in_the_terminal():
     """VS Code binds ⌘K to Terminal: Clear, which ate the chords that start with
-    it (⌘K H Hue: Search, ⌘K ⌘S Go to Folder) while the terminal had focus; in
-    tmux that clear did nothing anyway (C-l or `clear` there). Taken out, and
-    nothing else takes a bare ⌘K."""
+    it (⌘K H Hue: Search, ⌘K ⌘S Go to Folder) while the terminal had focus
+    (C-l or `clear` clear it instead). Taken out, and nothing else takes a
+    bare ⌘K."""
     import json
     binds = json.loads(VSCODE_KEYBINDINGS.read_text())
     assert any(b["key"] == "cmd+k" and b["command"] == "-workbench.action.terminal.clear" and "when" not in b for b in binds)

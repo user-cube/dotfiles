@@ -23,29 +23,16 @@ ws -n NAME -t terraform DIR:blue ... # create one from folders, then open it
   `../dotfiles/install.sh`) installs when missing; it never uninstalls, so
   add one you installed by hand to have it on every machine
   (`code --list-extensions` prints the ids)
-- `tmux.sh`: the default terminal profile (`tmux`), so the integrated terminal
-  runs tmux with the same `tmux.conf` as Ghostty
-  - one session per workspace folder, named like ⌘O names it: a VS Code reload
-    attaches it again, but it is marked `@vscode`, so tmux-resurrect doesn't
-    bring it back after a reboot (`../tmux/resurrect-drop.sh`)
-  - a terminal outside a folder (the home directory), or a second one on a
-    folder that is shown, gets a throwaway session, gone when it closes
-  - starts tmux through `../tmux/start-server.sh` when it isn't running, so the
-    tmux-resurrect save is restored whoever opens first
-  - the other profiles stay in the terminal's + menu
-  - same font and cursor as Ghostty: JetBrainsMono Nerd Font 14 (weight 500
-    stands in for `font-thicken`), blinking bar cursor, copy on select; the
-    colours stay the VS Code theme's
-- ⌘ shortcuts in the terminal send the tmux prefix like Ghostty's (only while
-  the terminal has focus; `tests/test_shortcuts.py` checks they match). Left
-  to VS Code: ⌘J (panel), ⌘K (chords, e.g. ⌘K ⌘S), ⌘O, ⌘⇧E, ⌘⇧F; in tmux use
-  `C-b K`, `C-b f`, `C-b E`, `C-b z`. ⌘K ⌘S: Hue's jump between workspace folders.
-  VS Code's ⌘K = Terminal: Clear is taken out, so chords that start with ⌘K
-  (⌘K H Hue: Search, ⌘K ⌘S) work with the terminal focused too; clear tmux
-  with C-l or `clear`
+- the integrated terminal is VS Code's own, plain zsh: no tmux there (tabs,
+  splits and ⌘ shortcuts are VS Code's). Same font and cursor as Ghostty:
+  JetBrainsMono Nerd Font 14 (weight 500 stands in for `font-thicken`),
+  blinking bar cursor, copy on select; the colours stay the VS Code theme's
+- VS Code's ⌘K = Terminal: Clear is taken out, so chords that start with ⌘K
+  (⌘K H Hue: Search, ⌘K ⌘S Hue's jump between workspace folders) work with
+  the terminal focused too; clear it with C-l or `clear`
 - Shift+Enter in the terminal sends ESC + Enter (Alt+Enter): VS Code would send
   a plain Enter, and Ghostty's extended Shift+Enter doesn't exist in VS Code.
-  Through tmux it reaches the app, a newline in Claude Code (and in zsh)
+  Claude Code (and zsh) take it as a newline
 - `templates/`: settings (tooling only: linters, schemas, file associations;
   never formatting) and recommended extensions `ws -n ... -t TPL` merges
   into a new workspace: `ansible`, `golang`, `helm`, `opentofu`, `terraform`;

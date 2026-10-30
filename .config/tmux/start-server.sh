@@ -1,6 +1,6 @@
 #!/bin/bash
 # Make sure the tmux server runs with the "main" session, whoever starts it
-# (ghostty/tmux-start.sh, vscode/tmux.sh). When tmux isn't running yet: restore
+# (ghostty/tmux-start.sh). When tmux isn't running yet: restore
 # the last tmux-resurrect save (sessions, tabs, splits, folders) first, so
 # tmux-continuum never autosaves a fresh, empty server over it; then preload
 # the sessions in ~/.config/tmux/sessions.local (preload-sessions.sh).
