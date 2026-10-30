@@ -11,6 +11,16 @@
       "Read(//**/.aws/credentials)",
       "Read(//**/.ssh/id_*)",
       "Read(//**/config/database.yml)"
+    ],
+    "ask": [
+      "Bash(kubectl:*)",
+      "Bash(rtk kubectl:*)",
+      "Bash(git commit:*)",
+      "Bash(rtk git commit:*)",
+      "Bash(git push:*)",
+      "Bash(rtk git push:*)",
+      "Bash(git -C * commit:*)",
+      "Bash(git -C * push:*)"
     ]
   },
   "model": "opus",
