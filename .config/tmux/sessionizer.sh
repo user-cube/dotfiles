@@ -1,9 +1,12 @@
 #!/bin/bash
 # Open a repo as a tmux session: fuzzy-pick a git repo under ~/work (⌘O in
 # Ghostty / prefix f; most-used repos first via zoxide), or pass a path. Session = repo name, started in the repo;
-# reused if it already exists.
+# reused if it already exists. --print only prints the picked folder (Rex's ⌘O,
+# rex/sessionizer.sh).
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 ROOT="${TMUX_SESSIONIZER_ROOT:-$HOME/work}"
+PRINT=
+[ "$1" = --print ] && { PRINT=1; shift; }
 
 if [ -n "$1" ]; then
   DIR="$1"
@@ -24,6 +27,7 @@ else
   DIR="$ROOT/$REL"
 fi
 [ -d "$DIR" ] || { echo "not a directory: $DIR" >&2; exit 1; }
+[ -n "$PRINT" ] && { echo "$DIR"; exit 0; }
 
 NAME=$(basename "$DIR" | tr '.:' '__')
 tmux has-session -t="$NAME" 2>/dev/null || tmux new-session -d -s "$NAME" -c "$DIR"

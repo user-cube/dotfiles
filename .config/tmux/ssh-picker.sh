@@ -3,7 +3,7 @@
 # after the host; the tab closes when the ssh ends. Hosts: the `Host` names (no
 # wildcards) in the ssh config, following its `Include` lines, then every host
 # already connected to (known_hosts, unless hashed). Env overrides for tests:
-# SSH_PICKER_CONFIG, SSH_PICKER_KNOWN_HOSTS.
+# SSH_PICKER_CONFIG, SSH_PICKER_KNOWN_HOSTS. --rex opens it in a Rex tab instead.
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 CONFIG=${SSH_PICKER_CONFIG:-$HOME/.ssh/config}
 KNOWN_HOSTS=${SSH_PICKER_KNOWN_HOSTS:-$HOME/.ssh/known_hosts}
@@ -37,4 +37,5 @@ HOSTS=$({ config_hosts "$CONFIG" 0; known_hosts; } | grep -v '[*?!:]' |
 
 HOST=$(echo "$HOSTS" | fzf --prompt='ssh › ' --height=100% --reverse --border=none)
 [ -z "$HOST" ] && exit 0
+[ "$1" = --rex ] && exec rex run --label "$HOST" -- ssh "$HOST"
 tmux new-window -n "$HOST" "ssh $(printf %q "$HOST")"
