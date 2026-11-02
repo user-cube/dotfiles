@@ -2,8 +2,9 @@
 # The steps after the dotfiles are copied into place (~/.config, ~/git_hooks,
 # ~/.claude): build the Go tools, download the SketchyBar icon map, install the
 # VS Code extensions (Hue, extensions.txt), link the VS Code and lazygit
-# configs, remove what the repo no longer installs. The one list of them, run
-# by dotfiles-sync and by the playbook: a new step goes here.
+# configs, apply Rex's Settings, remove what the repo no longer installs. The
+# one list of them, run by dotfiles-sync and by the playbook: a new step goes
+# here.
 #
 # Prints a line for each thing it changed ("built", "downloaded", "installed",
 # "removed"); nothing when all was up to date. Fails when a build fails.
@@ -70,6 +71,10 @@ for f in settings.json keybindings.json; do
   ln -sfn "$vscode_src/$f" "$link"
   echo "linked VS Code $f to $vscode_src"
 done
+
+# Rex's Settings (theme, tabs, panes): the ones in rex/settings.json that the
+# app has not; a change made in Settings goes back with `settings.py export`
+command -v defaults >/dev/null && "$HOME/.config/rex/settings.py" apply
 
 # Files the repo no longer installs (rsync never deletes): ./obsolete
 "$HOME/.config/dotfiles/remove-obsolete.sh"
