@@ -8,7 +8,7 @@ Shared shell functions: `.zshrc` sources every `*.zsh` here, before
 |---|---|---|
 | `bw.zsh` | `bw` | Bitwarden CLI wrapper: the session key in a root-only file, unlocked with Touch ID/sudo; needs `BW_USER` in `~/.zshrc.local` |
 | `secrets.zsh` | `secret T [item]` | read a token without echoing it (or from Bitwarden) for the next command; lines that look like they hold a token never reach the history |
-| `sops.zsh` | `sops-on [60m]`, `sops-off`, `sops-status`, `sops-save` | the SOPS age keys from Bitwarden, in a file for a limited time |
+| `sops.zsh` | `sops-on [60m]`, `sops-off`, `sops-status`, `sops-save` | the SOPS age keys from Bitwarden, in a file for a limited time; a log out or restart removes them (a LaunchAgent at login, `../dotfiles/launchd`) |
 | `dotfiles.zsh` | `dotfiles-sync`, `dotfiles-diff [-p]` | update this machine from `~/dotfiles` without Ansible, or see what that would change |
 | `local-files.zsh` | `local-backup`, `local-restore [machine]` | the per-machine files (never in git) to and from Bitwarden |
 | `vscode-workspaces.zsh` | `ws` | open or create a VS Code workspace in `~/workspaces` (templates, Hue colors) |

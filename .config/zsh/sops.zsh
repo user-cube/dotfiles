@@ -16,6 +16,8 @@
 # (then sops needs SOPS_AGE_KEY_FILE pointing at the same file).
 #
 # A keys file that sops-on did not create is never overwritten or removed.
+# A log out or restart removes the keys (a LaunchAgent at login, _sops_login):
+# the timer died with the session.
 
 zmodload zsh/datetime
 autoload -Uz add-zsh-hook
@@ -40,7 +42,7 @@ _sops_seconds() {
 # Remove the keys and the state; $1 = reason, shown at the next prompt
 _sops_expire() {
   local state=$(_sops_state_dir)
-  rm -f -- "$(_sops_keys_file)" "$state/expiry" "$state/pid"
+  rm -f -- "$(_sops_keys_file)" "$state/expiry" "$state/pid" "$state/file"
   [[ -n $1 ]] && print -r -- "$1" >| "$state/notice"
 }
 
@@ -80,6 +82,7 @@ sops-on() {
   mkdir -p -- "${file:h}"
   ( umask 077; print -r -- "$keys" >| "$file" ) || return
   print -r -- $(( EPOCHSECONDS + secs )) >| "$state/expiry"
+  print -r -- "$file" >| "$state/file" # for _sops_login, which sees no ~/.zshrc.local
   rm -f -- "$state/notice"
 
   local pid
@@ -147,3 +150,15 @@ _sops_precmd() {
   fi
 }
 add-zsh-hook precmd _sops_precmd
+
+# At login (the LaunchAgent .config/dotfiles/launchd/com.user-cube.sops-on-login.plist,
+# installed by install.sh): the timer died with the previous session (log out,
+# restart), so keys sops-on left are removed, whatever time was left; before
+# this, they stayed until the first prompt, readable by nvim or VS Code. The
+# keys file is the one sops-on wrote: launchd never sees ~/.zshrc.local
+_sops_login() {
+  local state=$(_sops_state_dir)
+  [[ -f $state/expiry ]] || return 0
+  [[ -s $state/file ]] && local SOPS_KEYS_FILE=$(<"$state/file")
+  _sops_expire "sops-on: keys removed (the session ended: log out or restart)"
+}

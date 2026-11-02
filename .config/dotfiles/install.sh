@@ -2,7 +2,7 @@
 # The steps after the dotfiles are copied into place (~/.config, ~/git_hooks,
 # ~/.claude): build the Go tools, download the SketchyBar icon map, install the
 # VS Code extensions (Hue, extensions.txt), link the VS Code and lazygit
-# configs, apply Rex's Settings, remove what the repo no longer installs. The
+# configs, install the LaunchAgents, apply Rex's Settings, remove what the repo no longer installs. The
 # one list of them, run by dotfiles-sync and by the playbook: a new step goes
 # here.
 #
@@ -72,6 +72,18 @@ for f in settings.json keybindings.json; do
   fi
   ln -sfn "$vscode_src/$f" "$link"
   echo "linked VS Code $f to $vscode_src"
+done
+
+# LaunchAgents (.config/dotfiles/launchd): copied (launchd wants a file, not a
+# link), not loaded: they run at login, and loading one now would run it now
+# (sops-on-login would remove keys in use)
+for plist in "$HOME/.config/dotfiles/launchd/"*.plist; do
+  [ -f "$plist" ] || continue
+  dest="$HOME/Library/LaunchAgents/$(basename "$plist")"
+  cmp -s "$plist" "$dest" && continue
+  mkdir -p "$(dirname "$dest")"
+  cp "$plist" "$dest"
+  echo "installed LaunchAgent $(basename "$plist" .plist) (runs at the next login)"
 done
 
 # Rex's Settings (theme, tabs, panes): the ones in rex/settings.json that the
