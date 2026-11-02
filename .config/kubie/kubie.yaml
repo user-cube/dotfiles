@@ -1,9 +1,0 @@
-# kubie: a kube context per shell (`kubie ctx`, `kubie ns`), not the global one
-# kubectx switches. kubie reads only ~/.kube/kubie.yaml: install.sh links it
-# here. Settings not listed keep kubie's defaults.
-prompt:
-  # Powerlevel10k shows the context already (.p10k.zsh: always, in a kubie shell)
-  disable: true
-behavior:
-  # `kubie ns mon` picks monitoring when it is the only namespace that matches
-  validate_namespaces: partial

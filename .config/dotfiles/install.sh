@@ -1,8 +1,8 @@
 #!/bin/bash
 # The steps after the dotfiles are copied into place (~/.config, ~/git_hooks,
 # ~/.claude): build the Go tools, download the SketchyBar icon map, install the
-# VS Code extensions (Hue, extensions.txt), link the VS Code, lazygit and
-# kubie configs, apply Rex's Settings, remove what the repo no longer installs. The
+# VS Code extensions (Hue, extensions.txt), link the VS Code and lazygit
+# configs, apply Rex's Settings, remove what the repo no longer installs. The
 # one list of them, run by dotfiles-sync and by the playbook: a new step goes
 # here.
 #
@@ -49,19 +49,6 @@ if [ ! -L "$lg_link" ]; then
     mkdir -p "$(dirname "$lg_link")"
     ln -sf "$HOME/.config/lazygit/config.yml" "$lg_link"
     echo "linked lazygit config"
-  fi
-fi
-
-# kubie reads only ~/.kube/kubie.yaml: a link to the dotfiles' config, like
-# lazygit's. A config written there by hand is left alone (and said so)
-kubie_link="$HOME/.kube/kubie.yaml"
-if [ ! -L "$kubie_link" ]; then
-  if [ -s "$kubie_link" ]; then
-    echo "kubie: $kubie_link has its own config, not linked to ~/.config/kubie" >&2
-  else
-    mkdir -p "$(dirname "$kubie_link")"
-    ln -sf "$HOME/.config/kubie/kubie.yaml" "$kubie_link"
-    echo "linked kubie config"
   fi
 fi
 

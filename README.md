@@ -20,7 +20,6 @@ The folders with more than a config file have their own README.
     `~/Library/Application Support/lazygit/config.yml` (where lazygit reads it on macOS) to it
   - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
   - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, krr, debug, Argo CD sync / refresh), read-only on production
-  - `kubie/`: kubie, a kube context per shell (`kubie ctx`, `kubie ns`); `install.sh` links `~/.kube/kubie.yaml` (the only place kubie reads) to it
   - [`sofka/`](.config/sofka/README.md): a Kubernetes TUI in Rust, next to k9s: its config imported from k9s, without the plugins sofka has built in (stern, krr, Argo CD), read-only on production
   - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync`, `local-backup`, `ws`, `plugins-outdated`)
   - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
@@ -187,7 +186,6 @@ ahead (commits not pushed yet). Uncommitted changes are not compared.
 - downloads the SketchyBar icon map for the installed font version
 - installs the Hue VS Code extension when it changed
 - links lazygit's macOS config file to `.config/lazygit/config.yml` (unless one was written there by hand)
-- links `~/.kube/kubie.yaml` to `.config/kubie/kubie.yaml` (the same)
 - removes the files the repo no longer installs (`.config/dotfiles/obsolete`:
   rsync never deletes; add a line when a file leaves the repo)
 
