@@ -1,7 +1,9 @@
 # sofka
 
 A Kubernetes TUI in Rust, next to k9s (⌘K opens it in a Rex / tmux popup;
-`:q` or ctrl+c closes). Its config started from
+`:q` or ctrl+c closes). The popup opens on the kube context of the pane ⌘K
+was pressed in, a `ktx -s` shell's own too (`kube-guard.zsh`). In Rex it is
+one per session: hidden with ⌘K, it comes back on the context it had. Its config started from
 `sofka import k9s` (`../k9s`) and keeps only what sofka doesn't do itself.
 
 | File | |

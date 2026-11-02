@@ -4,10 +4,12 @@ for the real ones: they print what they were asked to run, and kubectl's
 `config current-context` answers $FAKE_CTX. The prompt reads the terminal,
 so pexpect runs zsh in one and answers it."""
 
+import subprocess
+
 import pexpect
 import pytest
 
-from conftest import CONFIG
+from conftest import CONFIG, zsh
 
 GUARD = CONFIG / "zsh" / "kube-guard.zsh"
 FAKE = r"""
@@ -97,3 +99,38 @@ def test_sofka_is_read_only_on_production(fakes, ctx, command, expected):
     _, out = run(fakes, ctx, command)
     ran = next(line for line in out.splitlines() if line.startswith("RAN"))
     assert ran.strip() == expected
+
+
+# ⌘K follows the pane: each interactive shell writes its KUBECONFIG to a file
+# per pane (a `ktx -s` shell has one of its own), and puts back its parent's
+# when it exits; the popup (_kube_popup) reads it.
+def test_a_shell_writes_its_kubeconfig_for_the_pane_and_restores_the_parents(stubs, tmp_path):
+    pane = tmp_path / "kube-pane" / "tmux-%7"
+    pane.parent.mkdir()
+    pane.write_text("/parent.yaml\n")
+    # exit: zsh -c would exec its last command and never run the exit hook
+    script = f"source {GUARD}; _kube_pane_publish; cat {pane}; exit"
+    out = zsh_i(script, stubs.env(KUBE_PANE_DIR=str(pane.parent), TMUX_PANE="%7", KUBECONFIG="/child.yaml"))
+    assert out == "/child.yaml"
+    assert pane.read_text() == "/parent.yaml\n"
+
+
+@pytest.mark.parametrize("exists", [True, False])
+def test_the_popup_opens_on_the_panes_kubeconfig(fakes, tmp_path, exists):
+    kubeconfig = tmp_path / "kubectx-shell.yaml"
+    if exists:
+        kubeconfig.write_text("")
+    pane = tmp_path / "kube-pane" / "rex-block:1"
+    pane.parent.mkdir()
+    pane.write_text(f"{kubeconfig}\n")
+    fakes.add("sofka", 'echo "RAN sofka KUBECONFIG=${KUBECONFIG-unset}"')
+    env = fakes.env(KUBE_PANE_DIR=str(pane.parent), FAKE_CTX="dev")
+    env.pop("KUBECONFIG", None)
+    out = zsh(f"source {GUARD}; _kube_popup sofka rex-block:1", env).stdout.strip()
+    # a file naming a kubeconfig that is gone (its shell didn't exit cleanly): the default
+    assert out == f"RAN sofka KUBECONFIG={kubeconfig if exists else 'unset'}"
+
+
+def zsh_i(script: str, env: dict) -> str:
+    """An interactive zsh (no .zshrc), as kube-guard only writes the pane file there."""
+    return subprocess.run(["zsh", "-f", "-i", "-c", script], env=env, capture_output=True, text=True, timeout=30).stdout.strip()

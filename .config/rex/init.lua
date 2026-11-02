@@ -90,9 +90,11 @@ end)
 popup_action("lazydocker", "lazydocker", function(ctx)
   toggle_popup(ctx, "lazydocker", { "lazydocker" }, 0.95, HOME)
 end)
--- read-only on production (kube-guard.zsh)
+-- on the pane's kube context (a `ktx -s` shell's own too), read-only on
+-- production (kube-guard.zsh). One per session: a hidden one comes back as it was
 popup_action("sofka", "sofka", function(ctx)
-  toggle_popup(ctx, "sofka", { "zsh", "-c", "source ~/.config/zsh/kube-guard.zsh && sofka" }, 0.95, HOME)
+  local cmd = "source ~/.config/zsh/kube-guard.zsh && _kube_popup sofka rex-" .. ctx.block_id
+  toggle_popup(ctx, "sofka", { "zsh", "-c", cmd }, 0.95, HOME)
 end)
 -- ⌘J: scratch terminal, one per session
 popup_action("scratch", "Scratch Terminal", function(ctx)

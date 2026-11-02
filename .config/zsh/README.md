@@ -12,7 +12,7 @@ Shared shell functions: `.zshrc` sources every `*.zsh` here, before
 | `dotfiles.zsh` | `dotfiles-sync`, `dotfiles-diff [-p]` | update this machine from `~/dotfiles` without Ansible, or see what that would change |
 | `local-files.zsh` | `local-backup`, `local-restore [machine]` | the per-machine files (never in git) to and from Bitwarden |
 | `vscode-workspaces.zsh` | `ws` | open or create a VS Code workspace in `~/workspaces` (templates, Hue colors) |
-| `kube-guard.zsh` | `kubectl`, `kubecolor` (`k`), `helm`, `k9s`, `sofka` | on a production context (`prod` / `prd`, `KUBE_PROD_REGEX`) asks before a command that changes the cluster (apply, delete, edit, scale, rollout restart, drain, helm upgrade, …); reads pass. `KUBE_GUARD=0` skips it once. k9s and sofka open read-only there |
+| `kube-guard.zsh` | `kubectl`, `kubecolor` (`k`), `helm`, `k9s`, `sofka` | on a production context (`prod` / `prd`, `KUBE_PROD_REGEX`) asks before a command that changes the cluster (apply, delete, edit, scale, rollout restart, drain, helm upgrade, …); reads pass. `KUBE_GUARD=0` skips it once. k9s and sofka open read-only there; the ⌘K popup gets the pane's KUBECONFIG (a `ktx -s` shell's own), kept per pane in `~/.cache/kube-pane` |
 | `loki.zsh` | `logcli` | Loki's logs (deleted pods and finished jobs too): without `LOKI_ADDR`, port-forwards to `LOKI_SERVICE` (default `monitoring/loki`) for the command |
 | `plugins-outdated.zsh` | `plugins-outdated` | the zsh/tmux plugins the playbook pins that master has moved past; every 14 days a background check and a macOS notification |
 
