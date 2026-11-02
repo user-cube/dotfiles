@@ -13,3 +13,4 @@ git_hooks/go/commit-msg/taskfile.yaml
 .config/vscode/tmux.sh
 .config/kubie/kubie.yaml
 .kube/kubie.yaml
+git_hooks/sops-guard/pre-commit

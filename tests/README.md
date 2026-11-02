@@ -22,7 +22,7 @@ They need `tmux`, `zsh`, `bat`, `fzf` (without it the Ctrl+R test is skipped)
 | `test_config_files.py` | every TOML, YAML and JSON file parses; `tmux.conf` loads without errors; bat's theme exists |
 | `test_kube_guard.py` | on production, kubectl / kubecolor / helm ask before changing the cluster (answered y or n in a terminal, through pexpect), reads pass, `--context` anywhere, a piped manifest still reaches kubectl; k9s and sofka read-only; the ⌘K popup gets the pane's KUBECONFIG, and the file is put back or removed when the shell exits |
 | `test_terraform_fmt_hook.py` | the `tofu fmt` pre-commit hook on staged files, in a throwaway repo |
-| `test_lint_hooks.py` | the shellcheck, hadolint and sops-guard pre-commit hooks on staged files (shebang detection, the staged `.sops.yaml`'s `path_regex`, encrypted formats), in a throwaway repo |
+| `test_lint_hooks.py` | the shellcheck, hadolint and sops-guard pre-commit hooks on staged files (shebang detection, the staged `.sops.yaml`'s `path_regex`, encrypted formats), in a throwaway repo; sops-guard is built with go first |
 | `test_kubectl_complete.py` | the Tab completion scripts of krew and its plugins |
 | `test_plugins_outdated.py` | the pins read from the playbook, which master moved past, and the 14-day notification |
 | `test_tmux_sessions.py` | the resurrect hook that keeps throwaway sessions (a second Ghostty window) out of the save; on a tmux server of its own |

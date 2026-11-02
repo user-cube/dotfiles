@@ -30,10 +30,12 @@
     event = pre-commit
     command = ~/git_hooks/hadolint/pre-commit
 
-# Staged files sops should have encrypted, in cleartext (git_hooks/sops-guard)
+# Staged files sops should have encrypted, in cleartext (git_hooks/go/sops-guard).
+# Built by dotfiles-sync / the playbook; until it is, commits stop and say so
 [hook "sops-guard"]
     event = pre-commit
-    command = ~/git_hooks/sops-guard/pre-commit
+    # quoted: an unquoted ; starts a comment in git config
+    command = "[ -x ~/git_hooks/go/sops-guard/sops-guard ] && exec ~/git_hooks/go/sops-guard/sops-guard || { echo 'sops-guard is not built: run dotfiles-sync' >&2; exit 1; }"
 
 # Conventional Commit prefix + issue key from the branch; blocks main/master/develop.
 # Built by dotfiles-sync / the playbook; off in my own repos (.gitconfig-personal-github / -gitlab).

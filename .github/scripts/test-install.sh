@@ -54,7 +54,7 @@ sync() { # stdout of dotfiles-sync's own steps, without its reload lines
 echo "== first run: an empty HOME"
 if out=$(sync); then pass "dotfiles-sync exits 0"; else fail "dotfiles-sync failed:"; cat "$t/stderr"; fi
 echo "$out" | sed 's/^/      /'
-tools="git_hooks/go/commit-msg/commit-msg .config/dotfiles/local-files/local-files .config/sketchybar/plugins/check/check .claude/hooks/deny-sensitive-reads/deny-sensitive-reads"
+tools="git_hooks/go/commit-msg/commit-msg git_hooks/go/sops-guard/sops-guard .config/dotfiles/local-files/local-files .config/sketchybar/plugins/check/check .claude/hooks/deny-sensitive-reads/deny-sensitive-reads"
 for b in $tools; do
   if [ -x "$H/$b" ]; then pass "built ~/$b"; else fail "not built: ~/$b"; fi
 done

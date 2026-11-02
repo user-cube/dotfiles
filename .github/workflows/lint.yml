@@ -88,6 +88,11 @@ jobs:
         working-directory: git_hooks/go/commit-msg
         run: go vet ./... && go test ./...
 
+      # Every commit runs this hook too
+      - name: sops-guard hook (go vet + test)
+        working-directory: git_hooks/go/sops-guard
+        run: go vet ./... && go test ./...
+
       - name: local-files (go vet + test)
         working-directory: .config/dotfiles/local-files
         run: go vet ./... && go test ./...

@@ -14,8 +14,8 @@ for a repo with
 | `terraform-fmt/pre-commit` (`hook.terraform-fmt`) | pre-commit | the staged `*.tf`, `*.tfvars` and `*.tftest.hcl`, as staged, through `tofu fmt` (`terraform fmt` without tofu): shows the diff of an unformatted file and stops the commit; run `tofu fmt` and stage again |
 | `shellcheck/pre-commit` (`hook.shellcheck`) | pre-commit | the staged shell scripts (`*.sh`, `*.bash` or a sh / bash shebang; not zsh), as staged, through shellcheck at warning level, as CI; nothing without shellcheck |
 | `hadolint/pre-commit` (`hook.hadolint`) | pre-commit | the staged Dockerfiles and Containerfiles, as staged, through hadolint (the repo's `.hadolint.yaml` applies): warnings and errors stop the commit, info and style are only shown; nothing without hadolint |
-| `sops-guard/pre-commit` (`hook.sops-guard`) | pre-commit | stops a file sops should have encrypted that is staged in cleartext: named `*.sops.*` / `*.enc.*`, or matched by a `path_regex` of the repo's `.sops.yaml`; encrypted means it carries sops's MAC. Needs no sops |
+| `go/sops-guard/` (`hook.sops-guard`) | pre-commit | stops a file sops should have encrypted that is staged in cleartext: named `*.sops.*` / `*.enc.*`, or matched by a `path_regex` of a staged `.sops.yaml` (the root's, or one in a folder above the file, relative to that folder), read as Go regexes like sops does; encrypted means it carries sops's MAC. Needs no sops. Go: commits stop until it is built |
 | `go/commit-msg/` (`hook.commit-msg-go`) | commit-msg | Conventional Commit prefix and the issue key from the branch; blocks commits on main/master/develop. Off in my own repos (`.gitconfig-personal-github`, `.gitconfig-personal-gitlab`). [Its README](go/commit-msg/README.md) |
 
-The commit-msg hook is Go, built by `.config/dotfiles/install.sh`; CI runs its
-`go vet` and `go test`.
+The commit-msg and sops-guard hooks are Go, built by `.config/dotfiles/install.sh`;
+CI runs their `go vet` and `go test`.

@@ -1,5 +1,5 @@
-"""git_hooks/shellcheck, git_hooks/hadolint and git_hooks/sops-guard: the staged
-files, as staged, in a throwaway repo."""
+"""git_hooks/shellcheck, git_hooks/hadolint and git_hooks/go/sops-guard (built
+here; its unit tests are Go's): the staged files, as staged, in a throwaway repo."""
 
 import os
 import shutil
@@ -13,6 +13,7 @@ HOOKS = REPO / "git_hooks"
 
 needs_shellcheck = pytest.mark.skipif(not shutil.which("shellcheck"), reason="needs shellcheck")
 needs_hadolint = pytest.mark.skipif(not shutil.which("hadolint"), reason="needs hadolint")
+needs_go = pytest.mark.skipif(not shutil.which("go"), reason="needs go")
 
 BAD_SH = '#!/bin/bash\nrm -rf "$dir"/ ; cd $1\n'  # SC2164: cd without || exit
 GOOD_SH = '#!/bin/bash\ncd "$1" || exit\n'
@@ -24,8 +25,16 @@ ENCRYPTED_YAML = (
 )
 
 
+@pytest.fixture(scope="session")
+def sops_guard(tmp_path_factory):
+    """The Go hook, built as install.sh builds it."""
+    out = tmp_path_factory.mktemp("sops-guard") / "sops-guard"
+    subprocess.run(["go", "build", "-C", str(HOOKS / "go" / "sops-guard"), "-o", str(out), "."], check=True)
+    return out
+
+
 @pytest.fixture
-def repo(tmp_path):
+def repo(tmp_path, request):
     env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, env=env)
 
@@ -35,8 +44,9 @@ def repo(tmp_path):
         subprocess.run(["git", "add", name], cwd=tmp_path, check=True, env=env)
 
     def hook(name):
+        cmd = request.getfixturevalue("sops_guard") if name == "sops-guard" else HOOKS / name / "pre-commit"
         return subprocess.run(
-            [str(HOOKS / name / "pre-commit")], cwd=tmp_path, capture_output=True, text=True, env=env
+            [str(cmd)], cwd=tmp_path, capture_output=True, text=True, env=env
         )
 
     return tmp_path, stage, hook
@@ -112,6 +122,7 @@ def test_hadolint_clean_or_no_dockerfile_passes(repo):
     assert out.returncode == 0 and out.stdout == ""
 
 
+@needs_go
 def test_sops_guard_cleartext_sops_file_stops_the_commit(repo):
     _, stage, hook = repo
     stage("k8s/secrets.sops.yaml", "password: hunter2\n")
@@ -119,6 +130,7 @@ def test_sops_guard_cleartext_sops_file_stops_the_commit(repo):
     assert out.returncode == 1 and "k8s/secrets.sops.yaml" in out.stderr
 
 
+@needs_go
 def test_sops_guard_encrypted_formats_pass(repo):
     _, stage, hook = repo
     stage("secrets.sops.yaml", ENCRYPTED_YAML)
@@ -127,6 +139,7 @@ def test_sops_guard_encrypted_formats_pass(repo):
     assert hook("sops-guard").returncode == 0
 
 
+@needs_go
 def test_sops_guard_follows_the_path_regex_of_sops_yaml(repo):
     _, stage, hook = repo
     stage(".sops.yaml", "creation_rules:\n  - path_regex: 'secrets/.*\\.yaml$'\n    age: age1x\n"
@@ -140,6 +153,7 @@ def test_sops_guard_follows_the_path_regex_of_sops_yaml(repo):
     assert "values-dev" not in out.stderr
 
 
+@needs_go
 def test_sops_guard_reads_the_staged_sops_yaml(repo):
     root, stage, hook = repo
     stage(".sops.yaml", "creation_rules:\n  - path_regex: nothing$\n")
@@ -148,6 +162,7 @@ def test_sops_guard_reads_the_staged_sops_yaml(repo):
     assert hook("sops-guard").returncode == 0
 
 
+@needs_go
 def test_sops_guard_ignores_other_files(repo):
     _, stage, hook = repo
     stage("values.yaml", "password: x\n")
