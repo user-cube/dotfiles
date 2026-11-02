@@ -1,0 +1,53 @@
+# sofka, started from `sofka import k9s` (.config/k9s), then trimmed of what
+# sofka does itself: stern (`l` on a workload), krr (`:rightsize`) and the
+# Argo CD plugins (`t`).
+# Not `sofka import k9s --force` again: it rewrites this file with them back.
+bookmarks:
+- key: '!'
+  name: shift-1
+  resource: pods
+- key: '#'
+  name: shift-3
+  resource: deployments
+- key: $
+  name: shift-4
+  resource: applications
+- key: '%'
+  name: shift-5
+  resource: events
+logs:
+  tail: 200
+plugins:
+- args:
+  - -c
+  - kubectl get "$RESOURCE" "$NAME" -n "$NAMESPACE" --context "$CONTEXT" -o yaml | kubectl neat | less
+  command: sh
+  key: ctrl-n
+  mutating: false
+  name: neat
+- args:
+  - -c
+  - popeye --context "$CONTEXT" -n "$NAMESPACE" --force-exit-zero 2>&1 | LESSCHARSET=utf-8 less -R
+  command: sh
+  key: ctrl-u
+  mutating: false
+  name: popeye
+  scopes:
+  - pods
+  - deployments
+  - statefulsets
+  - daemonsets
+plugins_merge: name
+skin:
+  name: monokai
+# Production (prod / prd, like KUBE_PROD_REGEX): sofka opens read-only there
+# (kube-guard.zsh), and these hold on a context switched to inside it too
+guardrails:
+- contexts: ['*prod*', '*prd*']
+  actions: [delete, force-delete, drain]
+  deny: true
+  reason: Destructive actions on production go through GitOps, not the TUI.
+- contexts: ['*prod*', '*prd*']
+  actions: [shell]
+  confirmation: type-context-name
+  reason: Confirm the context before a shell in production.

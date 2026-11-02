@@ -1,5 +1,5 @@
 """kube-guard.zsh: on a production context kubectl / kubecolor / helm ask
-before changing the cluster, and k9s opens read-only. Fake commands stand in
+before changing the cluster, and k9s and sofka open read-only. Fake commands stand in
 for the real ones: they print what they were asked to run, and kubectl's
 `config current-context` answers $FAKE_CTX. The prompt reads the terminal,
 so pexpect runs zsh in one and answers it."""
@@ -18,7 +18,7 @@ if [ ! -t 0 ]; then echo "RAN {name} $* stdin=$(cat)"; else echo "RAN {name} $*"
 
 @pytest.fixture
 def fakes(stubs):
-    for name in ("kubectl", "kubecolor", "helm", "k9s"):
+    for name in ("kubectl", "kubecolor", "helm", "k9s", "sofka"):
         stubs.add(name, FAKE.replace("{name}", name))
     return stubs
 
@@ -80,6 +80,20 @@ def test_a_piped_manifest_reaches_kubectl(fakes):
     ("dev", "k9s", "RAN k9s"),
 ])
 def test_k9s_is_read_only_on_production(fakes, ctx, command, expected):
+    _, out = run(fakes, ctx, command)
+    ran = next(line for line in out.splitlines() if line.startswith("RAN"))
+    assert ran.strip() == expected
+
+
+@pytest.mark.parametrize("ctx,command,expected", [
+    ("prod-eu", "sofka", "RAN sofka --readonly"),
+    ("prod-eu", "sofka --write", "RAN sofka --write"),
+    ("dev", "sofka --context prod-us", "RAN sofka --readonly --context prod-us"),
+    ("dev", "sofka", "RAN sofka"),
+    # subcommands don't open the TUI
+    ("prod-eu", "sofka info --offline", "RAN sofka info --offline"),
+])
+def test_sofka_is_read_only_on_production(fakes, ctx, command, expected):
     _, out = run(fakes, ctx, command)
     ran = next(line for line in out.splitlines() if line.startswith("RAN"))
     assert ran.strip() == expected

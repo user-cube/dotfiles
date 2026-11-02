@@ -107,7 +107,7 @@ keybind = cmd+shift+g=text:\x02G
 keybind = cmd+e=text:\x02e
 # lazydocker, in a popup
 keybind = cmd+shift+l=text:\x02D
-# k9s on the current kube context, in a popup (replaces Ghostty's clear screen;
+# sofka on the current kube context, in a popup (replaces Ghostty's clear screen;
 # inside tmux use `clear` or ctrl+l)
 keybind = cmd+k=text:\x02K
 # scratch terminal popup (persistent); press again to close

@@ -90,7 +90,7 @@ reboot; `ctrl b ctrl s` saves now, `ctrl b ctrl r` restores.
 | `⌘ ⇧ g` | side-by-side diff of uncommitted changes (lumen popup; `q` closes) |
 | `⌘ e` | yazi file manager in the current folder (popup; `q` closes) |
 | `⌘ ⇧ l` | lazydocker: containers, logs, restarts (popup; `q` closes) |
-| `⌘ k` | k9s on the current kube context (popup; `:q` or `ctrl c` closes) |
+| `⌘ k` | sofka on the current kube context (popup; `:q` or `ctrl c` closes) |
 | `⌘ j` | scratch terminal (popup; keeps its history; `⌘ j` again closes) |
 | `⌘ a` | select the whole pane history (`y`/`enter` copies, `esc` cancels) |
 | `⌘ y` | letters over every copyable token (pod names, hashes, IPs, paths, URLs): letter copies, `⇧`+letter copies and pastes |

@@ -29,7 +29,7 @@ entries=(
   'C-b G	popups	⌘⇧G	diff'
   'C-b e	popups	⌘E	files (yazi)'
   'C-b D	popups	⌘⇧L	docker'
-  'C-b K	popups	⌘K	k8s (k9s)'
+  'C-b K	popups	⌘K	k8s (sofka)'
   'C-b J	popups	⌘J	scratch terminal'
   'C-b Y	copy	⌘Y	copy a token on screen'
   'C-b u	copy	⌘U	open a URL from the pane'
