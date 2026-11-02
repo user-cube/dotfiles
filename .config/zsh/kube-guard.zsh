@@ -13,25 +13,45 @@
 
 : ${KUBE_PROD_REGEX:='prod|prd'}
 
-# Sets REPLY to the subcommand (and its sub-subcommand for rollout) and
-# _kube_ctx to the --context given anywhere on the line, skipping flag values
+# Every subcommand of kubectl and helm (and helm diff, a read): the subcommand is
+# the first word that is one, so the value of a flag before it (--as admin,
+# --request-timeout 5s, -v 6) isn't taken for it
+typeset -gA _kube_guard_cmds=(
+  kubectl ' alpha annotate api-resources api-versions apply attach auth autoscale certificate cluster-info completion config cordon cp create debug delete describe diff drain edit events exec explain expose get kustomize label logs options patch plugin port-forward proxy replace rollout run scale set taint top uncordon version wait '
+  helm ' completion create del delete dependency diff env get help history install lint list ls package plugin pull push registry repo rollback search show status template test un uninstall upgrade verify version '
+)
+
+# tool args...: sets REPLY to the subcommand (and its sub-subcommand for
+# rollout), _kube_ctx to the --context and _kube_kc to the --kubeconfig given
+# anywhere on the line, skipping flag values. A kubectl plugin (kubectl-<name>
+# on the PATH, e.g. who-can) is a subcommand too: its arguments (who-can delete
+# pods) are not kubectl's
 _kube_guard_parse() {
-  local arg skip=
-  REPLY= _kube_ctx=
+  local tool=$1 arg skip=
+  shift
+  REPLY= _kube_ctx= _kube_kc=
   for arg in "$@"; do
     if [[ -n $skip ]]; then
-      [[ $skip == ctx ]] && _kube_ctx=$arg
+      case $skip in
+        ctx) _kube_ctx=$arg ;;
+        kc) _kube_kc=$arg ;;
+      esac
       skip=
       continue
     fi
     case $arg in
       --context=* | --kube-context=*) _kube_ctx=${arg#*=} ;;
       --context | --kube-context) skip=ctx ;;
-      -n | --namespace | --kubeconfig | --cluster | --user | -s | --server | -f | --filename | -l | --selector | -o | --output | -c | --container) skip=value ;;
+      --kubeconfig=*) _kube_kc=${arg#*=} ;;
+      --kubeconfig) skip=kc ;;
+      -n | --namespace | --cluster | --user | -s | --server | -f | --filename | -l | --selector | -o | --output | -c | --container) skip=value ;;
       -*) ;;
       *)
         if [[ -z $REPLY ]]; then
-          REPLY=$arg
+          if [[ $_kube_guard_cmds[$tool] == *" $arg "* ]] ||
+            [[ $tool == kubectl && -n $arg && $+commands[kubectl-${arg//-/_}] == 1 ]]; then
+            REPLY=$arg
+          fi
         elif [[ $REPLY == rollout ]]; then
           REPLY+=" $arg"
         fi
@@ -40,18 +60,25 @@ _kube_guard_parse() {
   done
 }
 
+# The context the parsed line runs on: its --context, else the current one of
+# its --kubeconfig (else of KUBECONFIG / ~/.kube/config)
+_kube_guard_ctx() {
+  REPLY=${_kube_ctx:-$(command kubectl ${_kube_kc:+--kubeconfig=$_kube_kc} config current-context 2>/dev/null)}
+}
+
 _kube_guard() { # tool args...
   local tool=$1 ctx
   shift
   [[ ${KUBE_GUARD:-1} == 0 ]] && return 0
-  _kube_guard_parse "$@"
+  _kube_guard_parse $tool "$@"
   case $tool:$REPLY in
     kubectl:(apply|create|delete|edit|patch|replace|scale|set|label|annotate|taint|drain|cordon|uncordon|autoscale|expose|run|exec|debug|cp)) ;;
     kubectl:"rollout "(restart|undo|pause|resume)) ;;
     helm:(install|upgrade|uninstall|delete|rollback)) ;;
     *) return 0 ;;
   esac
-  ctx=${_kube_ctx:-$(command kubectl config current-context 2>/dev/null)}
+  _kube_guard_ctx
+  ctx=$REPLY
   [[ ${(L)ctx} =~ ($KUBE_PROD_REGEX) ]] || return 0 # any case, like grep -i
   # From the terminal: stdin may be the manifest (kubectl apply -f -)
   if read -q "?kube-guard: $ctx is production. $tool $* ? [y/N] " </dev/tty; then
@@ -70,8 +97,9 @@ helm() { _kube_guard helm "$@" && command helm "$@"; }
 _kube_guard_tui() { # tool args...
   local tool=$1 ctx
   shift
-  _kube_guard_parse "$@"
-  ctx=${_kube_ctx:-$(command kubectl config current-context 2>/dev/null)}
+  _kube_guard_parse $tool "$@"
+  _kube_guard_ctx
+  ctx=$REPLY
   if [[ ${KUBE_GUARD:-1} != 0 && ${(L)ctx} =~ ($KUBE_PROD_REGEX) && " $* " != *" --write "* && " $* " != *" --readonly "* ]]; then
     print "kube-guard: $ctx is production, $tool read-only ($tool --write to change things)"
     command $tool --readonly "$@"

@@ -1,7 +1,8 @@
 """kube-guard.zsh: on a production context kubectl / kubecolor / helm ask
 before changing the cluster, and k9s and sofka open read-only. Fake commands stand in
 for the real ones: they print what they were asked to run, and kubectl's
-`config current-context` answers $FAKE_CTX. The prompt reads the terminal,
+`config current-context` answers $FAKE_CTX, or with --kubeconfig=FILE
+"ctx-of-FILE". The prompt reads the terminal,
 so pexpect runs zsh in one and answers it."""
 
 import subprocess
@@ -14,6 +15,7 @@ from conftest import CONFIG, zsh
 GUARD = CONFIG / "zsh" / "kube-guard.zsh"
 FAKE = r"""
 if [ "$1 $2" = "config current-context" ]; then echo "$FAKE_CTX"; exit 0; fi
+case "$1 $2 $3" in "--kubeconfig="*" config current-context") echo "ctx-of-${1#*=}"; exit 0 ;; esac
 if [ ! -t 0 ]; then echo "RAN {name} $* stdin=$(cat)"; else echo "RAN {name} $*"; fi
 """
 
@@ -54,6 +56,17 @@ CASES = [
     ("dev", "helm upgrade api ./chart --kube-context=prod-eu", True, False),
     ("prod-eu", "kubecolor delete ns test", True, False),
     ("prod-eu", "KUBE_GUARD=0 kubectl delete pod x", False, True),
+    # a flag's value before the subcommand is not taken for it
+    ("prod-eu", "kubectl --as admin delete pod x", True, False),
+    ("prod-eu", "kubectl --request-timeout 5s delete pod x", True, False),
+    ("prod-eu", "kubectl -v 6 delete pod x", True, False),
+    ("prod-eu", "helm --kube-as-user admin uninstall api", True, False),
+    ("prod-eu", "helm diff upgrade api ./chart", False, True),
+    # the current context of --kubeconfig, not of the default one
+    ("dev", "kubectl --kubeconfig prod.yaml delete pod x", True, False),
+    ("dev", "kubectl --kubeconfig=prod.yaml delete pod x", True, False),
+    ("prod-eu", "kubectl --kubeconfig dev.yaml delete pod x", False, True),
+    ("dev", "helm upgrade api ./chart --kubeconfig prod.yaml", True, False),
 ]
 
 
@@ -62,6 +75,13 @@ def test_guard_answering_no(fakes, ctx, command, asks, runs):
     asked, out = run(fakes, ctx, command, answer="n")
     assert asked == asks
     assert ("RAN " in out) == runs, out
+
+
+def test_a_kubectl_plugins_arguments_are_its_own(fakes):
+    """kubectl who-can delete pods: a read, though `delete` is on the line."""
+    fakes.add("kubectl-who_can", 'echo "RAN who-can $*"')
+    asked, out = run(fakes, "prod-eu", "kubectl who-can delete pods", answer="n")
+    assert not asked and "RAN" in out
 
 
 def test_yes_runs_it(fakes):
@@ -80,6 +100,7 @@ def test_a_piped_manifest_reaches_kubectl(fakes):
     ("prod-eu", "k9s --write", "RAN k9s --write"),
     ("dev", "k9s --context prod-us", "RAN k9s --readonly --context prod-us"),
     ("dev", "k9s", "RAN k9s"),
+    ("dev", "k9s --kubeconfig prod.yaml", "RAN k9s --readonly --kubeconfig prod.yaml"),
 ])
 def test_k9s_is_read_only_on_production(fakes, ctx, command, expected):
     _, out = run(fakes, ctx, command)
