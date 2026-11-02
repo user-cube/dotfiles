@@ -81,8 +81,9 @@ export GOBIN=$HOME/go/bin
 export EDITOR=nvim
 export VISUAL=nvim
 
-# Bitwarden SSH agent
-export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
+# Bitwarden SSH agent, when it is running: else ssh keeps the system agent's
+# socket, rather than failing with "Permission denied (publickey)"
+[[ -S $HOME/.bitwarden-ssh-agent.sock ]] && export SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock"
 
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"

@@ -33,7 +33,8 @@ bw() {
       sudo -k # de-elevate
       [[ -n $_bw_session ]] || { print -u2 "Token not found, please run bw --regenerate-session-key"; return 1 }
     fi
-    $bw_exec "$@" --session "$_bw_session"
+    # in its environment, not on the command line: `ps` shows any process's arguments
+    BW_SESSION=$_bw_session $bw_exec "$@"
     ;;
   esac
 }
