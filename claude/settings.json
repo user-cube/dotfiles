@@ -19,8 +19,8 @@
       "Bash(rtk git commit:*)",
       "Bash(git push:*)",
       "Bash(rtk git push:*)",
-      "Bash(git -C * commit:*)",
-      "Bash(git -C * push:*)"
+      "Bash(git -C * commit*)",
+      "Bash(git -C * push*)"
     ]
   },
   "model": "opus",
