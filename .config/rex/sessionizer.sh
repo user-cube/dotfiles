@@ -13,4 +13,4 @@ ID=$(rex api call session.list '{}' |
   jq -r --arg n "$NAME" '[.sessions[] | select(.label == $n)][0].session_id // empty')
 [ -z "$ID" ] && ID=$(rex new "$NAME" -c "$DIR" --json | jq -r .session_id)
 
-rex do session.select session_id="$ID" || sleep 4
+rex "do" session.select session_id="$ID" || sleep 4
