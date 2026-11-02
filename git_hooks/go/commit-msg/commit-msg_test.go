@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/fatih/color"
 )
 
 func TestIssueKey(t *testing.T) {
@@ -84,5 +88,37 @@ func TestActionFor(t *testing.T) {
 		if got := actionFor(data, repo); got != want {
 			t.Errorf("actionFor(%q) = %q, want %q", repo, got, want)
 		}
+	}
+}
+
+// Without a terminal (lazygit, VS Code, CI): plain text, no emojis
+func TestBlockedIsPlainWithoutATerminal(t *testing.T) {
+	color.NoColor, emoji = true, false
+	var out bytes.Buffer
+	if rc := blocked(&out, "main"); rc != 1 {
+		t.Errorf("rc %d", rc)
+	}
+	want := "commit-msg: no commits on main (main, master and develop are protected)\n" +
+		"git switch -c feat/ABC-123-what · the issue key comes from the branch name\n"
+	if out.String() != want {
+		t.Errorf("got\n%s\nwant\n%s", out.String(), want)
+	}
+}
+
+func TestBlockedColorsOnATerminal(t *testing.T) {
+	color.NoColor, emoji = false, true
+	t.Cleanup(func() { color.NoColor, emoji = true, false })
+	var out bytes.Buffer
+	blocked(&out, "main")
+	if s := out.String(); !strings.Contains(s, "\x1b[") || !strings.HasPrefix(s, "🚫 ") || !strings.Contains(s, "💡 ") {
+		t.Errorf("no colors or emojis: %q", s)
+	}
+}
+
+func TestNoArgumentFails(t *testing.T) {
+	color.NoColor, emoji = true, false
+	var out bytes.Buffer
+	if rc := run(nil, &out); rc != 1 || !strings.HasPrefix(out.String(), "commit-msg: ") {
+		t.Errorf("rc %d, %q", rc, out.String())
 	}
 }

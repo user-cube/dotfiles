@@ -3,12 +3,53 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/mattn/go-isatty"
 )
+
+// The styles of the output, as sops-guard's: colors and emojis when stderr is
+// a terminal and NO_COLOR is unset; plain text in lazygit, VS Code, CI
+var (
+	red   = color.New(color.FgRed, color.Bold)
+	cyan  = color.New(color.FgCyan)
+	faint = color.New(color.Faint)
+	emoji = false
+)
+
+func setup() {
+	color.NoColor = !isatty.IsTerminal(os.Stderr.Fd()) || os.Getenv("NO_COLOR") != ""
+	emoji = !color.NoColor
+}
+
+// icon is the emoji and a space on a terminal, else nothing
+func icon(e string) string {
+	if emoji {
+		return e + " "
+	}
+	return ""
+}
+
+// fail prints an error that stops the commit
+func fail(w io.Writer, format string, a ...any) int {
+	fmt.Fprintf(w, "%s%s %s\n", icon("❌"), red.Sprint("commit-msg:"), fmt.Sprintf(format, a...))
+	return 1
+}
+
+// blocked says the branch is protected, and how to go on
+func blocked(w io.Writer, branch string) int {
+	fmt.Fprintf(w, "%s%s no commits on %s %s\n", icon("🚫"), red.Sprint("commit-msg:"),
+		red.Sprint(branch), faint.Sprint("(main, master and develop are protected)"))
+	fmt.Fprintf(w, "%s%s %s\n", icon("💡"), cyan.Sprint("git switch -c feat/ABC-123-what"),
+		faint.Sprint("· the issue key comes from the branch name"))
+	return 1
+}
 
 var (
 	validPrefixes = "feat|fix|chore|docs|style|refactor|perf|test|build|ci"
@@ -165,42 +206,43 @@ func formatHeader(header, key, defaultAction string) string {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Error: Commit message file not found.")
-		os.Exit(1)
+	setup()
+	os.Exit(run(os.Args[1:], os.Stderr))
+}
+
+func run(args []string, w io.Writer) int {
+	if len(args) < 1 {
+		return fail(w, "no commit message file given (git passes it)")
 	}
-	commitMsgFile := os.Args[1]
+	commitMsgFile := args[0]
 
 	// Merges, conflicted cherry-picks and reverts keep the message git wrote
 	for _, name := range []string{"MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD"} {
 		if gitPathExists(name) {
-			return
+			return 0
 		}
 	}
 
 	branch, ok := currentBranch()
 	if !ok {
-		return // detached HEAD outside a rebase: nothing to take the key from
+		return 0 // detached HEAD outside a rebase: nothing to take the key from
 	}
 
 	// Block commits on protected branches
 	disallowed := map[string]bool{"main": true, "master": true, "develop": true}
 	if disallowed[strings.ToLower(branch)] {
-		fmt.Println("Branch not allowed. The disallowed branches are: main, master, develop")
-		os.Exit(1)
+		return blocked(w, branch)
 	}
 
 	repoPath, err := git("rev-parse", "--show-toplevel")
 	if err != nil {
-		fmt.Println("Error: Unable to determine the repository path.")
-		os.Exit(1)
+		return fail(w, "can't find the repository's root: %v", err)
 	}
 	defaultAction := loadDefaultAction(repoPath)
 
 	data, err := os.ReadFile(commitMsgFile)
 	if err != nil {
-		fmt.Println("Error: Unable to read the commit message file.")
-		os.Exit(1)
+		return fail(w, "can't read the commit message: %v", err)
 	}
 
 	// Only the header changes; the body and git's comments are kept as they are
@@ -216,7 +258,7 @@ func main() {
 	// No header: the message stays empty and git aborts the commit as usual
 
 	if err := os.WriteFile(commitMsgFile, []byte(strings.Join(lines, "\n")), 0644); err != nil {
-		fmt.Println("Error: Unable to write to the commit message file.")
-		os.Exit(1)
+		return fail(w, "can't write the commit message: %v", err)
 	}
+	return 0
 }
