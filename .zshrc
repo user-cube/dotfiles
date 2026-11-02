@@ -113,13 +113,13 @@ alias vim="nvim"
 alias lz="lazygit"
 alias lzd="lazydocker"
 alias tmux-sessions="~/.config/tmux/preload-sessions.sh" # after editing ~/.config/tmux/sessions.local
-alias ktx="kontext"
+alias ktx="kubectx" # ktx -s <ctx>: a shell of its own; -r: read-only
+alias kns="kubens"  # no argument: pick one with fzf; - for the previous one
 alias z=cd # zoxide is cd now (below); z kept for the habit
 
 # Kubernetes
 alias k=kubecolor
 compdef kubecolor=kubectl
-setNS() { kubectl config set-context --current --namespace="$@" ; }
 
 # --- Inits and completions ---
 # Cached in ~/.cache/zsh, skipped when the tool is missing. Regenerated when the
@@ -176,7 +176,6 @@ _history_fzf() { _history_read_new; fzf-history-widget "$@" }
 zle -N up-line-or-history _history_up
 (( $+widgets[fzf-history-widget] )) && zle -N fzf-history-widget _history_fzf
 _cached_source aws-cli-manager 'aws-cli-manager completion zsh'
-_cached_source kontext         'kontext completion zsh'
 _cached_source helm            'helm completion zsh'
 _cached_source tenv            'tenv completion zsh'
 _cached_source task            'task --completion zsh'
