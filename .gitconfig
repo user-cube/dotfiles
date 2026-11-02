@@ -5,6 +5,9 @@
     required = true
 [user]
     name = Rui
+    # No email here: each identity sets its own (work, GitHub, GitLab). In a repo
+    # none of them matches, a commit stops instead of using user@host.local
+    useConfigOnly = true
 
 [includeIf "gitdir:~/work/"]
     path = ~/.gitconfig-work
