@@ -6,10 +6,11 @@
 #
 #   name=path            session <name>
 #   same name again      one more tab in that session
+#   name/tab=path        the tab is called <tab>, not after the folder
 #   path                 session named after the folder
 
-# One "setup" session with two tabs
-setup=~/work/github/dotfiles
+# One "setup" session with two tabs, the first one named "dots"
+setup/dots=~/work/github/dotfiles
 setup=~/work/github/devops-daily-driver
 
 # One session per repo, named after its folder

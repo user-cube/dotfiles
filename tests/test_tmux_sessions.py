@@ -96,3 +96,19 @@ def test_tmux_conf_runs_the_drop_hook(tmux):
     conf = (CONFIG / "tmux" / "tmux.conf").read_text()
     assert "set -g @resurrect-hook-post-save-layout '~/.config/tmux/resurrect-drop.sh'" in conf
     assert conf.index("@resurrect-hook-post-save-layout") < conf.index("tmux-resurrect/resurrect.tmux"), "set before the plugin loads"
+
+
+def test_preload_names_the_tabs(tmux):
+    for repo in ("dotfiles", "infra", "my.app"):
+        (tmux.home / repo).mkdir()
+    conf = tmux.home / ".config" / "tmux"
+    conf.mkdir(parents=True)
+    (conf / "sessions.local").write_text(
+        "setup/dots=~/dotfiles\n"
+        "setup = ~/infra\n"
+        "/web=~/my.app\n"
+    )
+    env = {"HOME": str(tmux.home), "TMUX_TMPDIR": str(tmux.sockets), "PATH": "/opt/homebrew/bin:/usr/bin:/bin"}
+    subprocess.run(["/bin/bash", str(CONFIG / "tmux" / "preload-sessions.sh")], env=env, check=True, timeout=10)
+    windows = tmux("list-windows", "-a", "-F", "#{session_name}:#{window_name}").split()
+    assert sorted(windows) == ["my_app:web", "setup:dots", "setup:infra"]
