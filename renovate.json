@@ -2,5 +2,22 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "packageRules": [
+    {
+      "description": "The Go tools' dependencies (sops-guard, kube-guard, commit-msg): one PR for the minor and patch updates",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
+      "groupName": "Go dependencies"
+    }
   ]
 }

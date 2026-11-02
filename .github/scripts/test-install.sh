@@ -6,6 +6,8 @@
 # Checks that a first run installs everything, a second run changes nothing,
 # a changed .go file rebuilds only its tool, a broken build fails, and that
 # the binaries it built work.
+# `check && pass ... || fail ...` is if/else here: pass and fail always return 0
+# shellcheck disable=SC2015
 set -uo pipefail
 
 repo=$(cd "$(dirname "$0")/../.." && pwd)
@@ -35,7 +37,8 @@ g -C "$t/dotfiles" branch -q -u "origin/$(g -C "$t/dotfiles" branch --show-curre
 cat >"$t/bin/code" <<EOF
 #!/bin/sh
 case "\$1" in
-  --list-extensions) [ -f "$t/hue-installed" ] && echo rui.hue; cat "$t/extensions" 2>/dev/null; exit 0 ;;
+  --list-extensions) if cmp -s "$repo/.config/dotfiles/launchd/com.user-cube.sops-on-login.plist" "$H/Library/LaunchAgents/com.user-cube.sops-on-login.plist"; then pass "LaunchAgent installed"; else fail "LaunchAgent not installed"; fi
+[ -f "$t/hue-installed" ] && echo rui.hue; cat "$t/extensions" 2>/dev/null; exit 0 ;;
   --install-extension) case "\$2" in *.vsix) touch "$t/hue-installed" ;; *) echo "\$2" >>"$t/extensions" ;; esac ;;
 esac
 EOF
@@ -45,7 +48,7 @@ chmod +x "$t/bin/code"
 mkdir -p "$H/.config/cmux" && echo old >"$H/.config/cmux/settings.json"
 
 sync() { # stdout of dotfiles-sync's own steps, without its reload lines
-  HOME=$H PATH="$t/bin:$PATH" DOTFILES_DIR=$t/dotfiles GOCACHE=$(go env GOCACHE) \
+  HOME=$H PATH="$t/bin:$PATH" DOTFILES_DIR=$t/dotfiles GOCACHE=$(go env GOCACHE) GOMODCACHE=$(go env GOMODCACHE) \
     zsh -f -c 'source "$DOTFILES_DIR/.config/zsh/dotfiles.zsh" && dotfiles-sync' 2>"$t/stderr" |
     grep -vE '^(Already up to date\.|Done\. |tmux: |AeroSpace: |SketchyBar: |borders: )'
   return "${PIPESTATUS[0]}"
@@ -58,7 +61,8 @@ tools="git_hooks/go/commit-msg/commit-msg git_hooks/go/sops-guard/sops-guard .co
 for b in $tools; do
   if [ -x "$H/$b" ]; then pass "built ~/$b"; else fail "not built: ~/$b"; fi
 done
-for f in .zshrc .p10k.zsh .gitconfig .gitconfig-hooks .gitconfig-personal-github .gitconfig-personal-gitlab .gitconfig-work .claude/settings.json; do
+home_files=$(grep -vE '^[[:space:]]*(#|$)' "$repo/.config/dotfiles/home-files")
+for f in $home_files .gitconfig-work .claude/settings.json; do
   [ -f "$H/$f" ] && pass "copied ~/$f" || fail "not copied: ~/$f"
 done
 grep -q '__icon_map()' "$H/.config/sketchybar/plugins/icon_map.sh" 2>/dev/null && pass "icon map downloaded" || fail "no icon map"

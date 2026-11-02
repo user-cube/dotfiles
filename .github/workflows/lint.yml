@@ -24,6 +24,17 @@ jobs:
       - name: Install tooling
         run: brew install shellcheck hadolint gitleaks go jq neovim tree-sitter-cli tmux bat opentofu fzf
 
+      # The Go tools' modules and builds (go vet / test, pytest's and the install
+      # test's builds): downloaded and compiled again only when a go.sum changes
+      - name: Go cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/Library/Caches/go-build
+          key: go-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: go-${{ runner.os }}-
+
       - name: List shell scripts
         run: git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' > "$RUNNER_TEMP/scripts.txt"
 
