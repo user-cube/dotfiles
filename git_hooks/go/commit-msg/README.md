@@ -7,7 +7,7 @@ Git hook that automatically formats commit messages with a Conventional Commit p
 `dotfiles-sync` (and the playbook) copy this folder to `~/git_hooks` and build it:
 
 ```bash
-go build -o commit-msg commit-msg.go
+go build -o commit-msg .
 ```
 
 `.gitconfig-hooks` (included from `.gitconfig`) runs it in every repo as a
@@ -26,7 +26,9 @@ another repo: `git config hook.commit-msg-go.enabled false`.
 
 The issue key is extracted from the branch name (e.g. `features/PROJECT-123-foo` → `PROJECT-123`).
 
-Commits on protected branches (`main`, `master`, `develop`) are blocked.
+Commits on protected branches (`main`, `master`, `develop`) are blocked, with how to
+go on (`git switch -c feat/ABC-123-what`). Its messages go to stderr, with colors
+and emojis on a terminal and plain text elsewhere (lazygit, VS Code, CI, `NO_COLOR`).
 
 Only the first line is rewritten; the body is kept. Left unchanged:
 

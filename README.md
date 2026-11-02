@@ -3,7 +3,9 @@
 macOS configuration files. Installed by the
 [devops-daily-driver](https://github.com/user-cube/devops-daily-driver) Ansible
 playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
-`~/.config/` and copies `.zshrc`, `.p10k.zsh` and the git configs to `~`.
+`~/.config/` and copies the files `.config/dotfiles/home-files` lists (`.zshrc`,
+`.p10k.zsh`, the git configs) to `~`. `dotfiles-sync` does the same without
+Ansible (see [Updating without Ansible](#updating-without-ansible)).
 
 ## Directory Structure
 
@@ -14,6 +16,7 @@ The folders with more than a config file have their own README.
   - `borders/`: JankyBorders (focused window border)
   - [`sketchybar/`](.config/sketchybar/README.md): bottom status bar; its plugins, and the per-machine `aws_profiles` and `checks`
   - [`ghostty/`](.config/ghostty/README.md), [`tmux/`](.config/tmux/README.md): terminal; every Ghostty window runs inside tmux, and the ⌘ shortcuts are tmux's (the tmux README lists them, and how to copy)
+  - `rex/`: the Rex terminal, with the same ⌘ shortcuts bound to its own tabs, panes and sessions (`init.lua`), its ⌘O sessionizer, and its Settings as code (`settings.py export` / `apply`: theme, tabs, panes; `install.sh` applies them)
   - [`nvim/`](.config/nvim/README.md), `yazi/`: editor, file manager
   - `bat/`: bat's theme (Monokai Extended) and style, for `cat` and the fzf previews
   - `lazygit/`: lazygit's Monokai theme, file tree and Nerd Font icons; `install.sh` links
@@ -21,16 +24,17 @@ The folders with more than a config file have their own README.
   - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
   - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, krr, debug, Argo CD sync / refresh), read-only on production
   - [`sofka/`](.config/sofka/README.md): a Kubernetes TUI in Rust, next to k9s: its config imported from k9s, without the plugins sofka has built in (stern, krr, Argo CD), read-only on production
-  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (promptui) before a change to production; built by `install.sh`
-  - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync`, `local-backup`, `ws`, `plugins-outdated`)
+  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (promptui) before a change to production, and has k9s / sofka open read-only there; built by `install.sh`
+  - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync` / `dotfiles-diff`, `local-backup`, `ws`, `logcli`, `plugins-outdated`, and the kube-guard wrappers)
   - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
-  - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the obsolete files list, `local-files`
+  - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the lists of the files copied to `~` (`home-files`) and of the obsolete ones, the LaunchAgents (`launchd/`), `local-files`
   - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
   - `git/ignore`: global gitignore: macOS and editor files, tool state (`.direnv/`, `.terraform/`), and env files as a safety net (`.env`, `.env.*`, but not `.env.example`; `git add -f` overrides)
 - `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
-- `.gitconfig*`: git config, with the identities of my GitHub and GitLab accounts (by the remote) and of work. Defaults: `pull` rebases (autostash), `fetch` prunes, conflicts in `zdiff3` with `rerere` (staged when it resolves one), histogram diffs with moved lines colored, branches and tags newest first, `main` for new repos, `status` through fsmonitor, the diff in the commit editor, my signatures verified locally (`.config/git/allowed_signers`)
-- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig-hooks` (included from `.gitconfig`): gitleaks, actionlint and `glab ci lint` on the staged CI config, `tofu fmt` on the staged Terraform files, shellcheck on the staged scripts, hadolint on the staged Dockerfiles, sops-guard against cleartext secrets, the Go commit-msg hook
-- [`tests/`](tests/README.md): pytest, run by CI: the shortcuts agree across Ghostty, tmux and the cheat sheet, k9s keys, every config parses, and the behaviour of kube-guard, the hooks and the zsh functions
+- `.gitconfig*`: git config, with the identities of my GitHub and GitLab accounts (by the remote) and of work. Defaults: `pull` rebases (autostash), `fetch` prunes, conflicts in `zdiff3` with `rerere` (staged when it resolves one), histogram diffs with moved lines colored, branches and tags newest first, `main` for new repos, `status` through fsmonitor, the diff in the commit editor, my signatures verified locally (`.config/git/allowed_signers`), and no commit without an identity (`useConfigOnly`: never the guessed `user@host.local`)
+- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig-hooks` (included from `.gitconfig`): gitleaks, actionlint and `glab ci lint` on the staged CI config, `tofu fmt` on the staged Terraform files, shellcheck on the staged scripts, hadolint on the staged Dockerfiles, sops-guard against cleartext secrets and the commit-msg hook (both Go: colors and emojis on a terminal, plain text in lazygit / VS Code / CI)
+- [`tests/`](tests/README.md): pytest, run by CI: the shortcuts agree across Ghostty, tmux and the cheat sheet, k9s keys, every config parses, and the behaviour of kube-guard, the hooks and the zsh functions (sops-on at login included)
+- `renovate.json`: Renovate keeps the GitHub Actions (pinned by SHA) and the Go modules up to date; the Go ones in one PR, `go mod tidy` run
 - [`claude/`](claude/README.md): Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
   - `settings.json`: no co-author trailer, deny rules, hooks, plugins
   - `hooks/deny-sensitive-reads/`: a Go PreToolUse hook that blocks Bash commands and reads of what is really private (keys, credentials, env files); while it is not built, Claude Code's Bash and Read are blocked
@@ -57,7 +61,7 @@ Day to day (details in the [zsh README](.config/zsh/README.md)):
 - Tab completes in an fzf list (fzf-tab), hidden files included
 - Ctrl+T picks a file, Ctrl+G a folder, Ctrl+R a history entry, with previews
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick
-- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s opens read-only (`kube-guard.zsh`, deciding in Go: `.config/kube-guard`)
+- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s and sofka open read-only (`kube-guard.zsh`, deciding in Go: `.config/kube-guard`). `KUBE_GUARD=0` skips it once; `KUBE_PROD_REGEX` (default `prod|prd`) says what production is
 - Esc Esc adds `sudo`, Ctrl+O copies the line, `copypath`, `extract`, `ofd` / `cdf` (Finder)
 - the Oh My Zsh plugins (zsh-autosuggestions, fzf-tab, zsh-syntax-highlighting)
   are cloned at pinned commits by the playbook; `plugins-outdated` shows which
@@ -74,7 +78,9 @@ what the VS Code SOPS extension needs), then removes them with a notice at the
 next prompt and a macOS notification. `sops-off` removes them now, `sops-status`
 shows the time left, and `sops-save FILE` puts a keys file in the note. A keys file
 that `sops-on` did not create is never overwritten or removed. Default time:
-`SOPS_ON_MINUTES`, else 60. See `.config/zsh/sops.zsh`.
+`SOPS_ON_MINUTES`, else 60. A log out or restart removes them too: the timer dies
+with the session, so a LaunchAgent cleans up at login
+(`.config/dotfiles/launchd`). See `.config/zsh/sops.zsh`.
 
 ## Secrets (tokens, API keys)
 
@@ -158,9 +164,9 @@ dotfiles-sync
 ```
 
 Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/`, `git_hooks/` and `claude/` (to `~/.claude/`), copies `.zshrc`,
-`.p10k.zsh` and the git configs (`.gitconfig-work` only when missing), runs
-`.config/dotfiles/install.sh`, then reloads tmux, AeroSpace, SketchyBar and borders.
+syncs `.config/`, `git_hooks/` and `claude/` (to `~/.claude/`), copies the files
+`.config/dotfiles/home-files` lists (`.gitconfig-work` only when missing), runs
+`.config/dotfiles/install.sh`, then reloads tmux, Rex, AeroSpace, SketchyBar and borders.
 Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
 
 To sync from the clone you edit instead of `~/dotfiles` (which the playbook
@@ -182,11 +188,19 @@ ahead (commits not pushed yet). Uncommitted changes are not compared.
 `install.sh` holds the steps after the files are in place, the same for
 `dotfiles-sync` and the playbook (a new step goes there, in one repo):
 
-- builds the Go tools when their sources changed: the commit-msg hook,
-  `local-files`, the SketchyBar checks and the Claude Code hook
+- builds the Go tools when their sources changed: the commit-msg and sops-guard
+  hooks, kube-guard, `local-files`, the SketchyBar checks and the Claude Code hook.
+  Until sops-guard is built commits stop, and until kube-guard is every `kubectl` /
+  `helm` command asks
 - downloads the SketchyBar icon map for the installed font version
-- installs the Hue VS Code extension when it changed
-- links lazygit's macOS config file to `.config/lazygit/config.yml` (unless one was written there by hand)
+- installs the Hue VS Code extension when it changed, and the missing ones of
+  `.config/vscode/extensions.txt`
+- links VS Code's `settings.json` and `keybindings.json` into the clone (a setting
+  changed in VS Code shows in `git status`), and lazygit's macOS config file to
+  `.config/lazygit/config.yml` (unless one was written there by hand)
+- copies the LaunchAgents (`.config/dotfiles/launchd`) to `~/Library/LaunchAgents`;
+  they run from the next login
+- applies Rex's Settings (`.config/rex/settings.json`)
 - removes the files the repo no longer installs (`.config/dotfiles/obsolete`:
   rsync never deletes; add a line when a file leaves the repo)
 
@@ -197,8 +211,9 @@ ahead (commits not pushed yet). Uncommitted changes are not compared.
 wanted, use an array), `zsh -n` on the zsh files, `jq` on every JSON
 file (a broken `claude/settings.json` would break Claude Code), nvim started headless
 with the plugins at `lazy-lock.json` (any output on startup is an error), the pytest
-tests in `tests/`, `go vet` and `go test`
-on the commit-msg hook, `local-files`, the SketchyBar checks and the Claude Code hook,
+tests in `tests/`, Hue's tests (`node --test`), `go vet` and `go test` on every Go
+tool (the commit-msg and sops-guard hooks, kube-guard, `local-files`, the SketchyBar
+checks, the Claude Code hook; modules and builds cached),
 `.github/scripts/test-install.sh` (`dotfiles-sync` into an empty fake HOME: everything
 installed, a second run that changes nothing, the built tools working, `dotfiles-diff`), and
 `gitleaks` over the whole history. Run the same checks locally before pushing:
@@ -206,11 +221,15 @@ installed, a second run that changes nothing, the built tools working, `dotfiles
 ```sh
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S info -i SC2086
-(cd git_hooks/go/commit-msg && go vet ./... && go test ./...)
-(cd .config/dotfiles/local-files && go vet ./... && go test ./...)
-(cd .config/sketchybar/plugins/check && go vet ./... && go test ./...)
-(cd claude/hooks/deny-sensitive-reads && go vet ./... && go test ./...)
-.github/scripts/test-install.sh
+for d in git_hooks/go/commit-msg git_hooks/go/sops-guard .config/kube-guard \
+  .config/dotfiles/local-files .config/sketchybar/plugins/check claude/hooks/deny-sensitive-reads; do
+  (cd "$d" && go vet ./... && go test ./...)
+done
+node --test .config/vscode/extensions/hue/colors.test.js
 python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt && .venv/bin/pytest tests/
 gitleaks git --redact --no-banner .
 ```
+
+`.github/scripts/test-install.sh` is best left to CI: its HOME is fake, but
+`install.sh` applies Rex's Settings through `defaults`, which writes this user's
+real preferences whatever HOME is.
