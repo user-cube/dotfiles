@@ -115,6 +115,14 @@ def test_a_shell_writes_its_kubeconfig_for_the_pane_and_restores_the_parents(stu
     assert pane.read_text() == "/parent.yaml\n"
 
 
+def test_the_panes_first_shell_removes_the_file_on_exit(stubs, tmp_path):
+    """Rex's block IDs are never reused: a file kept would stay forever."""
+    pane = tmp_path / "kube-pane" / "rex-block:1"
+    zsh_i(f"source {GUARD}; _kube_pane_publish; exit",
+          stubs.env(KUBE_PANE_DIR=str(pane.parent), REX_BLOCK="block:1", KUBECONFIG="/x.yaml"))
+    assert not pane.exists()
+
+
 @pytest.mark.parametrize("exists", [True, False])
 def test_the_popup_opens_on_the_panes_kubeconfig(fakes, tmp_path, exists):
     kubeconfig = tmp_path / "kubectx-shell.yaml"

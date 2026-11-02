@@ -88,7 +88,8 @@ k9s() { _kube_guard_tui k9s "$@"; }
 # its own, which a popup (started by the tmux server or Rex) never sees. Each
 # interactive shell writes its KUBECONFIG to a file per pane (tmux's
 # TMUX_PANE, Rex's REX_BLOCK) when it changes, and puts back the one of the
-# shell it was started from when it exits; _kube_popup reads it.
+# shell it was started from when it exits (the pane's first shell removes the
+# file: Rex's block IDs are never reused); _kube_popup reads it.
 : ${KUBE_PANE_DIR:=${XDG_CACHE_HOME:-$HOME/.cache}/kube-pane}
 if [[ -o interactive && -n $TMUX_PANE$REX_BLOCK ]]; then
   _kube_pane_files=(${TMUX_PANE:+$KUBE_PANE_DIR/tmux-$TMUX_PANE} ${REX_BLOCK:+$KUBE_PANE_DIR/rex-$REX_BLOCK})
@@ -101,7 +102,9 @@ if [[ -o interactive && -n $TMUX_PANE$REX_BLOCK ]]; then
     _kube_pane_kc=${KUBECONFIG-}
     _kube_pane_write $_kube_pane_kc
   }
-  _kube_pane_restore() { _kube_pane_write $_kube_pane_prev; }
+  _kube_pane_restore() {
+    if [[ -n $_kube_pane_prev ]]; then _kube_pane_write $_kube_pane_prev; else rm -f $_kube_pane_files; fi
+  }
   autoload -Uz add-zsh-hook
   add-zsh-hook precmd _kube_pane_publish
   add-zsh-hook zshexit _kube_pane_restore

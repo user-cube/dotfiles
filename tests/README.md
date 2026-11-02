@@ -18,8 +18,9 @@ They need `tmux`, `zsh`, `bat`, `fzf` (without it the Ctrl+R test is skipped)
 |---|---|
 | `test_shortcuts.py` | each Ghostty ⌘ shortcut is bound in tmux and listed in the ⌘⇧H cheat sheet, with the same ⌘ keys; each cheat sheet line runs a key tmux binds |
 | `test_k9s.py` | plugin keys k9s can use (not Ctrl-H/I/J/M/P), none twice in a view, the ones that change the cluster `dangerous`; hotkeys that work on a Portuguese keyboard |
+| `test_sofka.py` | plugin keys that aren't sofka's own table keys (ctrl-f is page down), none twice in a view, each says whether it changes the cluster; `sofka info --offline` loads the config without warnings (skipped without sofka) |
 | `test_config_files.py` | every TOML, YAML and JSON file parses; `tmux.conf` loads without errors; bat's theme exists |
-| `test_kube_guard.py` | on production, kubectl / kubecolor / helm ask before changing the cluster (answered y or n in a terminal, through pexpect), reads pass, `--context` anywhere, a piped manifest still reaches kubectl; k9s read-only |
+| `test_kube_guard.py` | on production, kubectl / kubecolor / helm ask before changing the cluster (answered y or n in a terminal, through pexpect), reads pass, `--context` anywhere, a piped manifest still reaches kubectl; k9s and sofka read-only; the ⌘K popup gets the pane's KUBECONFIG, and the file is put back or removed when the shell exits |
 | `test_terraform_fmt_hook.py` | the `tofu fmt` pre-commit hook on staged files, in a throwaway repo |
 | `test_lint_hooks.py` | the shellcheck, hadolint and sops-guard pre-commit hooks on staged files (shebang detection, the staged `.sops.yaml`'s `path_regex`, encrypted formats), in a throwaway repo |
 | `test_kubectl_complete.py` | the Tab completion scripts of krew and its plugins |
