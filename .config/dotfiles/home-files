@@ -1,0 +1,10 @@
+# The files of the repo's root that dotfiles-sync (and the playbook) copy to
+# $HOME, overwriting them. The one list: dotfiles-sync, dotfiles-diff and
+# .github/scripts/test-install.sh read it. .gitconfig-work is not here: it
+# holds a placeholder, only seeded when missing.
+.zshrc
+.p10k.zsh
+.gitconfig
+.gitconfig-hooks
+.gitconfig-personal-github
+.gitconfig-personal-gitlab

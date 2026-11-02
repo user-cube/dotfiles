@@ -3,6 +3,13 @@
 # files, then reload whatever is running. DOTFILES_DIR overrides ~/dotfiles: it
 # can be the clone being edited, set in ~/.zshrc.local (a branch or uncommitted
 # changes there are installed as they are, and said so).
+# _dotfiles_home_files DIR: reply=(the files .config/dotfiles/home-files of the
+# clone or snapshot DIR lists, copied to ~)
+_dotfiles_home_files() {
+  reply=(${(f)"$(grep -vE '^[[:space:]]*(#|$)' "$1/.config/dotfiles/home-files" 2>/dev/null)"})
+  (( $#reply )) || { echo "dotfiles: no .config/dotfiles/home-files in $1" >&2; return 1 }
+}
+
 dotfiles-sync() {
   local repo=${DOTFILES_DIR:-$HOME/dotfiles}
   [[ -d $repo/.git ]] || { echo "dotfiles-sync: $repo is not a git clone"; return 1; }
@@ -17,7 +24,9 @@ dotfiles-sync() {
   [[ -z $(git -C "$repo" status --porcelain) ]] || echo "dotfiles-sync: $repo has uncommitted changes, installed as they are" >&2
   rsync -a "$repo/.config/" "$HOME/.config/" || return
   rsync -a "$repo/git_hooks/" "$HOME/git_hooks/" || return
-  cp "$repo/.zshrc" "$repo/.p10k.zsh" "$repo/.gitconfig" "$repo/.gitconfig-hooks" "$repo/.gitconfig-personal-github" "$repo/.gitconfig-personal-gitlab" "$HOME/" || return
+  local -a reply
+  _dotfiles_home_files "$repo" || return
+  cp "${reply[@]/#/$repo/}" "$HOME/" || return
   # Claude Code: settings, global instructions, hooks (claude/ and not .claude/,
   # which Claude Code would read as this repo's own project settings)
   mkdir -p "$HOME/.claude" && rsync -a "$repo/claude/" "$HOME/.claude/" || return
@@ -79,7 +88,9 @@ dotfiles-diff() {
       done < <(rsync -nai --checksum "$snap/$src/" "$dst/")
     done
     # The files it copies to ~ (.gitconfig-work only when missing)
-    for f in .zshrc .p10k.zsh .gitconfig .gitconfig-hooks .gitconfig-personal-github .gitconfig-personal-gitlab; do
+    local -a reply
+    _dotfiles_home_files "$snap" || return
+    for f in $reply; do
       if [[ ! -e $HOME/$f ]]; then
         rows+=("new      $HOME/$f")
       elif ! cmp -s "$snap/$f" "$HOME/$f"; then
