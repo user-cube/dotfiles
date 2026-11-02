@@ -1,9 +1,10 @@
-"""kube-guard.zsh: on a production context kubectl / kubecolor / helm ask
-before changing the cluster, and k9s and sofka open read-only. Fake commands stand in
-for the real ones: they print what they were asked to run, and kubectl's
-`config current-context` answers $FAKE_CTX, or with --kubeconfig=FILE
-"ctx-of-FILE". The prompt reads the terminal,
-so pexpect runs zsh in one and answers it."""
+"""kube-guard.zsh and its binary (.config/kube-guard, built here; its unit tests
+are Go's): on a production context kubectl / kubecolor / helm ask before
+changing the cluster, and k9s and sofka open read-only. Fake commands stand in
+for the real ones and print what they were asked to run; the context is the
+current-context of a kubeconfig written for the test (prod.yaml and dev.yaml
+next to it for --kubeconfig). The prompt reads the terminal, so pexpect runs
+zsh in one and answers it."""
 
 import subprocess
 
@@ -14,31 +15,49 @@ from conftest import CONFIG, zsh
 
 GUARD = CONFIG / "zsh" / "kube-guard.zsh"
 FAKE = r"""
-if [ "$1 $2" = "config current-context" ]; then echo "$FAKE_CTX"; exit 0; fi
-case "$1 $2 $3" in "--kubeconfig="*" config current-context") echo "ctx-of-${1#*=}"; exit 0 ;; esac
 if [ ! -t 0 ]; then echo "RAN {name} $* stdin=$(cat)"; else echo "RAN {name} $*"; fi
 """
 
 
+@pytest.fixture(scope="session")
+def guard_bin(tmp_path_factory):
+    """The Go binary, built as install.sh builds it."""
+    out = tmp_path_factory.mktemp("kube-guard") / "kube-guard"
+    subprocess.run(["go", "build", "-C", str(CONFIG / "kube-guard"), "-o", str(out), "."], check=True)
+    return out
+
+
 @pytest.fixture
-def fakes(stubs):
+def fakes(stubs, guard_bin):
     for name in ("kubectl", "kubecolor", "helm", "k9s", "sofka"):
         stubs.add(name, FAKE.replace("{name}", name))
+    stubs.guard_bin = guard_bin
     return stubs
 
 
-def run(fakes, ctx: str, command: str, answer=None):
+def kubeconfig(path, ctx):
+    path.write_text(f"apiVersion: v1\nkind: Config\ncurrent-context: {ctx}\n")
+    return path
+
+
+def run(fakes, ctx: str, command: str, answer=None, built=True):
     """Run command in zsh with kube-guard sourced; returns (asked?, output)."""
-    child = pexpect.spawn(
-        "zsh", ["-f", "-c", f"source {GUARD}; {command}"],
-        env=fakes.env(FAKE_CTX=ctx), encoding="utf-8", timeout=10,
-    )
+    home = fakes.bin.parent
+    kubeconfig(home / "prod.yaml", "prod-eu")
+    kubeconfig(home / "dev.yaml", "dev")
+    env = fakes.env(KUBECONFIG=str(kubeconfig(home / "config", ctx)), NO_COLOR="1",
+                    KUBE_GUARD_BIN=str(fakes.guard_bin if built else home / "not-built"))
+    child = pexpect.spawn("zsh", ["-f", "-c", f"source {GUARD}; {command}"],
+                          env=env, cwd=str(home), encoding="utf-8", timeout=10)
     asked = child.expect([r"\? \[y/N\] ", pexpect.EOF]) == 0
+    out = child.before or ""
     if asked:
-        child.send(answer)
+        out += child.after
+        child.send(answer + ("\r" if built else ""))  # zsh's read -q takes one key
         child.expect(pexpect.EOF)
+        out += child.before or ""
     child.close()
-    return asked, child.before or ""
+    return asked, out
 
 
 # (current context, command, asks?, runs?) answering n
@@ -82,6 +101,22 @@ def test_a_kubectl_plugins_arguments_are_its_own(fakes):
     fakes.add("kubectl-who_can", 'echo "RAN who-can $*"')
     asked, out = run(fakes, "prod-eu", "kubectl who-can delete pods", answer="n")
     assert not asked and "RAN" in out
+
+
+# Until dotfiles-sync builds it: every command asks, the TUIs open read-only
+@pytest.mark.parametrize("command,answer,runs", [
+    ("kubectl get pods", "y", True),
+    ("kubectl get pods", "n", False),
+])
+def test_not_built_every_command_asks(fakes, command, answer, runs):
+    asked, out = run(fakes, "dev", command, answer=answer, built=False)
+    assert asked and "is not built" in out
+    assert ("RAN " in out) == runs, out
+
+
+def test_not_built_the_tuis_are_read_only(fakes):
+    _, out = run(fakes, "dev", "k9s", built=False)
+    assert "RAN k9s --readonly" in out
 
 
 def test_yes_runs_it(fakes):

@@ -18,6 +18,7 @@ tools=(
   "$HOME/git_hooks/go/commit-msg"                # global commit-msg hook (hook.commit-msg-go in .gitconfig)
   "$HOME/git_hooks/go/sops-guard"                # global pre-commit hook (hook.sops-guard; commits stop until built)
   "$HOME/.config/dotfiles/local-files"           # local-backup / local-restore (Bitwarden)
+  "$HOME/.config/kube-guard"                     # kubectl / helm / k9s / sofka on production (zsh/kube-guard.zsh)
   "$HOME/.config/sketchybar/plugins/check"       # SketchyBar connectivity checks
   "$HOME/.claude/hooks/deny-sensitive-reads"     # Claude Code PreToolUse hook (Bash and Read are blocked until built)
 )

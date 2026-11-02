@@ -21,6 +21,7 @@ The folders with more than a config file have their own README.
   - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
   - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, krr, debug, Argo CD sync / refresh), read-only on production
   - [`sofka/`](.config/sofka/README.md): a Kubernetes TUI in Rust, next to k9s: its config imported from k9s, without the plugins sofka has built in (stern, krr, Argo CD), read-only on production
+  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (promptui) before a change to production; built by `install.sh`
   - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync`, `local-backup`, `ws`, `plugins-outdated`)
   - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
   - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the obsolete files list, `local-files`
@@ -56,7 +57,7 @@ Day to day (details in the [zsh README](.config/zsh/README.md)):
 - Tab completes in an fzf list (fzf-tab), hidden files included
 - Ctrl+T picks a file, Ctrl+G a folder, Ctrl+R a history entry, with previews
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick
-- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s opens read-only (`kube-guard.zsh`)
+- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s opens read-only (`kube-guard.zsh`, deciding in Go: `.config/kube-guard`)
 - Esc Esc adds `sudo`, Ctrl+O copies the line, `copypath`, `extract`, `ofd` / `cdf` (Finder)
 - the Oh My Zsh plugins (zsh-autosuggestions, fzf-tab, zsh-syntax-highlighting)
   are cloned at pinned commits by the playbook; `plugins-outdated` shows which

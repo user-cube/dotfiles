@@ -1,87 +1,26 @@
 # kube-guard: asks before a kubectl / helm command that changes a production
-# cluster. Production: the context (--context / --kube-context, else the
-# current one) matches KUBE_PROD_REGEX, default prod|prd like the SketchyBar
-# kube item. Reads (get, describe, logs, diff, rollout status, helm template...)
-# pass without asking.
+# cluster, and k9s and sofka open read-only there (--write to change things;
+# a context switched to inside them keeps the mode they started with). The
+# decision is the Go binary's (.config/kube-guard: the line's subcommand and
+# context, KUBE_PROD_REGEX, the question); these are its wrappers.
 #
 #   KUBE_GUARD=0 kubectl apply -f x.yaml   skip it for one command
 #
 # Covers kubectl, kubecolor (k) and helm, and so the Oh My Zsh aliases (kaf,
-# kdel...); scripts don't go through it. k9s and sofka on a production context
-# open read-only (--write to change things); a context switched to inside them
-# keeps the mode they started with.
+# kdel...); scripts don't go through it. Until the binary is built
+# (dotfiles-sync), every kubectl / helm command asks and the TUIs open read-only.
 
-: ${KUBE_PROD_REGEX:='prod|prd'}
-
-# Every subcommand of kubectl and helm (and helm diff, a read): the subcommand is
-# the first word that is one, so the value of a flag before it (--as admin,
-# --request-timeout 5s, -v 6) isn't taken for it
-typeset -gA _kube_guard_cmds=(
-  kubectl ' alpha annotate api-resources api-versions apply attach auth autoscale certificate cluster-info completion config cordon cp create debug delete describe diff drain edit events exec explain expose get kustomize label logs options patch plugin port-forward proxy replace rollout run scale set taint top uncordon version wait '
-  helm ' completion create del delete dependency diff env get help history install lint list ls package plugin pull push registry repo rollback search show status template test un uninstall upgrade verify version '
-)
-
-# tool args...: sets REPLY to the subcommand (and its sub-subcommand for
-# rollout), _kube_ctx to the --context and _kube_kc to the --kubeconfig given
-# anywhere on the line, skipping flag values. A kubectl plugin (kubectl-<name>
-# on the PATH, e.g. who-can) is a subcommand too: its arguments (who-can delete
-# pods) are not kubectl's
-_kube_guard_parse() {
-  local tool=$1 arg skip=
-  shift
-  REPLY= _kube_ctx= _kube_kc=
-  for arg in "$@"; do
-    if [[ -n $skip ]]; then
-      case $skip in
-        ctx) _kube_ctx=$arg ;;
-        kc) _kube_kc=$arg ;;
-      esac
-      skip=
-      continue
-    fi
-    case $arg in
-      --context=* | --kube-context=*) _kube_ctx=${arg#*=} ;;
-      --context | --kube-context) skip=ctx ;;
-      --kubeconfig=*) _kube_kc=${arg#*=} ;;
-      --kubeconfig) skip=kc ;;
-      -n | --namespace | --cluster | --user | -s | --server | -f | --filename | -l | --selector | -o | --output | -c | --container) skip=value ;;
-      -*) ;;
-      *)
-        if [[ -z $REPLY ]]; then
-          if [[ $_kube_guard_cmds[$tool] == *" $arg "* ]] ||
-            [[ $tool == kubectl && -n $arg && $+commands[kubectl-${arg//-/_}] == 1 ]]; then
-            REPLY=$arg
-          fi
-        elif [[ $REPLY == rollout ]]; then
-          REPLY+=" $arg"
-        fi
-        ;;
-    esac
-  done
-}
-
-# The context the parsed line runs on: its --context, else the current one of
-# its --kubeconfig (else of KUBECONFIG / ~/.kube/config)
-_kube_guard_ctx() {
-  REPLY=${_kube_ctx:-$(command kubectl ${_kube_kc:+--kubeconfig=$_kube_kc} config current-context 2>/dev/null)}
-}
+: ${KUBE_GUARD_BIN:=$HOME/.config/kube-guard/kube-guard}
 
 _kube_guard() { # tool args...
-  local tool=$1 ctx
-  shift
+  if [[ -x $KUBE_GUARD_BIN ]]; then
+    # not exported when set in ~/.zshrc.local or before the function
+    KUBE_GUARD=${KUBE_GUARD-} KUBE_PROD_REGEX=${KUBE_PROD_REGEX-} $KUBE_GUARD_BIN check "$@"
+    return
+  fi
   [[ ${KUBE_GUARD:-1} == 0 ]] && return 0
-  _kube_guard_parse $tool "$@"
-  case $tool:$REPLY in
-    kubectl:(apply|create|delete|edit|patch|replace|scale|set|label|annotate|taint|drain|cordon|uncordon|autoscale|expose|run|exec|debug|cp)) ;;
-    kubectl:"rollout "(restart|undo|pause|resume)) ;;
-    helm:(install|upgrade|uninstall|delete|rollback)) ;;
-    *) return 0 ;;
-  esac
-  _kube_guard_ctx
-  ctx=$REPLY
-  [[ ${(L)ctx} =~ ($KUBE_PROD_REGEX) ]] || return 0 # any case, like grep -i
   # From the terminal: stdin may be the manifest (kubectl apply -f -)
-  if read -q "?kube-guard: $ctx is production. $tool $* ? [y/N] " </dev/tty; then
+  if read -q "?kube-guard is not built (dotfiles-sync). $* ? [y/N] " </dev/tty; then
     print
     return 0
   fi
@@ -93,15 +32,20 @@ kubectl() { _kube_guard kubectl "$@" && command kubectl "$@"; }
 kubecolor() { _kube_guard kubectl "$@" && command kubecolor "$@"; }
 helm() { _kube_guard helm "$@" && command helm "$@"; }
 
-# The TUIs open read-only on a production context; --write overrides it
+# The TUIs open read-only on a production context: the binary says so (exit 0)
 _kube_guard_tui() { # tool args...
-  local tool=$1 ctx
+  local tool=$1 rc
   shift
-  _kube_guard_parse $tool "$@"
-  _kube_guard_ctx
-  ctx=$REPLY
-  if [[ ${KUBE_GUARD:-1} != 0 && ${(L)ctx} =~ ($KUBE_PROD_REGEX) && " $* " != *" --write "* && " $* " != *" --readonly "* ]]; then
-    print "kube-guard: $ctx is production, $tool read-only ($tool --write to change things)"
+  if [[ -x $KUBE_GUARD_BIN ]]; then
+    KUBE_GUARD=${KUBE_GUARD-} KUBE_PROD_REGEX=${KUBE_PROD_REGEX-} $KUBE_GUARD_BIN tui $tool "$@"
+    rc=$?
+  elif [[ ${KUBE_GUARD:-1} != 0 && " $* " != *" --write "* && " $* " != *" --readonly "* ]]; then
+    print -u2 "kube-guard is not built (dotfiles-sync): $tool read-only ($tool --write to change things)"
+    rc=0
+  else
+    rc=1
+  fi
+  if (( rc != 1 )); then # 2: the binary failed, read-only too
     command $tool --readonly "$@"
   else
     command $tool "$@"

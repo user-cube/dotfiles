@@ -93,6 +93,11 @@ jobs:
         working-directory: git_hooks/go/sops-guard
         run: go vet ./... && go test ./...
 
+      # kubectl / helm ask on production through it
+      - name: kube-guard (go vet + test)
+        working-directory: .config/kube-guard
+        run: go vet ./... && go test ./...
+
       - name: local-files (go vet + test)
         working-directory: .config/dotfiles/local-files
         run: go vet ./... && go test ./...
