@@ -7,7 +7,7 @@ and the playbook: a new step goes in `install.sh`, in this repo only.
 |---|---|
 | `install.sh` | builds the Go tools whose sources changed, downloads the SketchyBar icon map, installs the Hue VS Code extension, links lazygit's config, removes obsolete files; prints a line per change, nothing when all was up to date, fails when a build fails |
 | `home-files` | the files of the repo's root copied to `~` (`.zshrc`, the git configs…), overwriting them: the one list `dotfiles-sync`, `dotfiles-diff` and the install test read (the playbook should too). `.gitconfig-work` is apart: only seeded when missing |
-| `launchd/` | LaunchAgents, copied to `~/Library/LaunchAgents` by `install.sh` and run at login (not loaded on install): `com.user-cube.sops-on-login` removes the age keys `sops-on` left when the session ended |
+| `launchd/` | LaunchAgents, copied to `~/Library/LaunchAgents` by `install.sh` and run at login (not loaded on install): `com.user-cube.sops-on-login` removes the age keys `sops-on` left when the session ended. Off on one machine: `launchctl disable gui/$(id -u)/<label>` (macOS keeps it across reboots and syncs; `enable` turns it back on); for this one, `sops-login off` / `on` |
 | `obsolete` | files this repo used to install, relative to `$HOME`: rsync never deletes, so they are removed here. Add a line when a file leaves the repo (never a directory, a glob or a path outside `$HOME`) |
 | `remove-obsolete.sh` | removes them (only files and symlinks, then the folder when it is left empty) |
 | `local-files/` | `local-backup` / `local-restore`: a Go tool, see below |

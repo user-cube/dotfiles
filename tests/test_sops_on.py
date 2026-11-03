@@ -1,7 +1,10 @@
 """sops.zsh at login (_sops_login, run by the LaunchAgent): the keys sops-on left
 when the session ended are removed, also from a SOPS_KEYS_FILE only
-~/.zshrc.local set; a keys file sops-on didn't create stays. The keys file holds
-placeholder text: only whether it is removed matters here."""
+~/.zshrc.local set; a keys file sops-on didn't create stays. sops-login turns
+that LaunchAgent on or off (a fake launchctl keeps the state in a file). The
+keys file holds placeholder text: only whether it is removed matters here."""
+
+import pytest
 
 from conftest import CONFIG, zsh
 
@@ -48,3 +51,45 @@ def test_a_keys_file_sops_on_did_not_create_stays(tmp_path):
     keys.write_text(KEYS)
     assert login(tmp_path).returncode == 0
     assert keys.read_text() == KEYS
+
+
+# A fake launchctl: enable / disable write the state, print-disabled prints it as macOS does
+LAUNCHCTL = r"""
+state="$HOME/launchctl-state"
+case "$1" in
+  disable) echo "\"${2##*/}\" => disabled" >"$state" ;;
+  enable) echo "\"${2##*/}\" => enabled" >"$state" ;;
+  print-disabled) echo "disabled services = {"; cat "$state" 2>/dev/null; echo "}" ;;
+esac
+"""
+
+
+@pytest.fixture
+def launchctl(stubs, tmp_path):
+    stubs.add("launchctl", LAUNCHCTL)
+
+    def run(*commands):
+        script = f'source "{SOPS}"' + "".join(f" && {c}" for c in commands)
+        return zsh(script, stubs.env(HOME=str(tmp_path)))
+    return run
+
+
+def test_sops_login_off_and_on(launchctl, tmp_path):
+    plist = tmp_path / "Library" / "LaunchAgents" / "com.user-cube.sops-on-login.plist"
+    assert "not installed" in launchctl("sops-login").stdout
+    plist.parent.mkdir(parents=True)
+    plist.write_text("<plist/>")
+    assert "sops-login: on" in launchctl("sops-login").stdout
+
+    out = launchctl("sops-login off", "sops-login")
+    assert out.returncode == 0
+    assert out.stdout.splitlines()[-1].startswith("sops-login: off on this machine")
+    assert '"com.user-cube.sops-on-login" => disabled' in (tmp_path / "launchctl-state").read_text()
+
+    out = launchctl("sops-login on", "sops-login")
+    assert out.stdout.splitlines()[-1].startswith("sops-login: on")
+
+
+def test_sops_login_usage(launchctl):
+    out = launchctl("sops-login maybe")
+    assert out.returncode == 1 and "usage: sops-login [on|off]" in out.stderr

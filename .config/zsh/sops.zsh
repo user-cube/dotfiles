@@ -8,6 +8,8 @@
 #   sops-off             remove the keys now
 #   sops-status          is it on, and for how long
 #   sops-save [FILE]     put a keys file (default: the sops one) in the Bitwarden note
+#   sops-login [on|off]  the clean-up at login on this machine (below): off where
+#                        it makes no sense; no argument says which it is
 #
 # The keys live in one secure note, "SOPS age keys" (SOPS_BW_ITEM overrides), whose
 # notes field is a plain age keys file: one "AGE-SECRET-KEY-..." per line.
@@ -161,4 +163,35 @@ _sops_login() {
   [[ -f $state/expiry ]] || return 0
   [[ -s $state/file ]] && local SOPS_KEYS_FILE=$(<"$state/file")
   _sops_expire "sops-on: keys removed (the session ended: log out or restart)"
+}
+
+# sops-login [on|off]: the LaunchAgent above, on this machine. launchctl
+# enable / disable: macOS keeps it across reboots, and dotfiles-sync copying
+# the plist again doesn't turn it back on
+_sops_login_label=com.user-cube.sops-on-login
+sops-login() {
+  local domain=gui/$UID plist=$HOME/Library/LaunchAgents/$_sops_login_label.plist
+  case ${1-} in
+    off)
+      launchctl disable "$domain/$_sops_login_label" || return
+      print "sops-login: off on this machine: the keys sops-on left stay after a log out or restart (sops-login on to undo)"
+      ;;
+    on)
+      launchctl enable "$domain/$_sops_login_label" || return
+      print "sops-login: on: the keys sops-on left are removed at login"
+      ;;
+    '')
+      if launchctl print-disabled "$domain" 2>/dev/null | grep -qE "\"$_sops_login_label\" => (disabled|true)"; then
+        print "sops-login: off on this machine (sops-login on)"
+      elif [[ -f $plist ]]; then
+        print "sops-login: on: the keys sops-on left are removed at login (sops-login off)"
+      else
+        print "sops-login: not installed (dotfiles-sync copies it)"
+      fi
+      ;;
+    *)
+      print -u2 "usage: sops-login [on|off]"
+      return 1
+      ;;
+  esac
 }

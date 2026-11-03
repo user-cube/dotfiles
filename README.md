@@ -80,7 +80,8 @@ shows the time left, and `sops-save FILE` puts a keys file in the note. A keys f
 that `sops-on` did not create is never overwritten or removed. Default time:
 `SOPS_ON_MINUTES`, else 60. A log out or restart removes them too: the timer dies
 with the session, so a LaunchAgent cleans up at login
-(`.config/dotfiles/launchd`). See `.config/zsh/sops.zsh`.
+(`.config/dotfiles/launchd`). `sops-login off` turns that off on one machine
+(`sops-login on` back on, `sops-login` says which it is). See `.config/zsh/sops.zsh`.
 
 ## Secrets (tokens, API keys)
 
