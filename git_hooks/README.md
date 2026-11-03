@@ -1,5 +1,7 @@
 # Global git hooks
 
+> The guide: [Git](https://github.com/user-cube/dotfiles/wiki/Git#global-hooks) in the wiki. This README is the reference.
+
 Synced to `~/git_hooks` and run in every repo as config-based hooks (git 2.54+),
 next to each repo's own `.git/hooks`. They are wired in `../.gitconfig-hooks`
 (included from `.gitconfig`); skip one once with `git commit --no-verify`, or

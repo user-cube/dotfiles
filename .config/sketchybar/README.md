@@ -1,5 +1,7 @@
 # SketchyBar
 
+> The guide: [Terminal and desktop](https://github.com/user-cube/dotfiles/wiki/Terminal-and-desktop#sketchybar) in the wiki. This README is the reference.
+
 The status bar, at the bottom (the macOS menu bar stays on top). `sketchybarrc`
 builds it; each item runs a script in `plugins/`. Reload with
 `sketchybar --reload` (`dotfiles-sync` does it).

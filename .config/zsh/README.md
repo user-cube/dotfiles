@@ -16,30 +16,6 @@ Shared shell functions: `.zshrc` sources every `*.zsh` here, before
 | `loki.zsh` | `logcli` | Loki's logs (deleted pods and finished jobs too): without `LOKI_ADDR`, port-forwards to `LOKI_SERVICE` (default `monitoring/loki`) for the command |
 | `plugins-outdated.zsh` | `plugins-outdated` | the zsh/tmux plugins the playbook pins that master has moved past; every 14 days a background check and a macOS notification |
 
-The details are in each file's header comment and in the [main README](../../README.md).
-
-## What `.zshrc` sets up
-
-- Oh My Zsh with Powerlevel10k; plugins from `custom/plugins`, cloned at pinned
-  commits by the playbook: zsh-autosuggestions (also suggests from completions),
-  fzf-tab (Tab completes in an fzf list, hidden files included), and
-  zsh-syntax-highlighting, which must stay last
-- Oh My Zsh only notes its updates at startup (`omz update` when you want)
-- small Oh My Zsh plugins: **Esc Esc** puts `sudo` in front of the line (or of the
-  last command); **Ctrl+O** copies the line being typed, without running it;
-  `copypath [file]` copies a path; `extract FILE` unpacks any archive; `ofd` opens
-  this folder in Finder, `cdf` goes to Finder's, `quick-look FILE` previews
-- history: 100000 lines shared between panes, with start time and duration
-  (`history -i`), no duplicates, `!!` expanded before it runs
-  - ↑ and Ctrl+R read what other panes / sessions ran first, without waiting
-    for a new prompt in this one
-- fzf: Ctrl+T files, Ctrl+G folders, Ctrl+R history, listed with `fd`
-  (hidden files in, `.gitignore` respected) and previewed with `bat` / `ls`
-- `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick; `z` still works
-- `~/.krew/bin` on PATH: `kubectl neat`, `tree`, `view-secret`, `who-can`; their Tab
-  completion (and `kubectl krew`'s) comes from `../kubectl/complete/`
-- `k` = kubecolor; `vim` = nvim; `lz` / `lzd` = lazygit / lazydocker; `ktx` / `kns` = kubectx / kubens
-- startup around 0.1 s (`time zsh -i -c exit`): nvm loads on first use, and
-  the pyenv/zoxide/fzf inits and tool completions are cached in `~/.cache/zsh`,
-  regenerated when the tool or its command line changes (delete the folder to
-  force it)
+The details are in each file's header comment. What `.zshrc` sets up (plugins,
+history, fzf, aliases, startup time) and how to use it day to day: the
+[Shell](https://github.com/user-cube/dotfiles/wiki/Shell) page of the wiki.

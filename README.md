@@ -1,237 +1,46 @@
 # Dotfiles
 
-macOS configuration files. Installed by the
-[devops-daily-driver](https://github.com/user-cube/devops-daily-driver) Ansible
-playbook, which clones this repo to `~/dotfiles`, syncs `.config/` to
-`~/.config/` and copies the files `.config/dotfiles/home-files` lists (`.zshrc`,
-`.p10k.zsh`, the git configs) to `~`. `dotfiles-sync` does the same without
-Ansible (see [Updating without Ansible](#updating-without-ansible)).
+macOS configuration: zsh, Ghostty + tmux (or Rex), AeroSpace, SketchyBar,
+Neovim, VS Code, Kubernetes guardrails, secrets kept in Bitwarden, global git
+hooks and Claude Code.
 
-## Directory Structure
+**The guide is the [wiki](https://github.com/user-cube/dotfiles/wiki)**:
+installing and updating, the shell, Kubernetes, secrets, git, development and
+troubleshooting. The READMEs in the folders hold the reference tables
+(shortcuts, plugins, items).
 
-The folders with more than a config file have their own README.
+## Install and update
+
+A new Mac: the [devops-daily-driver](https://github.com/user-cube/devops-daily-driver)
+Ansible playbook clones this repo to `~/dotfiles` and installs it. Then, on any
+machine:
+
+```sh
+dotfiles-diff -p   # what a sync would change, changing nothing
+dotfiles-sync      # pull and install; then `exec zsh`
+```
+
+Never edit the installed files: what is specific to one machine goes in files
+that are never committed (`~/.zshrc.local` and the others in
+[the wiki](https://github.com/user-cube/dotfiles/wiki/Installing-and-updating#per-machine-files)).
+
+## Layout
 
 - `.config/`: tool configs, synced to `~/.config/`
-  - `aerospace/`: tiling window manager, plus `CHEATSHEET.md` (`⌥ i`)
-  - `borders/`: JankyBorders (focused window border)
-  - [`sketchybar/`](.config/sketchybar/README.md): bottom status bar; its plugins, and the per-machine `aws_profiles` and `checks`
-  - [`ghostty/`](.config/ghostty/README.md), [`tmux/`](.config/tmux/README.md): terminal; every Ghostty window runs inside tmux, and the ⌘ shortcuts are tmux's (the tmux README lists them, and how to copy)
-  - `rex/`: the Rex terminal, with the same ⌘ shortcuts bound to its own tabs, panes and sessions (`init.lua`), its ⌘O sessionizer, and its Settings as code (`settings.py export` / `apply`: theme, tabs, panes; `install.sh` applies them)
-  - [`nvim/`](.config/nvim/README.md), `yazi/`: editor, file manager
-  - `bat/`: bat's theme (Monokai Extended) and style, for `cat` and the fzf previews
-  - `lazygit/`: lazygit's Monokai theme, file tree and Nerd Font icons; `install.sh` links
-    `~/Library/Application Support/lazygit/config.yml` (where lazygit reads it on macOS) to it
-  - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
-  - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, krr, debug, Argo CD sync / refresh), read-only on production
-  - [`sofka/`](.config/sofka/README.md): a Kubernetes TUI in Rust, next to k9s: its config imported from k9s, without the plugins sofka has built in (stern, krr, Argo CD), read-only on production
-  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (y/N on the terminal) before a change to production, and has k9s / sofka open read-only there; `kube-guard context` feeds the SketchyBar kube item; built by `install.sh`
-  - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync` / `dotfiles-diff`, `local-backup`, `ws`, `logcli`, `plugins-outdated`, and the kube-guard wrappers)
-  - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
-  - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the lists of the files copied to `~` (`home-files`) and of the obsolete ones, the LaunchAgents (`launchd/`), `local-files`
-  - `ssh/`: ssh defaults (ControlMaster), included from the top of the per-machine ssh config by the playbook
-  - `git/ignore`: global gitignore: macOS and editor files, tool state (`.direnv/`, `.terraform/`), and env files as a safety net (`.env`, `.env.*`, but not `.env.example`; `git add -f` overrides)
-- `.zshrc`, `.p10k.zsh`: Zsh with Oh My Zsh and Powerlevel10k
-- `.gitconfig*`: git config, with the identities of my GitHub and GitLab accounts (by the remote) and of work. Defaults: `pull` rebases (autostash), `fetch` prunes, conflicts in `zdiff3` with `rerere` (staged when it resolves one), histogram diffs with moved lines colored, branches and tags newest first, `main` for new repos, `status` through fsmonitor, the diff in the commit editor, my signatures verified locally (`.config/git/allowed_signers`), and no commit without an identity (`useConfigOnly`: never the guessed `user@host.local`)
-- [`git_hooks/`](git_hooks/README.md): global git hooks, wired in `.gitconfig-hooks` (included from `.gitconfig`): gitleaks, actionlint and `glab ci lint` on the staged CI config, `tofu fmt` on the staged Terraform files, shellcheck on the staged scripts, hadolint on the staged Dockerfiles, sops-guard against cleartext secrets and the commit-msg hook (both Go: colors and emojis on a terminal, plain text in lazygit / VS Code / CI)
-- [`tests/`](tests/README.md): pytest, run by CI: the shortcuts agree across Ghostty, tmux and the cheat sheet, k9s keys, every config parses, and the behaviour of kube-guard, the hooks and the zsh functions (sops-on at login included)
-- `renovate.json`: Renovate keeps the GitHub Actions (pinned by SHA) and the Go modules up to date; the Go ones in one PR, `go mod tidy` run
-- [`claude/`](claude/README.md): Claude Code config, synced to `~/.claude/` (not `.claude/`: Claude Code would read that as this repo's project settings). Change these here, not with `/config`: a sync overwrites `~/.claude/settings.json`
-  - `settings.json`: no co-author trailer, deny rules, hooks, plugins
-  - `hooks/deny-sensitive-reads/`: a Go PreToolUse hook that blocks Bash commands and reads of what is really private (keys, credentials, env files); while it is not built, Claude Code's Bash and Read are blocked
+  - [`aerospace/`](.config/aerospace/CHEATSHEET.md), `borders/`, [`sketchybar/`](.config/sketchybar/README.md): the desktop
+  - [`ghostty/`](.config/ghostty/README.md), [`tmux/`](.config/tmux/README.md), `rex/`: the terminal
+  - [`nvim/`](.config/nvim/README.md), [`vscode/`](.config/vscode/README.md), `lazygit/`, `yazi/`, `bat/`: editors and viewers
+  - [`kube-guard/`](.config/kube-guard), [`k9s/`](.config/k9s/README.md), [`sofka/`](.config/sofka/README.md), `kubectl/`: Kubernetes
+  - [`zsh/`](.config/zsh/README.md): the shell functions `.zshrc` sources
+  - [`dotfiles/`](.config/dotfiles/README.md): `install.sh`, the lists of files copied to `~` and of obsolete ones, the LaunchAgents, `local-files`
+  - `git/`, `ssh/`: global gitignore, allowed signers, ssh defaults
+- `.zshrc`, `.p10k.zsh`, `.gitconfig*`: copied to `~` (`.config/dotfiles/home-files`)
+- [`git_hooks/`](git_hooks/README.md): the global git hooks
+- [`claude/`](claude/README.md): Claude Code, synced to `~/.claude/`
+- [`tests/`](tests/README.md): pytest, run by CI
 
-## Zsh
+## Before pushing
 
-`.zshrc` is copied to `~/.zshrc`, overwriting it.
-Never edit `~/.zshrc` by hand: put anything specific to one machine (work-only
-tools, aliases) in `~/.zshrc.local`, which is sourced at the end and
-never committed.
-
-Shared shell functions live in `.config/zsh/*.zsh` and are all sourced before
-`~/.zshrc.local`, e.g. `bw.zsh` (Bitwarden CLI session wrapper; needs
-`export BW_USER=<email>` in `~/.zshrc.local`).
-
-Startup is kept around 0.1 s: nvm loads on first use, `pyenv init` skips the rehash
-(run `pyenv rehash` after installing a package with commands), and the
-pyenv/zoxide/fzf inits and the completions are cached in `~/.cache/zsh`
-(regenerated when the tool is upgraded or its command line changes; delete the
-folder to force it). Measure with `time zsh -i -c exit`.
-
-Day to day (details in the [zsh README](.config/zsh/README.md)):
-
-- Tab completes in an fzf list (fzf-tab), hidden files included
-- Ctrl+T picks a file, Ctrl+G a folder, Ctrl+R a history entry, with previews
-- `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick
-- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s and sofka open read-only (`kube-guard.zsh`, deciding in Go: `.config/kube-guard`). `KUBE_GUARD=0` skips it once; what production is (default `prod|prd`): `~/.config/kube-guard/prod-regex` on a machine, `KUBE_PROD_REGEX` in a shell
-- Esc Esc adds `sudo`, Ctrl+O copies the line, `copypath`, `extract`, `ofd` / `cdf` (Finder)
-- the Oh My Zsh plugins (zsh-autosuggestions, fzf-tab, zsh-syntax-highlighting)
-  are cloned at pinned commits by the playbook; `plugins-outdated` shows which
-  ones master has moved past, and every 14 days a notification says so
-- p10k marks each prompt and command output, so tmux can jump between commands
-  and copy one's output (⌘⇧↑ / ⌘⇧↓, ⌘⇧C: see the [tmux README](.config/tmux/README.md))
-
-## SOPS age keys
-
-The keys for SOPS-encrypted files live in one Bitwarden secure note, `SOPS age keys`
-(a plain age keys file in the notes field), never on disk by default.
-`sops-on [60m]` writes them to sops's default keys file for a limited time (also
-what the VS Code SOPS extension needs), then removes them with a notice at the
-next prompt and a macOS notification. `sops-off` removes them now, `sops-status`
-shows the time left, and `sops-save FILE` puts a keys file in the note. A keys file
-that `sops-on` did not create is never overwritten or removed. Default time:
-`SOPS_ON_MINUTES`, else 60. A log out or restart removes them too: the timer dies
-with the session, so a LaunchAgent cleans up at login
-(`.config/dotfiles/launchd`). `sops-login off` turns that off on one machine
-(`sops-login on` back on, `sops-login` says which it is). See `.config/zsh/sops.zsh`.
-
-## Secrets (tokens, API keys)
-
-Secrets never go in this repo, and preferably not in `~/.zshrc.local` either:
-plain-text files end up in backups, screen shares and shell history. Bitwarden
-is the source of truth; the shell fetches a secret only when the tool that needs
-it is started, so it never sits in a file or in every shell's environment.
-
-1. Store the secret in Bitwarden: one item per service, the secret in the
-   password field (or in custom fields when there are several).
-2. Wrap the command that needs it in a function in `~/.zshrc.local` (per
-   machine) or `.config/zsh/<name>.zsh` (shared, as long as it holds no secret
-   and no machine-specific item names):
-
-   ```zsh
-   # Secrets live only in this process, not in the shell environment
-   mytool() {
-     local token
-     token=$(bw get password <item>) || return
-     MYTOOL_TOKEN=$token command mytool "$@"
-   }
-   ```
-
-   With several values in one item:
-
-   ```zsh
-   bw get item <item> | jq -r '.fields[] | select(.name == "<field>").value'
-   ```
-
-`bw` is the wrapper in `.config/zsh/bw.zsh`: the first call per shell asks for
-Touch ID/sudo to read the session key, later calls reuse it. Never fetch secrets
-at the top level of `.zshrc*`: every new shell would block on the vault.
-
-A token needed once on the command line (`claude mcp add --header ...`,
-`gh auth login --with-token`): `secret T` asks for it without echoing it
-(`secret T <item>` takes it from Bitwarden), then use `"$T"` in the next command;
-it is cleared right after and never exported (`.config/zsh/secrets.zsh`). Lines
-that look like they hold a token (GitHub/GitLab/Slack/OpenAI keys, AWS access
-keys, JWTs, a long `Bearer`, `--password=...`) are not saved to the history, and
-a leading space keeps any command out of it.
-
-Check nothing leaked: `git grep -nIE '(token|secret|password|api_?key)\s*='`
-before committing (gitleaks also runs as a pre-commit hook).
-
-## Per-machine files (never committed)
-
-| File | Purpose |
-|---|---|
-| `~/.zshrc.local` | machine-specific shell config (secrets: see [Secrets](#secrets-tokens-api-keys)) |
-| `~/.config/git/commit-msg.yaml` | optional: per-repo `default_action` of the commit-msg hook (see `git_hooks/go/commit-msg/README.md`; it was `~/.gitconfig-hook`, still read while not moved) |
-| `~/.config/nvim/lua/plugins_local/*.lua` | optional: nvim plugins only for this machine (lazy.nvim specs, e.g. vim-be-good) |
-| `~/.config/tmux/sessions.local` | repos preloaded as tmux sessions (see `.config/tmux/sessions.local.example`; `tmux-sessions` after editing) |
-| `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |
-| `~/workspaces/*.code-workspace` | VS Code workspaces, created and opened with `ws` |
-| `~/.config/kube-guard/prod-regex` | optional: what production is on this machine, for kube-guard, k9s / sofka and the SketchyBar kube item (one line, e.g. `prod\|prd\|live`; default `prod\|prd`). `KUBE_PROD_REGEX` overrides it in a shell, but only the file reaches SketchyBar |
-| `~/.config/sketchybar/checks` | optional: connectivity checks shown in the bar, instead of every kube context (see `checks.example`) |
-
-### Backup in Bitwarden
-
-These files (but not the nvim plugins), plus `~/.gitconfig-work`, `~/.kube/config`, the kubernetes MCP server's `config.toml`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
-`.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
-(`.config/dotfiles/local-files/`, a Go tool built by `dotfiles-sync` and the
-playbook; uses the `bw` wrapper's session).
-Claude Code's MCP servers (their tokens sit in `env`) go too: only the
-`mcpServers` key of `~/.claude.json`, which also holds the login and per-project
-state. Restore merges them back; a server already set up on the machine is kept
-unless `--force`:
-
-```sh
-local-backup                 # this machine -> Bitwarden (replaces the previous copy)
-local-restore                # Bitwarden -> this machine; existing files are kept
-local-restore other-mac      # restore another machine's backup (e.g. a new Mac)
-local-restore --force        # overwrite existing files
-```
-
-On a new Mac the playbook does the same with `--tags local-restore`.
-
-## Updating without Ansible
-
-```sh
-dotfiles-sync
-```
-
-Defined in `.config/zsh/dotfiles.zsh`: pulls `~/dotfiles` (or `$DOTFILES_DIR`),
-syncs `.config/`, `git_hooks/` and `claude/` (to `~/.claude/`), copies the files
-`.config/dotfiles/home-files` lists (`.gitconfig-work` only when missing), runs
-`.config/dotfiles/install.sh`, then reloads tmux, Rex, AeroSpace, SketchyBar and borders.
-Run `exec zsh` afterwards; Ghostty keybind changes need ⌘Q.
-
-To sync from the clone you edit instead of `~/dotfiles` (which the playbook
-keeps), set it in `~/.zshrc.local`: `export DOTFILES_DIR=~/work/github/dotfiles`.
-It installs what that clone has, so `dotfiles-sync` warns when that is a branch
-other than `main` or uncommitted changes.
-
-To see first what it would change, changing nothing:
-
-```sh
-dotfiles-diff      # files it would overwrite (changed here, or older), add, or remove (obsolete)
-dotfiles-diff -p   # and their diffs: - is this machine, + what the sync brings
-```
-
-It compares with the upstream `dotfiles-sync` would pull (fetched, not merged), and
-says how many commits the clone is behind; with the clone's own HEAD when it is
-ahead (commits not pushed yet). Uncommitted changes are not compared.
-
-`install.sh` holds the steps after the files are in place, the same for
-`dotfiles-sync` and the playbook (a new step goes there, in one repo):
-
-- builds the Go tools when their sources changed: the commit-msg and sops-guard
-  hooks, kube-guard, `local-files`, the SketchyBar checks and the Claude Code hook.
-  Until sops-guard is built commits stop, and until kube-guard is every `kubectl` /
-  `helm` command asks
-- downloads the SketchyBar icon map for the installed font version
-- installs the Hue VS Code extension when it changed, and the missing ones of
-  `.config/vscode/extensions.txt`
-- links VS Code's `settings.json` and `keybindings.json` into the clone (a setting
-  changed in VS Code shows in `git status`), and lazygit's macOS config file to
-  `.config/lazygit/config.yml` (unless one was written there by hand)
-- copies the LaunchAgents (`.config/dotfiles/launchd`) to `~/Library/LaunchAgents`;
-  they run from the next login
-- applies Rex's Settings (`.config/rex/settings.json`)
-- removes the files the repo no longer installs (`.config/dotfiles/obsolete`:
-  rsync never deletes; add a line when a file leaves the repo)
-
-## CI
-
-`.github/workflows/lint.yml` runs on macOS (for `/bin/bash` 3.2): `bash -n` and
-`shellcheck` on every shell script (unquoted variables included: where splitting is
-wanted, use an array), `zsh -n` on the zsh files, `jq` on every JSON
-file (a broken `claude/settings.json` would break Claude Code), nvim started headless
-with the plugins at `lazy-lock.json` (any output on startup is an error), the pytest
-tests in `tests/`, Hue's tests (`node --test`), `go vet` and `go test` on every Go
-tool (the commit-msg and sops-guard hooks, kube-guard, `local-files`, the SketchyBar
-checks, the Claude Code hook; modules and builds cached), and
-`gitleaks` over the whole history. The pytest tests include the install path end to
-end (`tests/test_install.py`: `dotfiles-sync` into an empty fake HOME, everything
-installed, a second run that changes nothing, the built tools working, `dotfiles-diff`). Run the same checks locally before pushing:
-
-```sh
-git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
-git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S info -i SC2086
-for d in git_hooks/go/commit-msg git_hooks/go/sops-guard .config/kube-guard \
-  .config/dotfiles/local-files .config/sketchybar/plugins/check claude/hooks/deny-sensitive-reads; do
-  (cd "$d" && go vet ./... && go test ./...)
-done
-node --test .config/vscode/extensions/hue/colors.test.js
-python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt && .venv/bin/pytest tests/
-gitleaks git --redact --no-banner .
-```
-
-All of it is safe to run on your Mac: the install test's HOME is fake, and the
-apps a sync touches (Rex's Settings through `defaults`, tmux, AeroSpace,
-SketchyBar, borders, VS Code) are fakes there.
+CI (`.github/workflows/lint.yml`, on macOS) runs shellcheck, bash 3.2 and zsh
+syntax, JSON, nvim, pytest, Hue's and the Go tools' tests, and gitleaks. The same
+locally: [Development](https://github.com/user-cube/dotfiles/wiki/Development#tests).

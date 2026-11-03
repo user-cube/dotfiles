@@ -1,5 +1,7 @@
 # sofka
 
+> The guide: [Kubernetes](https://github.com/user-cube/dotfiles/wiki/Kubernetes) in the wiki. This README is the reference.
+
 A Kubernetes TUI in Rust, next to k9s (⌘K opens it in a Rex / tmux popup;
 `:q` or ctrl+c closes). The popup opens on the kube context of the pane ⌘K
 was pressed in, a `ktx -s` shell's own too (`kube-guard.zsh`). In Rex it is

@@ -1,5 +1,7 @@
 # commit-msg hook
 
+> The guide: [Git](https://github.com/user-cube/dotfiles/wiki/Git#global-hooks) in the wiki. This README is the reference.
+
 Git hook that automatically formats commit messages with a Conventional Commit prefix and the issue key extracted from the branch name.
 
 ## Install

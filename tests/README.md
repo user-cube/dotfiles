@@ -1,5 +1,7 @@
 # Tests
 
+> The guide: [Development](https://github.com/user-cube/dotfiles/wiki/Development#tests) in the wiki. This README is the reference.
+
 pytest, run by CI (`.github/workflows/lint.yml`). Fake commands (kubectl,
 helm, git, osascript...) stand in for the real ones on PATH, so no test
 reaches a cluster, the network or the notification center.

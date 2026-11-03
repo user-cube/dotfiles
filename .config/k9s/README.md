@@ -1,5 +1,7 @@
 # k9s
 
+> The guide: [Kubernetes](https://github.com/user-cube/dotfiles/wiki/Kubernetes) in the wiki. This README is the reference.
+
 The Kubernetes TUI, run as `k9s` (⌘K opens sofka now, `../sofka`).
 `K9S_CONFIG_DIR` points k9s here instead of `~/Library/Application Support/k9s`;
 it is set in `../zsh/kube-guard.zsh`.

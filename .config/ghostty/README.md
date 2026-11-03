@@ -1,5 +1,7 @@
 # Ghostty
 
+> The guide: [Terminal and desktop](https://github.com/user-cube/dotfiles/wiki/Terminal-and-desktop) in the wiki. This README is the reference.
+
 The terminal. Tabs, splits and sessions come from tmux, not from Ghostty: its
 native tabs are separate macOS windows, which AeroSpace would tile one by one.
 

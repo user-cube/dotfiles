@@ -1,5 +1,7 @@
 # Neovim Config
 
+> The guide: [Editors](https://github.com/user-cube/dotfiles/wiki/Editors#neovim) in the wiki. This README is the reference.
+
 Personal Neovim configuration using [lazy.nvim](https://github.com/folke/lazy.nvim) as plugin manager.
 
 ## Plugins

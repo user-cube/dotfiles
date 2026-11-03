@@ -1,5 +1,7 @@
 # Claude Code
 
+> The guide: [Claude Code](https://github.com/user-cube/dotfiles/wiki/Claude-Code) in the wiki. This README is the reference.
+
 Synced to `~/.claude/` by `dotfiles-sync` and the playbook. It lives in
 `claude/`, not `.claude/`: Claude Code would read that as this repo's own
 project settings. Change these here, not with `/config`: a sync overwrites

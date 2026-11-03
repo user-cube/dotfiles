@@ -1,5 +1,7 @@
 # tmux
 
+> The guide: [Terminal and desktop](https://github.com/user-cube/dotfiles/wiki/Terminal-and-desktop) in the wiki. This README is the reference.
+
 Tabs, splits and sessions for Ghostty: every Ghostty window runs inside tmux
 (`../ghostty/tmux-start.sh`), and Ghostty's ⌘ shortcuts send the tmux prefix
 (`C-b`) plus a key. ⌘⇧H lists them all (`cheatsheet.sh`); keep that list in sync

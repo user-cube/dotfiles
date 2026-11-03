@@ -1,5 +1,7 @@
 # VS Code
 
+> The guide: [Editors](https://github.com/user-cube/dotfiles/wiki/Editors#vs-code) in the wiki. This README is the reference.
+
 Used through `ws` (`../zsh/vscode-workspaces.zsh`): workspaces live in
 `~/workspaces/*.code-workspace` (per machine, never committed).
 
