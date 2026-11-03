@@ -191,3 +191,39 @@ func TestTUI(t *testing.T) {
 		})
 	}
 }
+
+func TestNamespace(t *testing.T) {
+	home := t.TempDir()
+	a := filepath.Join(home, "a.yaml")
+	b := filepath.Join(home, "b.yaml")
+	os.WriteFile(a, []byte("current-context: prod-eu\ncontexts:\n- name: dev\n  context:\n    namespace: dev-ns\n"), 0o600)
+	os.WriteFile(b, []byte("contexts:\n- name: prod-eu\n  context:\n    cluster: c\n    namespace: api\n- name: dev\n  context:\n    namespace: other\n"), 0o600)
+	env := a + ":" + b
+	for ctx, want := range map[string]string{
+		"prod-eu": "api",    // defined in the second file
+		"dev":     "dev-ns", // the first file that defines it wins
+		"nope":    "",
+	} {
+		if got := namespace(ctx, "", env, home); got != want {
+			t.Errorf("namespace(%s) = %q, want %q", ctx, got, want)
+		}
+	}
+}
+
+func TestKubeContext(t *testing.T) {
+	for _, tt := range []struct{ config, regex, want string }{
+		{"current-context: prod-eu\ncontexts:\n- name: prod-eu\n  context:\n    namespace: api\n", "", "prod-eu\napi\nprod\n"},
+		{"current-context: dev\n", "", "dev\n\nother\n"},
+		{"current-context: live-1\n", "live", "live-1\n\nprod\n"}, // KUBE_PROD_REGEX
+		{"apiVersion: v1\n", "", ""},                              // no context: nothing
+	} {
+		guarded(t, "")
+		home, _ := os.UserHomeDir()
+		os.WriteFile(filepath.Join(home, ".kube", "config"), []byte(tt.config), 0o600)
+		t.Setenv("KUBE_PROD_REGEX", tt.regex)
+		var out bytes.Buffer
+		if rc := kubeContext(&out); rc != 0 || out.String() != tt.want {
+			t.Errorf("%q: rc %d, got %q, want %q", tt.config, rc, out.String(), tt.want)
+		}
+	}
+}

@@ -4,6 +4,8 @@
 //
 //	kube-guard check kubectl|helm ARGS...  exit 0: run it; else don't (answered no)
 //	kube-guard tui k9s|sofka ARGS...       exit 0: open it read-only; 1: as asked
+//	kube-guard context                     CONTEXT, NAMESPACE and prod|other on three
+//	                                       lines, for the SketchyBar kube item (nothing: no context)
 //
 // Production: the context (--context / --kube-context, else the current one,
 // of --kubeconfig when given) matches KUBE_PROD_REGEX, default prod|prd like
@@ -136,10 +138,37 @@ func tui(tool string, args []string, out io.Writer) int {
 	return 0
 }
 
+// kubeContext prints the current context, its namespace and whether it is
+// production, one per line (a shell reads an empty namespace line as it is,
+// where it would merge two tabs); nothing when there is no current context. Faster
+// than kubectl config current-context + view --minify, which the bar ran every 5 s
+func kubeContext(out io.Writer) int {
+	home, _ := os.UserHomeDir()
+	env := os.Getenv("KUBECONFIG")
+	ctx := currentContext("", env, home)
+	if ctx == "" {
+		return 0
+	}
+	prod, err := production(ctx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "kube-guard:", err)
+		return 2
+	}
+	kind := "other"
+	if prod {
+		kind = "prod"
+	}
+	fmt.Fprintf(out, "%s\n%s\n%s\n", ctx, namespace(ctx, "", env, home), kind)
+	return 0
+}
+
 func run(args []string) int {
 	setup()
+	if len(args) == 1 && args[0] == "context" {
+		return kubeContext(os.Stdout)
+	}
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: kube-guard check kubectl|helm ARGS... | kube-guard tui TOOL ARGS...")
+		fmt.Fprintln(os.Stderr, "usage: kube-guard check kubectl|helm ARGS... | kube-guard tui TOOL ARGS... | kube-guard context")
 		return 2
 	}
 	mode, tool, rest := args[0], args[1], args[2:]

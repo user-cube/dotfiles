@@ -24,7 +24,7 @@ The folders with more than a config file have their own README.
   - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
   - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, krr, debug, Argo CD sync / refresh), read-only on production
   - [`sofka/`](.config/sofka/README.md): a Kubernetes TUI in Rust, next to k9s: its config imported from k9s, without the plugins sofka has built in (stern, krr, Argo CD), read-only on production
-  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (promptui) before a change to production, and has k9s / sofka open read-only there; built by `install.sh`
+  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (promptui) before a change to production, and has k9s / sofka open read-only there; `kube-guard context` feeds the SketchyBar kube item; built by `install.sh`
   - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync` / `dotfiles-diff`, `local-backup`, `ws`, `logcli`, `plugins-outdated`, and the kube-guard wrappers)
   - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
   - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the lists of the files copied to `~` (`home-files`) and of the obsolete ones, the LaunchAgents (`launchd/`), `local-files`

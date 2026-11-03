@@ -18,7 +18,8 @@ The Go tools `install.sh` builds (source folder → binary in it, rebuilt when a
 - `~/git_hooks/go/commit-msg`: the global commit-msg hook
 - `~/git_hooks/go/sops-guard`: the global pre-commit hook against cleartext
   secrets (commits stop until it is built)
-- `~/.config/kube-guard`: what `kubectl` / `helm` / k9s / sofka do on production
+- `~/.config/kube-guard`: what `kubectl` / `helm` / k9s / sofka do on production,
+  and the SketchyBar kube item's context
   (until it is built every command asks)
 - `~/.config/dotfiles/local-files`
 - `~/.config/sketchybar/plugins/check`: the SketchyBar connectivity checks

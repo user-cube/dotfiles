@@ -10,13 +10,13 @@ builds it; each item runs a script in `plugins/`. Reload with
 | focused app | `front_app.sh` | |
 | Spotify | `spotify.sh` | playing / paused; click toggles |
 | Slack, Discord | `dock_badge.sh` | the Dock badge: red count, yellow dot = unread |
-| kube | `kube.sh` | context / namespace, red when it looks like prod |
+| kube | `kube.sh` | context / namespace, red on production; read by `kube-guard context` (the kubeconfig in ~3 ms, production as `kube-guard.zsh` says it), `kubectl` until it is built |
 | checks | `check/` (Go) | connectivity checks: passed/total, click for each |
 | Colima | `colima.sh`, `colima_toggle.sh` | running profiles; the popup starts / stops each |
 | GitHub, GitLab | `github.sh`, `gitlab.sh` | PRs / MRs waiting for my review; hidden without a glab login |
 | AWS | `aws.sh`, `aws_profiles.sh` | each profile's session, red "expired" when it needs `aws sso login` |
 | GCP | `gcp.sh` | active project, red when the login expired |
-| CPU, RAM | `cpu.sh`, `ram.sh` | |
+| CPU, RAM | `cpu.sh`, `ram.sh` | CPU every 5 s (the graph: the last 5 minutes), RAM every 15 s |
 | weather | `weather.sh` | wttr.in; click opens the forecast |
 | brew | `brew.sh`, `brew_upgrade.sh` | outdated packages (hourly); click upgrades in a new Ghostty window |
 
