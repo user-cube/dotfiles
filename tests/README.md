@@ -34,5 +34,8 @@ Hue, the VS Code extension, has its own: `node --test .config/vscode/extensions/
 (`colors.test.js`: its colors, the danger places, the colorCustomizations it
 writes, and `extension.js` loaded with a fake `vscode`).
 
-`.github/scripts/test-install.sh` is the other test: `dotfiles-sync` end to end
-into an empty fake HOME.
+`test_install.py` is the install path end to end: `dotfiles-sync` into an empty
+fake HOME (one scenario, its tests in order), with fakes for the apps a sync
+touches (`defaults` for Rex's Settings, tmux, AeroSpace, SketchyBar, brew, VS
+Code), so it runs on a Mac without touching them. It downloads the SketchyBar
+icon map (network) and needs go, zsh and rsync.

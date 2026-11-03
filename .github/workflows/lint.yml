@@ -24,8 +24,8 @@ jobs:
       - name: Install tooling
         run: brew install shellcheck hadolint gitleaks go jq neovim tree-sitter-cli tmux bat opentofu fzf
 
-      # The Go tools' modules and builds (go vet / test, pytest's and the install
-      # test's builds): downloaded and compiled again only when a go.sum changes
+      # The Go tools' modules and builds (go vet / test, and pytest's builds, the
+      # install test's included): downloaded and compiled again only when a go.sum changes
       - name: Go cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -80,7 +80,8 @@ jobs:
       # and plugins, every config parses, and the behaviour of kube-guard, the
       # tofu fmt, shellcheck, hadolint and sops-guard hooks, the krew completions
       # and plugins-outdated (fake commands);
-      # ↑ / Ctrl+R read the other shells' history (fzf)
+      # ↑ / Ctrl+R read the other shells' history (fzf); and the install path end
+      # to end: dotfiles-sync into an empty fake HOME (test_install.py)
       - name: pytest
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
@@ -121,11 +122,6 @@ jobs:
       - name: deny-sensitive-reads hook (go vet + test)
         working-directory: claude/hooks/deny-sensitive-reads
         run: go vet ./... && go test ./...
-
-      # dotfiles-sync into an empty fake HOME: the install path end to end
-      # (copies, Go builds, icon map, Hue, obsolete files, a second run that does nothing)
-      - name: install (dotfiles-sync in a fake HOME)
-        run: .github/scripts/test-install.sh
 
       - name: gitleaks
         run: gitleaks git --redact --no-banner .

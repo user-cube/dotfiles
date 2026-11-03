@@ -214,10 +214,10 @@ file (a broken `claude/settings.json` would break Claude Code), nvim started hea
 with the plugins at `lazy-lock.json` (any output on startup is an error), the pytest
 tests in `tests/`, Hue's tests (`node --test`), `go vet` and `go test` on every Go
 tool (the commit-msg and sops-guard hooks, kube-guard, `local-files`, the SketchyBar
-checks, the Claude Code hook; modules and builds cached),
-`.github/scripts/test-install.sh` (`dotfiles-sync` into an empty fake HOME: everything
-installed, a second run that changes nothing, the built tools working, `dotfiles-diff`), and
-`gitleaks` over the whole history. Run the same checks locally before pushing:
+checks, the Claude Code hook; modules and builds cached), and
+`gitleaks` over the whole history. The pytest tests include the install path end to
+end (`tests/test_install.py`: `dotfiles-sync` into an empty fake HOME, everything
+installed, a second run that changes nothing, the built tools working, `dotfiles-diff`). Run the same checks locally before pushing:
 
 ```sh
 git ls-files -z | xargs -0 grep -lIE '^#!.*\b(ba)?sh\b' | xargs shellcheck -x -S warning
@@ -231,6 +231,6 @@ python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt && .ven
 gitleaks git --redact --no-banner .
 ```
 
-`.github/scripts/test-install.sh` is best left to CI: its HOME is fake, but
-`install.sh` applies Rex's Settings through `defaults`, which writes this user's
-real preferences whatever HOME is.
+All of it is safe to run on your Mac: the install test's HOME is fake, and the
+apps a sync touches (Rex's Settings through `defaults`, tmux, AeroSpace,
+SketchyBar, borders, VS Code) are fakes there.
