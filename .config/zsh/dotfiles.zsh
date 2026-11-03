@@ -1,8 +1,3 @@
-# dotfiles-sync: update this machine from the dotfiles repo without Ansible.
-# Mirrors the playbook's `dotfiles` tag: pull, sync .config, copy the home
-# files, then reload whatever is running. DOTFILES_DIR overrides ~/dotfiles: it
-# can be the clone being edited, set in ~/.zshrc.local (a branch or uncommitted
-# changes there are installed as they are, and said so).
 # _dotfiles_home_files DIR: reply=(the files .config/dotfiles/home-files of the
 # clone or snapshot DIR lists, copied to ~)
 _dotfiles_home_files() {
@@ -10,11 +5,27 @@ _dotfiles_home_files() {
   (( $#reply )) || { echo "dotfiles: no .config/dotfiles/home-files in $1" >&2; return 1 }
 }
 
+# dotfiles-sync: update this machine from the dotfiles repo without Ansible.
+# Mirrors the playbook's `dotfiles` tag: pull, sync .config, copy the home
+# files, then reload whatever is running. DOTFILES_DIR overrides ~/dotfiles: it
+# can be the clone being edited, set in ~/.zshrc.local (a branch or uncommitted
+# changes there are installed as they are, and said so).
+#
+# This function is the one the shell loaded when it started, which may be older
+# than what the pull brings (a file it copies renamed since): after the pull,
+# the rest is _dotfiles_sync_install from the clone's own dotfiles.zsh.
 dotfiles-sync() {
   local repo=${DOTFILES_DIR:-$HOME/dotfiles}
   [[ -d $repo/.git ]] || { echo "dotfiles-sync: $repo is not a git clone"; return 1; }
 
   git -C "$repo" pull --ff-only || return
+  source "$repo/.config/zsh/dotfiles.zsh" || return
+  _dotfiles_sync_install "$repo"
+}
+
+# _dotfiles_sync_install REPO: dotfiles-sync after the pull
+_dotfiles_sync_install() {
+  local repo=$1
   # DOTFILES_DIR can be the clone being edited: it installs what is there, so
   # say so when that is a branch or uncommitted changes
   local branch=$(git -C "$repo" branch --show-current)
