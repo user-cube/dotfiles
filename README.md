@@ -24,7 +24,7 @@ The folders with more than a config file have their own README.
   - `kubectl/complete/`: Tab completion for the krew plugins (`kubectl_complete-<plugin>`, which kubectl runs), mostly through `kubectl get`'s own
   - [`k9s/`](.config/k9s/README.md): the Kubernetes TUI: Monokai skin, Shift-<digit> views, plugins (stern, `kubectl neat`, dive, krr, debug, Argo CD sync / refresh), read-only on production
   - [`sofka/`](.config/sofka/README.md): a Kubernetes TUI in Rust, next to k9s: its config imported from k9s, without the plugins sofka has built in (stern, krr, Argo CD), read-only on production
-  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (promptui) before a change to production, and has k9s / sofka open read-only there; `kube-guard context` feeds the SketchyBar kube item; built by `install.sh`
+  - `kube-guard/`: the Go binary behind `kube-guard.zsh`: reads the kubectl / helm line, finds its context in the kubeconfig and asks (y/N on the terminal) before a change to production, and has k9s / sofka open read-only there; `kube-guard context` feeds the SketchyBar kube item; built by `install.sh`
   - [`zsh/`](.config/zsh/README.md): shell functions sourced by `.zshrc` (`bw`, `secret`, `sops-on`, `dotfiles-sync` / `dotfiles-diff`, `local-backup`, `ws`, `logcli`, `plugins-outdated`, and the kube-guard wrappers)
   - [`vscode/`](.config/vscode/README.md): workspace templates for `ws`, and Hue, a small extension that colors the window per folder (red for production)
   - [`dotfiles/`](.config/dotfiles/README.md): `install.sh` (the steps after a sync), the lists of the files copied to `~` (`home-files`) and of the obsolete ones, the LaunchAgents (`launchd/`), `local-files`
@@ -61,7 +61,7 @@ Day to day (details in the [zsh README](.config/zsh/README.md)):
 - Tab completes in an fzf list (fzf-tab), hidden files included
 - Ctrl+T picks a file, Ctrl+G a folder, Ctrl+R a history entry, with previews
 - `cd` is zoxide: `cd dotfiles` from anywhere, `cdi` to pick
-- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s and sofka open read-only (`kube-guard.zsh`, deciding in Go: `.config/kube-guard`). `KUBE_GUARD=0` skips it once; `KUBE_PROD_REGEX` (default `prod|prd`) says what production is
+- production clusters: `kubectl` / `k` / `helm` ask before a command that changes one, and k9s and sofka open read-only (`kube-guard.zsh`, deciding in Go: `.config/kube-guard`). `KUBE_GUARD=0` skips it once; what production is (default `prod|prd`): `~/.config/kube-guard/prod-regex` on a machine, `KUBE_PROD_REGEX` in a shell
 - Esc Esc adds `sudo`, Ctrl+O copies the line, `copypath`, `extract`, `ofd` / `cdf` (Finder)
 - the Oh My Zsh plugins (zsh-autosuggestions, fzf-tab, zsh-syntax-highlighting)
   are cloned at pinned commits by the playbook; `plugins-outdated` shows which
@@ -136,11 +136,12 @@ before committing (gitleaks also runs as a pre-commit hook).
 | `~/.config/tmux/sessions.local` | repos preloaded as tmux sessions (see `.config/tmux/sessions.local.example`; `tmux-sessions` after editing) |
 | `~/.config/sketchybar/aws_profiles` | AWS profiles shown in the bar |
 | `~/workspaces/*.code-workspace` | VS Code workspaces, created and opened with `ws` |
+| `~/.config/kube-guard/prod-regex` | optional: what production is on this machine, for kube-guard, k9s / sofka and the SketchyBar kube item (one line, e.g. `prod\|prd\|live`; default `prod\|prd`). `KUBE_PROD_REGEX` overrides it in a shell, but only the file reaches SketchyBar |
 | `~/.config/sketchybar/checks` | optional: connectivity checks shown in the bar, instead of every kube context (see `checks.example`) |
 
 ### Backup in Bitwarden
 
-These files (but not the nvim plugins or the workspaces), plus `~/.gitconfig-work`, `~/.kube/config`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
+These files (but not the nvim plugins), plus `~/.gitconfig-work`, `~/.kube/config`, the kubernetes MCP server's `config.toml`, `~/.terraformrc` and `~/.terraform.d/credentials.tfrc.json` (`terraform login` tokens), are backed up as one
 `.tar.gz` attached to a Bitwarden secure note `Local files (<machine>)`
 (`.config/dotfiles/local-files/`, a Go tool built by `dotfiles-sync` and the
 playbook; uses the `bw` wrapper's session).

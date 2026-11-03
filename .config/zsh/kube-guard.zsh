@@ -2,7 +2,9 @@
 # cluster, and k9s and sofka open read-only there (--write to change things;
 # a context switched to inside them keeps the mode they started with). The
 # decision is the Go binary's (.config/kube-guard: the line's subcommand and
-# context, KUBE_PROD_REGEX, the question); these are its wrappers.
+# context, what production is, the question); these are its wrappers.
+# Production on this machine: ~/.config/kube-guard/prod-regex (one line, e.g.
+# prod|prd|live); KUBE_PROD_REGEX overrides it in a shell.
 #
 #   KUBE_GUARD=0 kubectl apply -f x.yaml   skip it for one command
 #

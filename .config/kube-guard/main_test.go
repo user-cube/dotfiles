@@ -227,3 +227,37 @@ func TestKubeContext(t *testing.T) {
 		}
 	}
 }
+
+func TestProdRegexFile(t *testing.T) {
+	guarded(t, "live-eu")
+	home, _ := os.UserHomeDir()
+	os.MkdirAll(filepath.Join(home, ".config", "kube-guard"), 0o700)
+	file := filepath.Join(home, prodRegexFile)
+	deny := func(string) bool { return false }
+	os.WriteFile(file, []byte("# this machine's clusters\n\nlive|prd\n"), 0o600)
+	if rc := check("kubectl", []string{"delete", "pod", "x"}, deny, &bytes.Buffer{}); rc != 1 {
+		t.Errorf("the file's regex: rc %d, want 1 (live-eu is production)", rc)
+	}
+	t.Setenv("KUBE_PROD_REGEX", "staging") // the variable wins over the file
+	if rc := check("kubectl", []string{"delete", "pod", "x"}, deny, &bytes.Buffer{}); rc != 0 {
+		t.Errorf("KUBE_PROD_REGEX over the file: rc %d, want 0", rc)
+	}
+	t.Setenv("KUBE_PROD_REGEX", "")
+	os.WriteFile(file, []byte("(\n"), 0o600)
+	var out bytes.Buffer
+	if rc := check("kubectl", []string{"delete", "pod", "x"}, deny, &out); rc != 2 || !strings.Contains(out.String(), prodRegexFile) {
+		t.Errorf("a bad regex in the file: rc %d, %q", rc, out.String())
+	}
+}
+
+func TestAsk(t *testing.T) {
+	for answer, want := range map[string]bool{"y\n": true, "YES\n": true, " y \n": true, "n\n": false, "\n": false, "": false, "yep\n": false} {
+		var out bytes.Buffer
+		if got := ask(strings.NewReader(answer), &out, "kube-guard: prod-eu is production. kubectl delete pod x"); got != want {
+			t.Errorf("answer %q: %v, want %v", answer, got, want)
+		}
+		if out.String() != "? kube-guard: prod-eu is production. kubectl delete pod x? [y/N] " {
+			t.Errorf("question %q", out.String())
+		}
+	}
+}

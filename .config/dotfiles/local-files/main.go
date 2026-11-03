@@ -30,6 +30,7 @@ var files = []string{
 	".config/sketchybar/checks",
 	".config/sketchybar/aws_profiles",
 	".kube/config",
+	".config/kube-guard/prod-regex",
 	".config/kubernetes-mcp-server/config.toml",
 	".terraformrc",
 	".terraform.d/credentials.tfrc.json",

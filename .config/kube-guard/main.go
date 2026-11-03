@@ -8,32 +8,39 @@
 //	                                       lines, for the SketchyBar kube item (nothing: no context)
 //
 // Production: the context (--context / --kube-context, else the current one,
-// of --kubeconfig when given) matches KUBE_PROD_REGEX, default prod|prd like
-// the SketchyBar kube item, in any case. Reads (get, describe, logs, diff,
+// of --kubeconfig when given) matches the production regex, in any case:
+// KUBE_PROD_REGEX, else the first line of ~/.config/kube-guard/prod-regex (per
+// machine, never committed: what launchd and SketchyBar see too, which never
+// read ~/.zshrc.local), else prod|prd. Reads (get, describe, logs, diff,
 // rollout status, helm template...) pass without asking. KUBE_GUARD=0 skips it.
 //
-// The question is asked on the terminal (/dev/tty): stdin may be the manifest
+// The question (y/N, then Enter) is asked on the terminal (/dev/tty): stdin may be the manifest
 // (kubectl apply -f -). Colors on a terminal, none with NO_COLOR.
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/manifoldco/promptui"
 	"github.com/mattn/go-isatty"
 )
 
 const defaultProdRegex = "prod|prd"
 
+// prodRegexFile is the per-machine production regex, under the home directory
+const prodRegexFile = ".config/kube-guard/prod-regex"
+
 var (
+	blue   = color.New(color.FgBlue, color.Bold)
 	red    = color.New(color.FgRed, color.Bold)
 	yellow = color.New(color.FgYellow, color.Bold)
 	faint  = color.New(color.Faint)
@@ -45,15 +52,30 @@ func setup() {
 	color.NoColor = !isatty.IsTerminal(os.Stderr.Fd()) || os.Getenv("NO_COLOR") != ""
 }
 
-// production says whether ctx matches KUBE_PROD_REGEX (any case)
-func production(ctx string) (bool, error) {
-	expr := os.Getenv("KUBE_PROD_REGEX")
-	if expr == "" {
-		expr = defaultProdRegex
+// prodRegex is the production regex and where it comes from: KUBE_PROD_REGEX,
+// else the first line of ~/.config/kube-guard/prod-regex that is neither blank
+// nor a # comment, else the default
+func prodRegex() (expr, from string) {
+	if expr := os.Getenv("KUBE_PROD_REGEX"); expr != "" {
+		return expr, "KUBE_PROD_REGEX"
 	}
+	home, _ := os.UserHomeDir()
+	if data, err := os.ReadFile(filepath.Join(home, prodRegexFile)); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			if line = strings.TrimSpace(line); line != "" && !strings.HasPrefix(line, "#") {
+				return line, "~/" + prodRegexFile
+			}
+		}
+	}
+	return defaultProdRegex, "the default"
+}
+
+// production says whether ctx matches the production regex (any case)
+func production(ctx string) (bool, error) {
+	expr, from := prodRegex()
 	re, err := regexp.Compile(expr)
 	if err != nil {
-		return false, fmt.Errorf("KUBE_PROD_REGEX %q: %v", expr, err)
+		return false, fmt.Errorf("%s %q: %v", from, expr, err)
 	}
 	return ctx != "" && re.MatchString(strings.ToLower(ctx)), nil
 }
@@ -72,26 +94,28 @@ func isPlugin(word string) bool {
 	return err == nil
 }
 
-// confirm asks y/N on the terminal; anything but y (or no terminal) is no
+// confirm asks y/N on the terminal; anything but y / yes (or no terminal) is no
 func confirm(label string) bool {
 	tty, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
 	if err != nil {
 		return false
 	}
 	defer tty.Close()
-	p := promptui.Prompt{Label: label, IsConfirm: true, Stdin: tty, Stdout: nopCloser{tty}}
-	if color.NoColor { // promptui colors its own templates
-		plain := "{{ . }}? [y/N] "
-		p.Templates = &promptui.PromptTemplates{Prompt: plain, Confirm: plain, Valid: plain, Invalid: plain, Success: "{{ . }}: "}
-	}
-	_, err = p.Run()
-	return err == nil
+	return ask(tty, tty, label)
 }
 
-// nopCloser: promptui closes its Stdout when done, the tty is closed above
-type nopCloser struct{ io.Writer }
-
-func (nopCloser) Close() error { return nil }
+// ask writes the question to out and reads one line of answer from in
+//
+//	? kube-guard: prod-eu is production. kubectl delete pod x? [y/N]
+func ask(in io.Reader, out io.Writer, label string) bool {
+	fmt.Fprintf(out, "%s %s? %s ", blue.Sprint("?"), label, faint.Sprint("[y/N]"))
+	answer, _ := bufio.NewReader(in).ReadString('\n')
+	switch strings.ToLower(strings.TrimSpace(answer)) {
+	case "y", "yes":
+		return true
+	}
+	return false
+}
 
 // check: exit 0 when the command may run
 func check(tool string, args []string, ask func(string) bool, out io.Writer) int {
