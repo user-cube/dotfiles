@@ -30,6 +30,7 @@ TOOLS = [
     ".config/kube-guard/kube-guard",
     ".config/sketchybar/plugins/check/check",
     ".claude/hooks/deny-sensitive-reads/deny-sensitive-reads",
+    ".claude/hooks/git-guard/git-guard",
 ]
 LAUNCH_AGENT = "Library/LaunchAgents/com.user-cube.sops-on-login.plist"
 # defaults, for Rex's Settings (settings.py): what is written is exported back,
@@ -124,6 +125,10 @@ esac
 
     # The repo the sync pulls: this checkout with its working tree, committed
     i.git("clone", "-q", str(REPO), str(i.clone), cwd=t)
+    if not i.git("branch", "--show-current"):
+        # CI checks a pull request out detached, and the clone is detached too:
+        # give it a branch, as the upstream below needs one
+        i.git("switch", "-q", "-c", "main")
     subprocess.run(["rsync", "-a", "--exclude", ".git", f"{REPO}/", f"{i.clone}/"], check=True)
     i.git("add", "-A")
     i.git("commit", "-q", "--allow-empty", "-m", "working tree")
@@ -269,11 +274,25 @@ def test_only_the_changed_tool_is_rebuilt(install):
 
 # --- the binaries work ---
 
+def hook_output(install, tool, command):
+    event = json.dumps({"tool_name": "Bash", "cwd": "/tmp", "tool_input": {"command": command}})
+    return subprocess.run([install.home / tool], input=event, capture_output=True, text=True).stdout
+
+
 @pytest.mark.parametrize("command,denied", [("cat .env", True), ("cat README.md", False)])
 def test_claude_hook(install, command, denied):
-    event = json.dumps({"tool_name": "Bash", "cwd": "/tmp", "tool_input": {"command": command}})
-    out = subprocess.run([install.home / TOOLS[-1]], input=event, capture_output=True, text=True).stdout
+    out = hook_output(install, ".claude/hooks/deny-sensitive-reads/deny-sensitive-reads", command)
     assert ('"deny"' in out) == denied, out
+
+
+@pytest.mark.parametrize("command,decision", [
+    ("git commit --no-verify -m 'feat: x'", '"deny"'),
+    ("gh pr merge 3", '"ask"'),
+    ("git commit -m 'feat: x'", None),
+])
+def test_git_guard_hook(install, command, decision):
+    out = hook_output(install, ".claude/hooks/git-guard/git-guard", command)
+    assert (decision in out) if decision else out == "", out
 
 
 def test_sketchybar_check_toggles_its_popup(install):
