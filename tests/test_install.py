@@ -125,6 +125,10 @@ esac
 
     # The repo the sync pulls: this checkout with its working tree, committed
     i.git("clone", "-q", str(REPO), str(i.clone), cwd=t)
+    if not i.git("branch", "--show-current"):
+        # CI checks a pull request out detached, and the clone is detached too:
+        # give it a branch, as the upstream below needs one
+        i.git("switch", "-q", "-c", "main")
     subprocess.run(["rsync", "-a", "--exclude", ".git", f"{REPO}/", f"{i.clone}/"], check=True)
     i.git("add", "-A")
     i.git("commit", "-q", "--allow-empty", "-m", "working tree")
