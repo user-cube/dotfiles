@@ -21,6 +21,7 @@ tools=(
   "$HOME/.config/kube-guard"                     # kubectl / helm / k9s / sofka on production (zsh/kube-guard.zsh)
   "$HOME/.config/sketchybar/plugins/check"       # SketchyBar connectivity checks
   "$HOME/.claude/hooks/deny-sensitive-reads"     # Claude Code PreToolUse hook (Bash and Read are blocked until built)
+  "$HOME/.claude/hooks/git-guard"                # Claude Code PreToolUse hook: commits and PRs (Bash is blocked until built)
 )
 for dir in "${tools[@]}"; do
   bin="$dir/$(basename "$dir")"

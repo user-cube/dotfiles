@@ -5,6 +5,7 @@ git_hooks/go/sops-guard/sops-guard
 .config/kube-guard/kube-guard
 .config/sketchybar/plugins/check/check
 claude/hooks/deny-sensitive-reads/deny-sensitive-reads
+claude/hooks/git-guard/git-guard
 # Per-machine files (never committed)
 .config/tmux/sessions.local
 .config/sketchybar/aws_profiles

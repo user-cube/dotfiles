@@ -123,5 +123,10 @@ jobs:
         working-directory: claude/hooks/deny-sensitive-reads
         run: go vet ./... && go test ./...
 
+      # Claude Code's PreToolUse hook: checks the commits and PRs Claude writes
+      - name: git-guard hook (go vet + test)
+        working-directory: claude/hooks/git-guard
+        run: go vet ./... && go test ./...
+
       - name: gitleaks
         run: gitleaks git --redact --no-banner .

@@ -30,6 +30,7 @@ TOOLS = [
     ".config/kube-guard/kube-guard",
     ".config/sketchybar/plugins/check/check",
     ".claude/hooks/deny-sensitive-reads/deny-sensitive-reads",
+    ".claude/hooks/git-guard/git-guard",
 ]
 LAUNCH_AGENT = "Library/LaunchAgents/com.user-cube.sops-on-login.plist"
 # defaults, for Rex's Settings (settings.py): what is written is exported back,
