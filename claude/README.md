@@ -17,6 +17,21 @@ project settings. Change these here, not with `/config`: a sync overwrites
 | `hooks/git-guard/` | a Go PreToolUse hook, below |
 | `hooks/write-guard/` | a Go PreToolUse hook, below |
 | `statusline/` | the status line (a Go binary), below |
+| `skills/` | my slash commands, below |
+
+## Skills
+
+`skills/<name>/SKILL.md`, run as `/<name>`. `dotfiles-sync` copies them with the rest of `claude/` (`rsync`
+without `--delete`: a skill removed here stays in `~/.claude/skills` until removed there too).
+`tests/test_claude_skills.py` checks every header (`name` is the directory, a description and a body exist).
+
+| Skill | |
+|---|---|
+| `/commit [hint]` | commits the working tree on a feature branch (never on `main`: the commit-msg hook blocks it): files staged by name, a conventional header in English, no full stop, no attribution, no `--no-verify`. A hook that rejects it means a **new** commit, not an amend. It does not push |
+| `/pr [draft] [base]` | pushes and opens a PR ready for review (`draft` for a draft): the body goes through `--body-file` (a heredoc leaves stray backslashes before backticks), with what changed, why and what a reviewer should know. An open PR for the branch is only pushed to. A `CONFLICTING` PR gets the base merged in. It never merges or turns on auto-merge |
+
+Both are `disable-model-invocation: true`: only the user runs them, Claude does not decide to commit or open a PR
+by itself, and each has an `allowed-tools` list of just the git and `gh pr` commands it needs.
 
 ## Status line
 
@@ -35,6 +50,8 @@ dotfiles  main*  ⎈ prod-eu/api PROD │ Opus · ctx 42% · $1.23 · 5h 18% · 
 - `refreshInterval` is 15 s so a context switched in another terminal shows up without a new message;
   `NO_COLOR=1` turns the colors off
 - built by `install.sh`; until it is, the line is blank
+- shown by Claude Code in a terminal (the VS Code integrated terminal too); the desktop app and the VS Code
+  panel ignore `statusLine`, the hooks below work everywhere
 - `go test ./...` in its folder
 
 ## Hooks (PreToolUse)
