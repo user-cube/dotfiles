@@ -41,6 +41,16 @@
         ]
       },
       {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/write-guard/write-guard || { echo 'write-guard is not built: run dotfiles-sync' >&2; exit 2; }",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {

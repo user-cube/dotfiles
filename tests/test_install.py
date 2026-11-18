@@ -31,6 +31,7 @@ TOOLS = [
     ".config/sketchybar/plugins/check/check",
     ".claude/hooks/deny-sensitive-reads/deny-sensitive-reads",
     ".claude/hooks/git-guard/git-guard",
+    ".claude/hooks/write-guard/write-guard",
 ]
 LAUNCH_AGENT = "Library/LaunchAgents/com.user-cube.sops-on-login.plist"
 # defaults, for Rex's Settings (settings.py): what is written is exported back,
@@ -293,6 +294,19 @@ def test_claude_hook(install, command, denied):
 def test_git_guard_hook(install, command, decision):
     out = hook_output(install, ".claude/hooks/git-guard/git-guard", command)
     assert (decision in out) if decision else out == "", out
+
+
+@pytest.mark.parametrize("tool,tool_input,denied", [
+    ("Write", {"file_path": "/tmp/.env"}, True),
+    ("Edit", {"file_path": "/tmp/main.go"}, False),
+    ("Bash", {"command": "echo x > ~/.claude/settings.json"}, True),
+    ("Bash", {"command": "cat ~/.claude/settings.json"}, False),
+])
+def test_write_guard_hook(install, tool, tool_input, denied):
+    event = json.dumps({"tool_name": tool, "cwd": "/tmp", "tool_input": tool_input})
+    out = subprocess.run([install.home / ".claude/hooks/write-guard/write-guard"], input=event,
+                         capture_output=True, text=True, env=dict(install.env, HOME=str(install.home))).stdout
+    assert ('"deny"' in out) == denied, out
 
 
 def test_sketchybar_check_toggles_its_popup(install):

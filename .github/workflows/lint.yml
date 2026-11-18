@@ -128,5 +128,10 @@ jobs:
         working-directory: claude/hooks/git-guard
         run: go vet ./... && go test ./...
 
+      # Claude Code's PreToolUse hook: blocks writes to keys, git hooks and the guardrails
+      - name: write-guard hook (go vet + test)
+        working-directory: claude/hooks/write-guard
+        run: go vet ./... && go test ./...
+
       - name: gitleaks
         run: gitleaks git --redact --no-banner .
