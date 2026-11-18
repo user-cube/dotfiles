@@ -162,6 +162,89 @@ func TestHelm(t *testing.T) {
 	})
 }
 
+func TestTerraform(t *testing.T) {
+	table(t, []string{"terraform"}, []tc{
+		// allowed: check the code
+		{"fmt -check", `terraform fmt -check`, ""},
+		{"fmt -check -diff -recursive", `terraform fmt -check -diff -recursive`, ""},
+		{"fmt -write=false", `terraform fmt -write=false -diff`, ""},
+		{"fmt a directory", `terraform fmt -check infra/`, ""},
+		{"validate", `terraform validate`, ""},
+		{"validate -json", `terraform validate -json`, ""},
+		{"-chdir validate", `terraform -chdir=infra validate`, ""},
+		{"-chdir fmt", `terraform -chdir=infra fmt -check`, ""},
+		{"version", `terraform version`, ""},
+		{"tofu fmt", `tofu fmt -check -recursive`, ""},
+		{"tofu validate", `tofu validate`, ""},
+		{"tflint", `tflint`, ""},
+		{"tflint chdir", `tflint --chdir=infra`, ""},
+		{"tflint recursive json", `tflint --recursive --format=json`, ""},
+		{"tflint config", `tflint -c .tflint.hcl`, ""},
+		{"trivy config", `trivy config ./infra`, ""},
+		{"trivy config severity", `trivy config --severity HIGH,CRITICAL --format json ./infra`, ""},
+		{"rtk in front", `rtk terraform validate`, ""},
+
+		// denied: fmt that writes
+		{"fmt bare", `terraform fmt`, "rewrites the files"},
+		{"fmt -diff alone writes", `terraform fmt -diff`, "rewrites the files"},
+		{"fmt -recursive alone writes", `terraform fmt -recursive`, "rewrites the files"},
+		{"fmt -write=true", `terraform fmt -write=true`, "rewrites the files"},
+		{"fmt -check -write=true", `terraform fmt -check -write=true`, "rewrites the files"},
+		{"tofu fmt bare", `tofu fmt`, "rewrites the files"},
+
+		// denied: everything that plans, changes, initialises or reads state
+		{"plan", `terraform plan`, "is not one of the terraform commands"},
+		{"apply", `terraform apply`, "is not one of the terraform commands"},
+		{"destroy", `terraform destroy`, "is not one of the terraform commands"},
+		{"init", `terraform init`, "is not one of the terraform commands"},
+		{"get", `terraform get`, "is not one of the terraform commands"},
+		{"import", `terraform import a.b id`, "is not one of the terraform commands"},
+		{"state", `terraform state list`, "is not one of the terraform commands"},
+		{"show", `terraform show`, "is not one of the terraform commands"},
+		{"output", `terraform output`, "is not one of the terraform commands"},
+		{"console", `terraform console`, "is not one of the terraform commands"},
+		{"test", `terraform test`, "is not one of the terraform commands"},
+		{"workspace", `terraform workspace select prod`, "is not one of the terraform commands"},
+		{"providers", `terraform providers lock`, "is not one of the terraform commands"},
+		{"refresh", `terraform refresh`, "is not one of the terraform commands"},
+		{"force-unlock", `terraform force-unlock x`, "is not one of the terraform commands"},
+		{"tofu apply", `tofu apply`, "is not one of the tofu commands"},
+		{"alone", `terraform`, "give it one of"},
+
+		// denied: options before the subcommand, other than -chdir=
+		{"-chdir with a space", `terraform -chdir infra validate`, "No option before"},
+		{"-var", `terraform -var x=1 validate`, "No option before"},
+		{"-chdir to a secret", `terraform -chdir=secrets/prod validate`, "not marked as encrypted"},
+		{"-chdir to ssh", `terraform -chdir=~/.ssh validate`, "an ssh path"},
+
+		// denied: the linters that download or write
+		{"tflint --init", `tflint --init`, "downloads plugins"},
+		{"tflint --fix", `tflint --fix`, "rewrites the files"},
+		{"tflint --langserver", `tflint --langserver`, "starts a server"},
+		{"trivy fs", `trivy fs .`, "is not one of the trivy commands"},
+		{"trivy image", `trivy image nginx`, "is not one of the trivy commands"},
+		{"trivy repo", `trivy repo https://github.com/x/y`, "is not one of the trivy commands"},
+		{"trivy -o", `trivy config -o out.json ./infra`, "writes a file"},
+		{"trivy --output", `trivy config --output out.json ./infra`, "writes a file"},
+		{"trivy --server", `trivy config --server http://x ./infra`, "sends the code to a server"},
+		{"trivy a remote target", `trivy config https://example.com/x`, "a remote chart or URL"},
+
+		// denied: shell syntax, and other programs
+		{"pipe", `terraform validate | head`, "one simple command"},
+		{"redirect", `terraform fmt -check > out`, "one simple command"},
+		{"kubectl", `kubectl get pods`, "may only run: terraform, tflint, tofu, trivy"},
+		{"git is not in this profile", `git diff`, "may only run: terraform, tflint, tofu, trivy"},
+		{"helm is not in this profile", `helm lint ./chart`, "may only run: terraform, tflint, tofu, trivy"},
+	})
+
+	table(t, []string{"git", "terraform"}, []tc{
+		{"git", `git diff main...HEAD`, ""},
+		{"terraform", `terraform validate`, ""},
+		{"a git write is still denied", `git push`, "is not one of the git commands"},
+		{"a terraform apply is still denied", `terraform apply`, "is not one of the terraform commands"},
+	})
+}
+
 func TestProfilesAddUp(t *testing.T) {
 	table(t, []string{"git", "helm"}, []tc{
 		{"git", `git diff main...HEAD`, ""},

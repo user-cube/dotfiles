@@ -9,11 +9,20 @@ import (
 type program struct {
 	subs   map[string]bool            // the subcommands that read; nil: the program takes no subcommand
 	deeper map[string]map[string]bool // a subcommand that needs one more word: helm dependency list
-	flags  []flag                     // denied after the subcommand (up to a bare --), by their start
-	arg    func(word string) string   // why an argument may not be passed, "" to let it through
+	// the options allowed before the subcommand, by their start (terraform -chdir=dir); any other is denied
+	leading []string
+	needs   map[string]need          // a subcommand that only reads in a certain mode: terraform fmt -check
+	flags   []flag                   // denied after the subcommand (up to a bare --), by their start
+	arg     func(word string) string // why an argument may not be passed, "" to let it through
 }
 
 type flag struct{ prefix, why string }
+
+// need: at least one of the flags (by their start) must be there, else why
+type need struct {
+	anyOf []string
+	why   string
+}
 
 // profiles are added together by name: `readonly git helm`
 var profiles = map[string]map[string]program{
@@ -54,6 +63,48 @@ var profiles = map[string]map[string]program{
 			arg: sensitiveArg,
 		},
 	},
+
+	// terraform and OpenTofu that check the code: format in check mode, validate, and
+	// the static linters. Nothing that plans, applies, initialises (downloads
+	// providers and modules), reads state or runs infrastructure tests
+	"terraform": {
+		"terraform": terraformProgram,
+		"tofu":      terraformProgram,
+		"tflint": {
+			flags: []flag{
+				{"--init", "downloads plugins and writes them"},
+				{"--fix", "rewrites the files"},
+				{"--langserver", "starts a server"},
+			},
+			arg: sensitiveArg,
+		},
+		"trivy": {
+			subs: set("config"),
+			flags: []flag{
+				{"--output", "writes a file"},
+				{"-o", "writes a file"},
+				{"--server", "sends the code to a server"},
+				{"--token", "is for a server"},
+				{"--custom-headers", "is for a server"},
+			},
+			arg: sensitiveArg,
+		},
+	},
+}
+
+// What terraform and tofu share. fmt must be told not to write; -chdir is the
+// only way to point validate at a directory, so it is the one option allowed
+// before the subcommand (and its value is judged like any argument).
+var terraformProgram = program{
+	subs:    set("fmt validate version"),
+	leading: []string{"-chdir="},
+	needs: map[string]need{
+		"fmt": {anyOf: []string{"-check", "-write=false"}, why: "rewrites the files unless it is run with -check (or -write=false)"},
+	},
+	flags: []flag{
+		{"-write=true", "rewrites the files"}, // not -write=false, which is what is asked for
+	},
+	arg: sensitiveArg,
 }
 
 func set(words string) map[string]bool {
