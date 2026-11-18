@@ -9,7 +9,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "~/.claude/hooks/readonly-git/readonly-git || { echo 'readonly-git is not built: run dotfiles-sync' >&2; exit 2; }"
+          command: "~/.claude/hooks/readonly/readonly git || { echo 'readonly is not built: run dotfiles-sync' >&2; exit 2; }"
           timeout: 5
 ---
 

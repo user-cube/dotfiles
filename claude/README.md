@@ -16,7 +16,7 @@ project settings. Change these here, not with `/config`: a sync overwrites
 | `hooks/stop-check/` | a Go Stop hook, below |
 | `hooks/git-guard/` | a Go PreToolUse hook, below |
 | `hooks/write-guard/` | a Go PreToolUse hook, below |
-| `hooks/readonly-git/`, `agents/` | a subagent and its Go hook, below |
+| `hooks/readonly/`, `agents/` | the review agents and their Go hook, below |
 | `statusline/` | the status line (a Go binary), below |
 | `skills/` | my slash commands, below |
 
@@ -144,17 +144,42 @@ tool list plus, where a tool is too wide, a hook in the agent's own header.
 
 | Agent | |
 |---|---|
-| `security-reviewer` | read-only review of a change (`git diff HEAD`, then the branch against `main`) for secrets, injection, trust, dependencies and CI, and for anything that weakens a guardrail. Reports findings ranked by severity with `file:line`, and what it did not check; it fixes nothing. Tools: `Read`, `Grep`, `Glob` and `Bash`, which its header narrows with the `readonly-git` hook. Delegated to by Claude (its description says "use proactively"), or `@agent-security-reviewer` |
+| `security-reviewer` | read-only review of a change (`git diff HEAD`, then the branch against `main`) for secrets, injection, trust, dependencies and CI, and for anything that weakens a guardrail. Reports findings ranked by severity with `file:line`, and what it did not check; it fixes nothing. Bash narrowed by `readonly git` |
+| `helm-reviewer` | read-only review of a Helm chart or a change to one: `helm lint --strict`, `helm template` with the defaults and each environment's values (production first), then pod security, reliability, access, values and secrets, template and chart hygiene problems, with the rendered snippet as evidence. Never talks to a cluster or the network. Bash narrowed by `readonly git helm` |
 
-### readonly-git (the security-reviewer's Bash)
+Both are delegated to by Claude (their descriptions say "use proactively"), or `@agent-<name>`. Tools: `Read`,
+`Grep`, `Glob` and `Bash`, which the header's hook narrows.
 
-A PreToolUse hook in the agent's own header, so it applies to that agent only. Allows one simple git command that
-reads (`diff`, `log`, `show`, `status`, `ls-files`, `ls-tree`, `blame`, `rev-parse`, `merge-base`, `shortlog`,
-`describe`), with `rtk` in front when the global rtk hook rewrites it. Denies:
+### readonly (the review agents' Bash)
 
-- any other command, and any option before the git subcommand (`-c`, `-C`, `--git-dir` can run a program)
-- `--output` (writes a file), `--ext-diff`, `--textconv`, `-O` (run a program)
-- shell syntax: `;` `&` `|` `<` `>`, backticks, `$(` and new lines
-- the global hooks still apply on top (`deny-sensitive-reads` stops it reading keys, `write-guard` stops writes)
-- built by `install.sh`; until it is, the agent's Bash is blocked with "run dotfiles-sync"
-- `go test ./...` in `hooks/readonly-git`
+A PreToolUse hook named in an agent's own header, with the profiles it needs, so it applies to that agent only:
+
+```yaml
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "~/.claude/hooks/readonly/readonly git helm || { echo 'readonly is not built: run dotfiles-sync' >&2; exit 2; }"
+```
+
+A profile (`hooks/readonly/profiles.go`) lists, per program, the subcommands that read, the flags that don't and the
+arguments that may not be passed. Profiles add up (`git helm` allows what either allows); one it does not know
+denies everything, so a typo in a header cannot widen what an agent may run. Adding a domain is a table entry and
+its tests.
+
+| Profile | Allows | Denies |
+|---|---|---|
+| `git` | `diff`, `log`, `show`, `status`, `ls-files`, `ls-tree`, `blame`, `rev-parse`, `merge-base`, `shortlog`, `describe` | every other subcommand; `--output` (writes a file), `--ext-diff`, `--textconv`, `-O` (run a program) |
+| `helm` | `lint`, `template`, `version`, `dependency list` | `install`, `upgrade`, `get`, `repo`, `pull`, `dependency build` and the rest; `--validate` and `--dry-run` (ask the cluster), `--kube*` (point at one), `--output-dir`, `--post-renderer`, `--set-file`, `--repo`, key and credential flags; a remote chart or URL; a path to an env file, a key, an age key, an ssh or AWS directory, or a cleartext file under `secrets/` or `credentials/` (an `.enc.` / `.sops.` one is fine) |
+
+For every profile:
+
+- one simple command, with `rtk` in front when the global rtk hook rewrites it; an option before the subcommand
+  (`git -c`, `helm --kube-context` can run a program or move to another target) and shell syntax (`;` `&` `|` `<`
+  `>`, backticks, `$(`, new lines) are denied
+- the global hooks still apply on top (`deny-sensitive-reads` stops it reading keys, `write-guard` stops writes):
+  `readonly` exists because `helm template -f secrets.yaml` reads a file that the Read tool's hooks never see
+- the arguments are judged by their text, so a symlink to a secret is not seen: a safety net, not a sandbox
+- built by `install.sh`; until it is, the agents' Bash is blocked with "run dotfiles-sync"
+- `go test ./...` in `hooks/readonly`

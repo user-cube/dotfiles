@@ -33,7 +33,7 @@ TOOLS = [
     ".claude/hooks/stop-check/stop-check",
     ".claude/hooks/git-guard/git-guard",
     ".claude/hooks/write-guard/write-guard",
-    ".claude/hooks/readonly-git/readonly-git",
+    ".claude/hooks/readonly/readonly",
     ".claude/statusline/statusline",
 ]
 LAUNCH_AGENT = "Library/LaunchAgents/com.user-cube.sops-on-login.plist"
@@ -332,15 +332,20 @@ def test_write_guard_hook(install, tool, tool_input, denied):
     assert ('"deny"' in out) == denied, out
 
 
-@pytest.mark.parametrize("command,denied", [
-    ("git diff main...HEAD", False),
-    ("git commit -m x", True),
-    ("git diff | head", True),
-    ("git -c diff.external=x diff", True),
+@pytest.mark.parametrize("profiles,command,denied", [
+    ("git", "git diff main...HEAD", False),
+    ("git", "git commit -m x", True),
+    ("git", "git diff | head", True),
+    ("git", "git -c diff.external=x diff", True),
+    ("git helm", "helm lint ./chart", False),
+    ("git helm", "helm template r ./chart --dry-run=server", True),
+    ("git helm", "helm install r ./chart", True),
+    ("git", "helm lint ./chart", True),
+    ("typo", "git diff", True),
 ])
-def test_readonly_git_hook(install, command, denied):
+def test_readonly_hook(install, profiles, command, denied):
     event = json.dumps({"tool_name": "Bash", "tool_input": {"command": command}})
-    out = subprocess.run([install.home / ".claude/hooks/readonly-git/readonly-git"], input=event,
+    out = subprocess.run([install.home / ".claude/hooks/readonly/readonly", *profiles.split()], input=event,
                          capture_output=True, text=True).stdout
     assert ('"deny"' in out) == denied, out
 
