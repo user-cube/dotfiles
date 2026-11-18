@@ -20,6 +20,23 @@ project settings. Change these here, not with `/config`: a sync overwrites
 | `statusline/` | the status line (a Go binary), below |
 | `skills/` | my slash commands, below |
 
+## Permissions
+
+`settings.json` has three lists, and the hooks run on top of all of them:
+
+- `deny`: `Read` of keys, env files and credentials (the hooks cover what `Read` rules cannot: Bash, writes)
+- `ask`: `git commit` and `git push`, with and without `rtk` or `-C`
+- `allow`: read-only things that kept prompting, from the 50 most recent transcripts (names and counts only were
+  read, with the `fewer-permission-prompts` skill's rules, applied here and not to a project's `.claude/`):
+  `go vet ./...`, `gofmt -l`, `shellcheck`, and the MCP tools that only read (Grafana queries, BookStack reads and
+  search, superlogical docs and feedback, a PR's status, `pods_list`, the browser's `find` and `get_page_text`)
+
+Left out on purpose: what Claude Code already allows by itself (`cat`, `grep`, `ls`, `git status`, `gh pr view`...),
+interpreters and task runners (`python3`, `node`, `make`, `npx`), `gh api`, `curl`, and `go test ./...` and
+`pytest`, which run a repository's own code: wildcard-allowed everywhere, an unknown repository could run code
+unasked. Allow those in a project's own `.claude/settings.json`. Nothing that writes is allowed, and
+`resources_get` of the Kubernetes MCP is not either: it can return a Secret.
+
 ## Skills
 
 `skills/<name>/SKILL.md`, run as `/<name>`. `dotfiles-sync` copies them with the rest of `claude/` (`rsync`
