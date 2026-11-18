@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -95,7 +96,8 @@ func repo(t *testing.T) (string, hook) {
 	h := hook{
 		run: execRunner,
 		has: func(tool string) bool {
-			return tool != "shellcheck" && tool != "zsh" && func() bool { _, err := exec.LookPath(tool); return err == nil }()
+			// the tests that want shellcheck, zsh or gitleaks say so; the rest do not depend on what is installed
+			return tool != "shellcheck" && tool != "zsh" && tool != "gitleaks" && func() bool { _, err := exec.LookPath(tool); return err == nil }()
 		},
 		cacheDir: filepath.Join(t.TempDir(), "cache"),
 	}
@@ -260,5 +262,127 @@ func TestRun(t *testing.T) {
 	}
 	if resp["decision"] != "block" || !strings.Contains(resp["reason"], "go test in mod") {
 		t.Errorf("decision = %v", resp)
+	}
+}
+
+// --- gitleaks ---
+
+// fakeScanner stands in for gitleaks: it records the arguments and answers with report
+func fakeScanner(report string, seen *[]string) runner {
+	real := execRunner
+	return func(ctx context.Context, dir, name string, args ...string) (string, error) {
+		if name != "gitleaks" {
+			return real(ctx, dir, name, args...)
+		}
+		*seen = args
+		return report, nil
+	}
+}
+
+func withGitleaks(h hook) hook {
+	have := h.has
+	h.has = func(tool string) bool { return tool == "gitleaks" || have(tool) }
+	return h
+}
+
+func TestSecretsAreReportedByPlaceNeverByValue(t *testing.T) {
+	root, h := repo(t)
+	write(t, root, "app/config.txt", "x\n")
+	var seen []string
+	// the real report is redacted; a field that was not would still not be printed
+	h.run = fakeScanner(`[{"File":"`+root+`/app/config.txt","StartLine":3,"RuleID":"github-pat","Description":"GitHub Personal Access Token","Secret":"super-secret-value","Match":"token = super-secret-value"}]`, &seen)
+	got := withGitleaks(h).check(context.Background(), root)
+	if !strings.Contains(got, "app/config.txt:3  GitHub Personal Access Token (github-pat)") {
+		t.Errorf("want the place and the rule, got %q", got)
+	}
+	if strings.Contains(got, "super-secret-value") {
+		t.Errorf("the secret is in the report: %q", got)
+	}
+	if !strings.Contains(got, "rotated") {
+		t.Errorf("it should say a real secret has to be rotated: %q", got)
+	}
+	if !strings.Contains(strings.Join(seen, " "), "--redact") || !strings.Contains(strings.Join(seen, " "), root+"/app/config.txt") {
+		t.Errorf("gitleaks should be redacted and given the changed file: %v", seen)
+	}
+}
+
+func TestSecretsUseTheRepositoryConfig(t *testing.T) {
+	root, h := repo(t)
+	write(t, root, ".gitleaks.toml", "title = \"x\"\n")
+	write(t, root, "a.txt", "x\n")
+	var seen []string
+	h.run = fakeScanner(`[]`, &seen)
+	withGitleaks(h).check(context.Background(), root)
+	joined := strings.Join(seen, " ")
+	if !strings.Contains(joined, "-c "+root+"/.gitleaks.toml") {
+		t.Errorf("the repository's config should be passed: %v", seen)
+	}
+}
+
+func TestSecretsClean(t *testing.T) {
+	root, h := repo(t)
+	write(t, root, "a.txt", "x\n")
+	var seen []string
+	h.run = fakeScanner(`[]`, &seen)
+	if got := withGitleaks(h).check(context.Background(), root); got != "" {
+		t.Errorf("a clean scan: %q", got)
+	}
+}
+
+func TestSecretsScannerThatFailsIsNotAFailure(t *testing.T) {
+	root, h := repo(t)
+	write(t, root, "a.txt", "x\n")
+	for _, report := range []string{"", "gitleaks: bad config", "[not json"} {
+		var seen []string
+		h.run = fakeScanner(report, &seen)
+		h.cacheDir = filepath.Join(t.TempDir(), "cache")
+		if got := withGitleaks(h).check(context.Background(), root); got != "" {
+			t.Errorf("report %q was reported as a failure: %q", report, got)
+		}
+	}
+}
+
+func TestSecretsWithoutGitleaks(t *testing.T) {
+	root, h := repo(t)
+	write(t, root, "a.txt", "x\n")
+	var seen []string
+	h.run = fakeScanner(`[{"File":"a.txt","StartLine":1,"RuleID":"r","Description":"d"}]`, &seen)
+	if got := h.check(context.Background(), root); got != "" || seen != nil {
+		t.Errorf("not installed: got %q, gitleaks called with %v", got, seen)
+	}
+}
+
+func TestSecretsOnlyTheChangedFilesThatExist(t *testing.T) {
+	root, h := repo(t)
+	var seen []string
+	h.run = fakeScanner(`[]`, &seen)
+	// only a deleted file changed: nothing to scan, so gitleaks is not run
+	os.Remove(filepath.Join(root, "mod/m_test.go"))
+	withGitleaks(h).check(context.Background(), root)
+	if seen != nil {
+		t.Errorf("a deleted file was scanned: %v", seen)
+	}
+}
+
+// the real gitleaks, with a token made up here (never written in the source,
+// which gitleaks scans in CI) that looks like a GitHub one
+func TestRealGitleaks(t *testing.T) {
+	need(t, "gitleaks")
+	root, h := repo(t)
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	r := rand.New(rand.NewSource(7))
+	token := "ghp_"
+	for range 36 {
+		token += string(letters[r.Intn(len(letters))])
+	}
+	write(t, root, "deploy/env.txt", "token = \""+token+"\"\n")
+	h = withGitleaks(h)
+	h.has = func(tool string) bool { _, err := exec.LookPath(tool); return err == nil && tool == "gitleaks" }
+	got := h.check(context.Background(), root)
+	if !strings.Contains(got, "deploy/env.txt:1") || !strings.Contains(got, "github-pat") {
+		t.Errorf("want the place and the rule, got %q", got)
+	}
+	if strings.Contains(got, token) || strings.Contains(got, token[:12]) {
+		t.Errorf("the token is in the report: %q", got)
 	}
 }
