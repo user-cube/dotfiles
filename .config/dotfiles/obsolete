@@ -14,3 +14,7 @@ git_hooks/go/commit-msg/taskfile.yaml
 .config/kubie/kubie.yaml
 .kube/kubie.yaml
 git_hooks/sops-guard/pre-commit
+.claude/hooks/readonly-git/readonly-git
+.claude/hooks/readonly-git/main.go
+.claude/hooks/readonly-git/main_test.go
+.claude/hooks/readonly-git/go.mod
