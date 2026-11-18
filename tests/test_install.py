@@ -345,6 +345,11 @@ def test_write_guard_hook(install, tool, tool_input, denied):
     ("git terraform", "terraform fmt", True),
     ("git terraform", "terraform apply", True),
     ("git terraform", "tflint --init", True),
+    ("git ansible", "ansible-playbook --syntax-check site.yml", False),
+    ("git ansible", "ansible-lint --offline .", False),
+    ("git ansible", "ansible-playbook site.yml", True),
+    ("git ansible", "ansible-lint .", True),
+    ("git ansible", "ansible-vault decrypt x.yml", True),
     ("git", "helm lint ./chart", True),
     ("typo", "git diff", True),
 ])

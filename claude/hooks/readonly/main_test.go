@@ -245,6 +245,86 @@ func TestTerraform(t *testing.T) {
 	})
 }
 
+func TestAnsible(t *testing.T) {
+	const noRun = "only runs in a mode that stops before any task"
+	table(t, []string{"ansible"}, []tc{
+		// allowed: parse and lint
+		{"syntax-check", `ansible-playbook --syntax-check site.yml`, ""},
+		{"syntax-check a path", `ansible-playbook --syntax-check playbooks/site.yml`, ""},
+		{"list-tasks", `ansible-playbook --list-tasks site.yml`, ""},
+		{"list-tags", `ansible-playbook --list-tags site.yml`, ""},
+		{"list-hosts", `ansible-playbook --list-hosts site.yml`, ""},
+		{"list-tasks with limit and vars", `ansible-playbook --list-tasks site.yml -l web -e env=prod`, ""},
+		{"extra vars file", `ansible-playbook --syntax-check site.yml -e @vars/prod.yml`, ""},
+		{"extra vars encrypted", `ansible-playbook --syntax-check site.yml -e @secrets/prod.enc.yml`, ""},
+		{"version", `ansible-playbook --version`, ""},
+		{"lint", `ansible-lint --offline site.yml`, ""},
+		{"lint a directory", `ansible-lint --offline roles/web`, ""},
+		{"lint with a profile", `ansible-lint --offline --profile production .`, ""},
+		{"lint json", `ansible-lint --offline -f json site.yml`, ""},
+		{"lint list rules", `ansible-lint -L`, ""},
+		{"lint version", `ansible-lint --version`, ""},
+		{"yamllint", `yamllint -f parsable .`, ""},
+		{"yamllint a file", `yamllint roles/web/tasks/main.yml`, ""},
+		{"ansible-doc", `ansible-doc -t module copy`, ""},
+		{"ansible-doc lookup", `ansible-doc ansible.builtin.template`, ""},
+		{"rtk in front", `rtk ansible-lint --offline .`, ""},
+
+		// denied: runs a playbook, or connects
+		{"a bare run", `ansible-playbook site.yml`, noRun},
+		{"a run with limit", `ansible-playbook -l web site.yml`, noRun},
+		{"check mode connects", `ansible-playbook --check site.yml`, noRun},
+		{"check with syntax-check", `ansible-playbook --syntax-check --check site.yml`, "connects to the hosts"},
+		{"-C", `ansible-playbook --syntax-check -C site.yml`, "connects to the hosts"},
+		{"an inventory", `ansible-playbook --list-hosts -i inventories/prod site.yml`, "can run a script"},
+		{"--inventory", `ansible-playbook --list-hosts --inventory=hosts site.yml`, "can run a script"},
+		{"vault password file", `ansible-playbook --syntax-check --vault-password-file x site.yml`, "decrypts secrets"},
+		{"vault id", `ansible-playbook --syntax-check --vault-id @prompt site.yml`, "decrypts secrets"},
+		{"ask vault pass", `ansible-playbook --syntax-check --ask-vault-pass site.yml`, "decrypts secrets"},
+		{"ask pass", `ansible-playbook --syntax-check --ask-pass site.yml`, "asks for a password"},
+		{"-k", `ansible-playbook --syntax-check -k site.yml`, "asks for a password"},
+		{"a key file", `ansible-playbook --syntax-check --private-key k site.yml`, "reads a key"},
+		{"-u", `ansible-playbook --syntax-check -u root site.yml`, "sets a connection user"},
+		{"-c", `ansible-playbook --syntax-check -c ssh site.yml`, "sets a connection"},
+		{"module path", `ansible-playbook --syntax-check -M ./mods site.yml`, "loads code from a path"},
+		{"extra vars from a secret", `ansible-playbook --syntax-check site.yml -e @secrets/prod.yml`, "not marked as encrypted"},
+		{"extra vars from an env file", `ansible-playbook --syntax-check site.yml -e @.env`, "an env file"},
+		{"playbook alone", `ansible-playbook`, noRun},
+
+		// denied: lint that installs, rewrites or runs code
+		{"lint without --offline", `ansible-lint site.yml`, "installs roles and collections"},
+		{"lint alone", `ansible-lint`, "installs roles and collections"},
+		{"lint --fix", `ansible-lint --offline --fix site.yml`, "rewrites the files"},
+		{"lint --write", `ansible-lint --offline --write=all site.yml`, "rewrites the files"},
+		{"lint rules dir", `ansible-lint --offline -r ./rules site.yml`, "runs the code in a rules directory"},
+		{"lint --rules-dir", `ansible-lint --offline --rules-dir ./rules site.yml`, "runs the code in a rules directory"},
+
+		// denied: the other ansible programs
+		{"ansible", `ansible all -m ping`, "may only run: ansible-doc"},
+		{"ansible-vault", `ansible-vault decrypt secrets/x.yml`, "may only run: ansible-doc"},
+		{"ansible-vault view", `ansible-vault view secrets/x.yml`, "may only run: ansible-doc"},
+		{"ansible-inventory", `ansible-inventory --list`, "may only run: ansible-doc"},
+		{"ansible-galaxy", `ansible-galaxy install x`, "may only run: ansible-doc"},
+		{"ansible-config", `ansible-config dump`, "may only run: ansible-doc"},
+		{"ansible-pull", `ansible-pull -U x`, "may only run: ansible-doc"},
+		{"ansible-console", `ansible-console`, "may only run: ansible-doc"},
+
+		// denied: shell syntax, and other programs
+		{"pipe", `ansible-lint --offline . | head`, "one simple command"},
+		{"redirect", `ansible-lint --offline . > out`, "one simple command"},
+		{"substitution", `ansible-playbook --syntax-check $(echo x)`, "one simple command"},
+		{"kubectl", `kubectl get pods`, "may only run: ansible-doc, ansible-lint, ansible-playbook, yamllint"},
+		{"terraform is not in this profile", `terraform validate`, "may only run: ansible-doc"},
+	})
+
+	table(t, []string{"git", "ansible"}, []tc{
+		{"git", `git diff main...HEAD`, ""},
+		{"ansible-lint", `ansible-lint --offline .`, ""},
+		{"a git write is still denied", `git push`, "is not one of the git commands"},
+		{"a playbook run is still denied", `ansible-playbook site.yml`, noRun},
+	})
+}
+
 func TestProfilesAddUp(t *testing.T) {
 	table(t, []string{"git", "helm"}, []tc{
 		{"git", `git diff main...HEAD`, ""},
