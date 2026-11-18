@@ -325,6 +325,79 @@ func TestAnsible(t *testing.T) {
 	})
 }
 
+func TestK8s(t *testing.T) {
+	table(t, []string{"k8s"}, []tc{
+		// allowed: validate and lint manifests, build an overlay
+		{"kubeconform", `kubeconform -strict -summary manifests/`, ""},
+		{"kubeconform json", `kubeconform -output json -ignore-missing-schemas deploy.yaml`, ""},
+		{"kubeconform version", `kubeconform -kubernetes-version 1.30.0 -strict k8s/`, ""},
+		{"kubeconform skip", `kubeconform -skip Certificate,ClusterIssuer k8s/`, ""},
+		{"kustomize build", `kustomize build overlays/prod`, ""},
+		{"kustomize build a path", `kustomize build ./k8s/overlays/staging`, ""},
+		{"kustomize version", `kustomize version`, ""},
+		{"kube-linter", `kube-linter lint manifests/`, ""},
+		{"kube-linter format", `kube-linter lint --format json k8s/`, ""},
+		{"kube-score", `kube-score score deploy.yaml service.yaml`, ""},
+		{"trivy config", `trivy config --severity HIGH,CRITICAL k8s/`, ""},
+		{"rtk in front", `rtk kubeconform -strict k8s/`, ""},
+
+		// denied: kustomize that runs code, writes or reaches outside
+		{"enable-helm", `kustomize build --enable-helm overlays/prod`, "turns on plugins or helm"},
+		{"enable-exec", `kustomize build --enable-exec .`, "turns on plugins or helm"},
+		{"enable-alpha-plugins", `kustomize build --enable-alpha-plugins .`, "turns on plugins or helm"},
+		{"load-restrictor", `kustomize build --load-restrictor LoadRestrictionsNone .`, "reads outside"},
+		{"-o", `kustomize build -o out.yaml .`, "writes files"},
+		{"--output", `kustomize build --output out/ .`, "writes files"},
+		{"helm-command", `kustomize build --helm-command ./x .`, "runs a program"},
+		{"network", `kustomize build --network .`, "runs containers"},
+		{"env", `kustomize build --env X .`, "passes the environment"},
+		{"edit", `kustomize edit set image a=b`, "is not one of the kustomize commands"},
+		{"create", `kustomize create --autodetect`, "is not one of the kustomize commands"},
+		{"cfg", `kustomize cfg fmt .`, "is not one of the kustomize commands"},
+		{"fn", `kustomize fn run .`, "is not one of the kustomize commands"},
+		{"a remote base", `kustomize build github.com/org/repo//overlays/prod?ref=v1`, "a remote chart or URL"},
+		{"a remote url", `kustomize build https://github.com/org/repo`, "a remote chart or URL"},
+		{"a git target", `kustomize build git@github.com:org/repo.git//x`, "a remote chart or URL"},
+		{"a ?ref=", `kustomize build ./local?ref=main`, "a remote chart or URL"},
+
+		// denied: the others that write or reach out
+		{"kubeconform cache", `kubeconform -cache /tmp/c k8s/`, "writes a cache directory"},
+		{"kubeconform remote schemas", `kubeconform -schema-location https://example.com/s k8s/`, "a remote chart or URL"},
+		{"kubeconform remote schemas =", `kubeconform -schema-location=https://example.com/s k8s/`, "a remote chart or URL"},
+		{"trivy -o", `trivy config -o out.json k8s/`, "writes a file"},
+		{"trivy image", `trivy image nginx`, "is not one of the trivy commands"},
+		{"kube-linter other", `kube-linter checks list`, "is not one of the kube-linter commands"},
+		{"kube-score other", `kube-score anything`, "is not one of the kube-score commands"},
+
+		// denied: kubectl, in every form, and the cluster tools
+		{"kubectl get", `kubectl get pods`, "may only run: kube-linter, kube-score, kubeconform, kustomize, trivy"},
+		{"kubectl dry-run", `kubectl apply --dry-run=client -f x.yaml`, "may only run: kube-linter"},
+		{"kubectl kustomize", `kubectl kustomize overlays/prod`, "may only run: kube-linter"},
+		{"kubectl diff", `kubectl diff -k overlays/prod`, "may only run: kube-linter"},
+		{"helm", `helm template r ./chart`, "may only run: kube-linter"},
+		{"k9s", `k9s`, "may only run: kube-linter"},
+
+		// denied: a path to a secret, and shell syntax
+		{"a secret manifest", `kubeconform secrets/prod.yaml`, "not marked as encrypted"},
+		{"an encrypted secret manifest", `kubeconform secrets/prod.enc.yaml`, ""},
+		{"an env file", `kube-linter lint .env`, "an env file"},
+		{"pipe", `kustomize build overlays/prod | kubeconform -`, "one simple command"},
+		{"redirect", `kustomize build overlays/prod > out.yaml`, "one simple command"},
+	})
+
+	table(t, []string{"git", "k8s"}, []tc{
+		{"git", `git diff main...HEAD`, ""},
+		{"kubeconform", `kubeconform -strict k8s/`, ""},
+		{"a git write is still denied", `git push`, "is not one of the git commands"},
+		{"kubectl is still denied", `kubectl apply -f x.yaml`, "may only run: git, kube-linter"},
+	})
+
+	// the shorthand for a remote target is refused in the helm profile too
+	table(t, []string{"helm"}, []tc{
+		{"helm remote shorthand", `helm template r github.com/org/chart`, "a remote chart or URL"},
+	})
+}
+
 func TestProfilesAddUp(t *testing.T) {
 	table(t, []string{"git", "helm"}, []tc{
 		{"git", `git diff main...HEAD`, ""},
