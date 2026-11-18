@@ -123,6 +123,11 @@ jobs:
         working-directory: claude/hooks/deny-sensitive-reads
         run: go vet ./... && go test ./...
 
+      # Claude Code's Stop hook: checks what Claude changed before it stops
+      - name: stop-check hook (go vet + test)
+        working-directory: claude/hooks/stop-check
+        run: go vet ./... && go test ./...
+
       # Claude Code's PreToolUse hook: checks the commits and PRs Claude writes
       - name: git-guard hook (go vet + test)
         working-directory: claude/hooks/git-guard

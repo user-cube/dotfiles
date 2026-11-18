@@ -13,6 +13,7 @@ project settings. Change these here, not with `/config`: a sync overwrites
 | `CLAUDE.md` | global instructions (it includes `RTK.md`) |
 | `RTK.md` | how to use rtk (Rust Token Killer), the token-saving CLI proxy the playbook installs |
 | `hooks/deny-sensitive-reads/` | a Go PreToolUse hook, below |
+| `hooks/stop-check/` | a Go Stop hook, below |
 | `hooks/git-guard/` | a Go PreToolUse hook, below |
 
 ## Hooks (PreToolUse)
@@ -59,3 +60,22 @@ project settings. Change these here, not with `/config`: a sync overwrites
     Claude Code's Bash is blocked with "run dotfiles-sync"
   - `go test ./...` in `.config/kube-guard`
 - **rtk hook claude** (Bash): rewrites commands through rtk
+
+## Hooks (Stop)
+
+The PreToolUse hooks stop what Claude must not do; this checks what it leaves behind.
+
+- **stop-check**: when Claude is about to say it is done, it checks the files changed in the working tree
+  (`git status`, untracked included) and, if a check fails, tells Claude why and Claude carries on
+  - `*.go`: `go vet ./...` and `go test ./...` in the module of each changed file
+  - `*.sh`: `shellcheck`, or `bash -n` without it; `*.zsh`: `zsh -n`
+  - `*.json`: valid JSON (not under `vscode/`: those are JSONC)
+  - no loop: once Claude has been sent back (`stop_hook_active`) it may stop
+  - the same state is not checked twice: a fingerprint of the changed files (path, size, time) is kept per
+    repository in `~/Library/Caches/stop-check`, so a turn that only answers a question costs nothing and
+    a failure is reported once, not on every turn
+  - 100 s for all the checks: a check that runs out of time is skipped, never reported as a failure
+  - it runs the repository's own tests (`go test`), as Claude would
+  - `STOP_CHECK=0` in the environment Claude Code starts from switches it off
+  - built by `install.sh`; until it is, the hook does nothing and Claude just stops
+  - `go test ./...` in its folder
