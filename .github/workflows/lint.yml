@@ -138,6 +138,11 @@ jobs:
         working-directory: claude/hooks/write-guard
         run: go vet ./... && go test ./...
 
+      # The security-reviewer agent's hook: only git commands that read
+      - name: readonly-git hook (go vet + test)
+        working-directory: claude/hooks/readonly-git
+        run: go vet ./... && go test ./...
+
       # Claude Code's status line
       - name: statusline (go vet + test)
         working-directory: claude/statusline

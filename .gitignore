@@ -8,6 +8,7 @@ claude/hooks/deny-sensitive-reads/deny-sensitive-reads
 claude/hooks/stop-check/stop-check
 claude/hooks/git-guard/git-guard
 claude/hooks/write-guard/write-guard
+claude/hooks/readonly-git/readonly-git
 claude/statusline/statusline
 # Per-machine files (never committed)
 .config/tmux/sessions.local

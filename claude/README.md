@@ -16,6 +16,7 @@ project settings. Change these here, not with `/config`: a sync overwrites
 | `hooks/stop-check/` | a Go Stop hook, below |
 | `hooks/git-guard/` | a Go PreToolUse hook, below |
 | `hooks/write-guard/` | a Go PreToolUse hook, below |
+| `hooks/readonly-git/`, `agents/` | a subagent and its Go hook, below |
 | `statusline/` | the status line (a Go binary), below |
 
 ## Status line
@@ -116,3 +117,27 @@ The PreToolUse hooks stop what Claude must not do; this checks what it leaves be
   - `STOP_CHECK=0` in the environment Claude Code starts from switches it off
   - built by `install.sh`; until it is, the hook does nothing and Claude just stops
   - `go test ./...` in its folder
+
+## Agents
+
+`agents/<name>.md`, copied with the rest of `claude/` (`rsync` without `--delete`: an agent removed here stays in
+`~/.claude/agents`). A subagent's `tools:` line takes whole tools, not patterns, so least privilege is a short
+tool list plus, where a tool is too wide, a hook in the agent's own header.
+`tests/test_claude_skills.py` checks every header (and that an agent lists its `tools`).
+
+| Agent | |
+|---|---|
+| `security-reviewer` | read-only review of a change (`git diff HEAD`, then the branch against `main`) for secrets, injection, trust, dependencies and CI, and for anything that weakens a guardrail. Reports findings ranked by severity with `file:line`, and what it did not check; it fixes nothing. Tools: `Read`, `Grep`, `Glob` and `Bash`, which its header narrows with the `readonly-git` hook. Delegated to by Claude (its description says "use proactively"), or `@agent-security-reviewer` |
+
+### readonly-git (the security-reviewer's Bash)
+
+A PreToolUse hook in the agent's own header, so it applies to that agent only. Allows one simple git command that
+reads (`diff`, `log`, `show`, `status`, `ls-files`, `ls-tree`, `blame`, `rev-parse`, `merge-base`, `shortlog`,
+`describe`), with `rtk` in front when the global rtk hook rewrites it. Denies:
+
+- any other command, and any option before the git subcommand (`-c`, `-C`, `--git-dir` can run a program)
+- `--output` (writes a file), `--ext-diff`, `--textconv`, `-O` (run a program)
+- shell syntax: `;` `&` `|` `<` `>`, backticks, `$(` and new lines
+- the global hooks still apply on top (`deny-sensitive-reads` stops it reading keys, `write-guard` stops writes)
+- built by `install.sh`; until it is, the agent's Bash is blocked with "run dotfiles-sync"
+- `go test ./...` in `hooks/readonly-git`
