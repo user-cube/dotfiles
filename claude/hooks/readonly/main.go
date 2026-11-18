@@ -147,6 +147,9 @@ func (r program) check(words []string) string {
 			return where + " " + n.why + " (" + rule + ")."
 		}
 		rest = rest[1:]
+	} else if n, has := r.needs[""]; has && !slices.ContainsFunc(rest, func(w string) bool { return startsWithAny(w, n.anyOf) }) {
+		// a program with no subcommand that only reads in a certain mode (ansible-playbook --syntax-check)
+		return prog + " " + n.why + " (" + rule + ")."
 	}
 	for i, w := range rest {
 		if w == "--" {

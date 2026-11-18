@@ -64,6 +64,10 @@ var profiles = map[string]map[string]program{
 		},
 	},
 
+	// ansible that parses and lints a playbook, role or inventory on this machine: nothing
+	// that connects to a host, runs a task, decrypts a vault or installs from the network
+	"ansible": ansibleProfile,
+
 	// terraform and OpenTofu that check the code: format in check mode, validate, and
 	// the static linters. Nothing that plans, applies, initialises (downloads
 	// providers and modules), reads state or runs infrastructure tests
@@ -90,6 +94,57 @@ var profiles = map[string]map[string]program{
 			arg: sensitiveArg,
 		},
 	},
+}
+
+var ansibleProfile = map[string]program{
+	// the playbook is parsed, never run: one of the modes that stop before any task
+	// does, so nothing connects to a host. -i is denied too: an inventory can be a
+	// script, and it is run to be read
+	"ansible-playbook": {
+		needs: map[string]need{
+			"": {anyOf: []string{"--syntax-check", "--list-tasks", "--list-tags", "--list-hosts", "--version"},
+				why: "only runs in a mode that stops before any task: --syntax-check, --list-tasks, --list-tags or --list-hosts"},
+		},
+		flags: []flag{
+			{"--check", "connects to the hosts"},
+			{"-C", "connects to the hosts"},
+			{"-i", "can run a script (an inventory can be one)"},
+			{"--inventory", "can run a script (an inventory can be one)"},
+			{"--vault", "decrypts secrets"},
+			{"--ask-vault", "decrypts secrets"},
+			{"--ask-", "asks for a password"},
+			{"-k", "asks for a password"},
+			{"-K", "asks for a password"},
+			{"--private-key", "reads a key"},
+			{"--key-file", "reads a key"},
+			{"-u", "sets a connection user"},
+			{"--user", "sets a connection user"},
+			{"-c", "sets a connection"},
+			{"--connection", "sets a connection"},
+			{"-M", "loads code from a path"},
+			{"--module-path", "loads code from a path"},
+		},
+		arg: sensitiveArg,
+	},
+	// static analysis. It installs the roles and collections a project asks for
+	// unless it is told it is offline, so offline is required; --fix rewrites the
+	// files; a rules directory is code that it runs
+	"ansible-lint": {
+		needs: map[string]need{
+			"": {anyOf: []string{"--offline", "--version", "--list-rules", "-L", "--list-tags", "-T"},
+				why: "installs roles and collections from the network unless it is run with --offline"},
+		},
+		flags: []flag{
+			{"--fix", "rewrites the files"},
+			{"--write", "rewrites the files"},
+			{"-r", "runs the code in a rules directory"},
+			{"--rules-dir", "runs the code in a rules directory"},
+			{"--rulesdir", "runs the code in a rules directory"},
+		},
+		arg: sensitiveArg,
+	},
+	"yamllint":    {arg: sensitiveArg},
+	"ansible-doc": {arg: sensitiveArg},
 }
 
 // What terraform and tofu share. fmt must be told not to write; -chdir is the
@@ -135,6 +190,7 @@ func sensitiveArg(w string) string {
 		}
 		w = w[i+1:]
 	}
+	w = strings.TrimPrefix(w, "@") // ansible -e @vars.yml, curl -d @file: a file to read
 	if strings.Contains(w, "://") {
 		return "a remote chart or URL: this agent works on what is on this machine"
 	}
