@@ -13,8 +13,6 @@
       "Read(//**/config/database.yml)"
     ],
     "ask": [
-      "Bash(kubectl:*)",
-      "Bash(rtk kubectl:*)",
       "Bash(git commit:*)",
       "Bash(rtk git commit:*)",
       "Bash(git push:*)",
@@ -46,6 +44,16 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/git-guard/git-guard || { echo 'git-guard is not built: run dotfiles-sync' >&2; exit 2; }",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.config/kube-guard/kube-guard claude-hook || { echo 'kube-guard is not built: run dotfiles-sync' >&2; exit 2; }",
             "timeout": 5
           }
         ]

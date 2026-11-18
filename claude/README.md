@@ -47,4 +47,15 @@ project settings. Change these here, not with `/config`: a sync overwrites
     or built at runtime is not seen, the git `commit-msg` hook is the one that always runs
   - built by `install.sh`; until it is, Claude Code's Bash is blocked with "run dotfiles-sync"
   - `go test ./...` in its folder
+- **kube-guard claude-hook** (Bash): the zsh wrappers never see what Claude runs, so Claude gets the same rule
+  - asks the user (not a flat deny) before `kubectl` / `kubecolor` / `helm` changes a production
+    cluster: same parser, same production regex (`KUBE_PROD_REGEX` or `~/.config/kube-guard/prod-regex`)
+    and same reads-pass rule as [kube-guard](../.config/zsh/kube-guard.zsh)
+  - looks inside `sh -c`, `eval`, `$(...)`, backticks, `sudo` / `env` / `rtk` / `xargs`
+  - `KUBE_GUARD=0` does not switch it off: that is the user's switch, not Claude's
+  - an invalid production regex asks instead of allowing
+  - a command built at runtime (`$CMD`, a script) is not seen: a safety net, not a sandbox
+  - the binary is the one `install.sh` already builds in `.config/kube-guard`; until it is,
+    Claude Code's Bash is blocked with "run dotfiles-sync"
+  - `go test ./...` in `.config/kube-guard`
 - **rtk hook claude** (Bash): rewrites commands through rtk

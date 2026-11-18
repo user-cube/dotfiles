@@ -6,6 +6,8 @@
 //	kube-guard tui k9s|sofka ARGS...       exit 0: open it read-only; 1: as asked
 //	kube-guard context                     CONTEXT, NAMESPACE and prod|other on three
 //	                                       lines, for the SketchyBar kube item (nothing: no context)
+//	kube-guard claude-hook                 Claude Code PreToolUse hook (hook.go): asks the
+//	                                       user before Claude changes a production cluster
 //
 // Production: the context (--context / --kube-context, else the current one,
 // of --kubeconfig when given) matches the production regex, in any case:
@@ -190,6 +192,9 @@ func run(args []string) int {
 	setup()
 	if len(args) == 1 && args[0] == "context" {
 		return kubeContext(os.Stdout)
+	}
+	if len(args) == 1 && args[0] == "claude-hook" {
+		return claudeHook(os.Stdin, os.Stdout)
 	}
 	if len(args) < 2 {
 		fmt.Fprintln(os.Stderr, "usage: kube-guard check kubectl|helm ARGS... | kube-guard tui TOOL ARGS... | kube-guard context")
