@@ -7,6 +7,7 @@ git_hooks/go/sops-guard/sops-guard
 claude/hooks/deny-sensitive-reads/deny-sensitive-reads
 claude/hooks/stop-check/stop-check
 claude/hooks/git-guard/git-guard
+claude/hooks/write-guard/write-guard
 # Per-machine files (never committed)
 .config/tmux/sessions.local
 .config/sketchybar/aws_profiles

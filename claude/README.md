@@ -15,6 +15,7 @@ project settings. Change these here, not with `/config`: a sync overwrites
 | `hooks/deny-sensitive-reads/` | a Go PreToolUse hook, below |
 | `hooks/stop-check/` | a Go Stop hook, below |
 | `hooks/git-guard/` | a Go PreToolUse hook, below |
+| `hooks/write-guard/` | a Go PreToolUse hook, below |
 
 ## Hooks (PreToolUse)
 
@@ -27,6 +28,22 @@ project settings. Change these here, not with `/config`: a sync overwrites
     for Bash it reads the paths from the command text, so it is a safety net, not a sandbox
   - built by `install.sh`; until it is, Claude Code's Bash and Read are blocked
     with "run dotfiles-sync"
+  - `go test ./...` in its folder
+- **write-guard** (Edit, Write, MultiEdit, NotebookEdit and Bash): the other half of deny-sensitive-reads,
+  which stops Claude reading what is private; this stops it changing what keeps it safe
+  - denies a write (an edit, a redirection, `tee`, `sed -i`, `rm`, `mv`, `cp`, `ln`, `chmod`, `dd of=`...) to
+    - `~/.ssh` and `~/.aws`
+    - env files (not `.env.example` and other templates), `*.pem`, `*.key`, age keys
+    - `.git/hooks` and `.git/config`: a `core.hooksPath` there turns every git hook off
+    - `.claude/settings*.json` and `.claude/hooks/`, in `~/.claude` and in any project: the guardrails themselves
+    - `~/.gitconfig*`, `~/.config/git/`, `~/git_hooks/`: the global git hooks and their switches
+    - `~/.config/kube-guard/prod-regex`: what kube-guard calls production
+  - reading them is not its business; this repo's own `claude/` directory is not `~/.claude`, so
+    Claude edits the source here and a sync (your step) puts it in place
+  - looks inside `sh -c`, `eval`, `$(...)`, backticks and `sudo` / `env` / `rtk` / `xargs`
+  - for Bash it reads the paths from the command text: a script or an interpreter (`python -c`) that writes
+    a path built at runtime is not seen, so it is a safety net, not a sandbox
+  - built by `install.sh`; until it is, Claude Code's Edit, Write and Bash are blocked with "run dotfiles-sync"
   - `go test ./...` in its folder
 - **git-guard** (Bash): checks the commits and PRs Claude writes, before they exist
   - `git commit`: no `Co-Authored-By` / "Generated with Claude", no `--no-verify` / `-n`
