@@ -32,6 +32,7 @@ TOOLS = [
     ".claude/hooks/deny-sensitive-reads/deny-sensitive-reads",
     ".claude/hooks/git-guard/git-guard",
     ".claude/hooks/write-guard/write-guard",
+    ".claude/statusline/statusline",
 ]
 LAUNCH_AGENT = "Library/LaunchAgents/com.user-cube.sops-on-login.plist"
 # defaults, for Rex's Settings (settings.py): what is written is exported back,
@@ -307,6 +308,14 @@ def test_write_guard_hook(install, tool, tool_input, denied):
     out = subprocess.run([install.home / ".claude/hooks/write-guard/write-guard"], input=event,
                          capture_output=True, text=True, env=dict(install.env, HOME=str(install.home))).stdout
     assert ('"deny"' in out) == denied, out
+
+
+def test_claude_statusline(install, tmp_path):
+    event = json.dumps({"cwd": str(tmp_path), "model": {"display_name": "Opus"}, "cost": {"total_cost_usd": 1.5}})
+    env = dict(install.env, HOME=str(install.home), NO_COLOR="1", KUBE_GUARD_BIN="/nonexistent")
+    out = subprocess.run([install.home / ".claude/statusline/statusline"], input=event,
+                         capture_output=True, text=True, env=env)
+    assert out.returncode == 0 and out.stdout == f"{tmp_path.name} │ Opus · $1.50\n", out
 
 
 def test_sketchybar_check_toggles_its_popup(install):
