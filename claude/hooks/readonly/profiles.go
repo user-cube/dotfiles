@@ -82,17 +82,37 @@ var profiles = map[string]map[string]program{
 			},
 			arg: sensitiveArg,
 		},
-		"trivy": {
-			subs: set("config"),
+		"trivy": trivyProgram,
+	},
+
+	// Kubernetes manifests and kustomize overlays, checked on this machine: schema
+	// validation and the static linters, and kustomize build to see the final
+	// output. No kubectl, not even --dry-run=client: it can ask the API server
+	"k8s": {
+		"kubeconform": {
+			// it fetches the schemas of the Kubernetes API over the network (a read);
+			// the cache is a directory it writes
+			flags: []flag{{"-cache", "writes a cache directory"}},
+			arg:   sensitiveArg,
+		},
+		"kustomize": {
+			subs: set("build version"),
 			flags: []flag{
-				{"--output", "writes a file"},
-				{"-o", "writes a file"},
-				{"--server", "sends the code to a server"},
-				{"--token", "is for a server"},
-				{"--custom-headers", "is for a server"},
+				{"--enable-", "turns on plugins or helm, which run programs"},
+				{"--load-restrictor", "reads outside the kustomization root"},
+				{"--output", "writes files"},
+				{"-o", "writes files"},
+				{"--helm-command", "runs a program"},
+				{"--network", "runs containers"},
+				{"--mount", "runs containers"},
+				{"--env", "passes the environment to a plugin"},
+				{"-e", "passes the environment to a plugin"},
 			},
 			arg: sensitiveArg,
 		},
+		"kube-linter": {subs: set("lint version"), arg: sensitiveArg},
+		"kube-score":  {subs: set("score version"), arg: sensitiveArg},
+		"trivy":       trivyProgram,
 	},
 }
 
@@ -147,6 +167,20 @@ var ansibleProfile = map[string]program{
 	"ansible-doc": {arg: sensitiveArg},
 }
 
+// trivy config: static scan of IaC and manifests. It may fetch its checks from the
+// network the first time and keeps them in its cache; nothing else is written
+var trivyProgram = program{
+	subs: set("config"),
+	flags: []flag{
+		{"--output", "writes a file"},
+		{"-o", "writes a file"},
+		{"--server", "sends the code to a server"},
+		{"--token", "is for a server"},
+		{"--custom-headers", "is for a server"},
+	},
+	arg: sensitiveArg,
+}
+
 // What terraform and tofu share. fmt must be told not to write; -chdir is the
 // only way to point validate at a directory, so it is the one option allowed
 // before the subcommand (and its value is judged like any argument).
@@ -170,6 +204,9 @@ func set(words string) map[string]bool {
 	return m
 }
 
+// How a remote target is written without a scheme: kustomize's github.com/org/repo//path, git@host:org/repo
+var remoteShorthand = []string{"github.com/", "gitlab.com/", "bitbucket.org/", "git@", "git::"}
+
 // An encrypted file under secrets/ is fine to name: what it holds is ENC[...]
 var encryptedName = regexp.MustCompile(`\.(enc|encrypted|sops)\.(ya?ml|json|hcl|env|ini)`)
 
@@ -191,7 +228,7 @@ func sensitiveArg(w string) string {
 		w = w[i+1:]
 	}
 	w = strings.TrimPrefix(w, "@") // ansible -e @vars.yml, curl -d @file: a file to read
-	if strings.Contains(w, "://") {
+	if strings.Contains(w, "://") || strings.Contains(w, "?ref=") || startsWithAny(w, remoteShorthand) {
 		return "a remote chart or URL: this agent works on what is on this machine"
 	}
 	p := strings.ToLower(strings.TrimRight(w, "."))
