@@ -9,6 +9,8 @@
 //	*.sh            shellcheck, or bash -n when there is no shellcheck
 //	*.zsh           zsh -n
 //	*.json          valid JSON (not under vscode/: those are JSONC)
+//	any file        gitleaks: no secret in what changed (the repository's .gitleaks.toml
+//	                and .gitleaksignore apply; where it is, not what it is, is reported)
 //
 // It does not loop: when Claude has already been sent back once
 // (stop_hook_active) it lets it stop. The same state is not checked twice: a
@@ -151,6 +153,9 @@ func (h hook) check(ctx context.Context, cwd string) string {
 			}
 		}
 	}
+	if leaks := h.secrets(ctx, root, files); leaks != "" {
+		add("gitleaks: a secret in the files you changed", leaks)
+	}
 	if ctx.Err() != nil || len(failures) == 0 {
 		return "" // out of time: never a failure
 	}
@@ -160,6 +165,66 @@ func (h hook) check(ctx context.Context, cwd string) string {
 		report = report[:maxReport] + "\n[cut]"
 	}
 	return report
+}
+
+// How many changed files gitleaks is given at once, and how big a file it reads (MB)
+const (
+	maxScanFiles = 200
+	maxScanMB    = "5"
+)
+
+// finding is what is kept of a gitleaks result: where and which rule, never the
+// secret (the scan is redacted, and this does not read the field)
+type finding struct {
+	File        string `json:"File"`
+	StartLine   int    `json:"StartLine"`
+	RuleID      string `json:"RuleID"`
+	Description string `json:"Description"`
+}
+
+// secrets scans the changed files with gitleaks, with the repository's own
+// .gitleaks.toml (and .gitleaksignore, read from root) when it has them, and
+// returns one line per finding, "" when there is none, gitleaks is not
+// installed, or it could not run: a broken scanner is not Claude's failure.
+func (h hook) secrets(ctx context.Context, root string, files []string) string {
+	if !h.has("gitleaks") {
+		return ""
+	}
+	args := []string{"dir"}
+	for _, f := range files {
+		if len(args) > maxScanFiles {
+			break
+		}
+		if st, err := os.Stat(filepath.Join(root, f)); err == nil && st.Mode().IsRegular() {
+			args = append(args, filepath.Join(root, f))
+		}
+	}
+	if len(args) == 1 {
+		return ""
+	}
+	args = append(args, "--no-banner", "--redact", "--log-level", "error", "--exit-code", "0",
+		"--max-target-megabytes", maxScanMB, "-f", "json", "-r", "-")
+	if _, err := os.Stat(filepath.Join(root, ".gitleaks.toml")); err == nil {
+		args = append(args, "-c", filepath.Join(root, ".gitleaks.toml"))
+	}
+	out, _ := h.run(ctx, root, "gitleaks", args...)
+	start := strings.Index(out, "[")
+	if start < 0 || ctx.Err() != nil {
+		return "" // not a report: it did not run (err says why), or it ran out of time
+	}
+	var found []finding
+	if json.NewDecoder(strings.NewReader(out[start:])).Decode(&found) != nil || len(found) == 0 {
+		return ""
+	}
+	lines := []string{"Remove the secret from the file. If it was a real one, tell the user it has to be rotated: it may be in this session's transcript too."}
+	for _, f := range found {
+		path := f.File
+		if rel, err := filepath.Rel(root, f.File); err == nil {
+			path = rel
+		}
+		lines = append(lines, fmt.Sprintf("%s:%d  %s (%s)", path, f.StartLine, f.Description, f.RuleID))
+	}
+	return strings.Join(lines, "\n")
 }
 
 // changedFiles reads `git status --porcelain=v1 -z`: "XY path\0", and a rename

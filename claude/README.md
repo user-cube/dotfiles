@@ -125,6 +125,10 @@ The PreToolUse hooks stop what Claude must not do; this checks what it leaves be
   - `*.go`: `go vet ./...` and `go test ./...` in the module of each changed file
   - `*.sh`: `shellcheck`, or `bash -n` without it; `*.zsh`: `zsh -n`
   - `*.json`: valid JSON (not under `vscode/`: those are JSONC)
+  - every changed file: `gitleaks dir --redact`, with the repository's own `.gitleaks.toml` and `.gitleaksignore`
+    when it has them. A finding is reported as `file:line  description (rule)`, never with the value, and tells
+    Claude to remove it and to tell you to rotate it if it was real (it may be in the session's transcript
+    too). Without `gitleaks`, or if it fails to run, this check is skipped, not a failure
   - no loop: once Claude has been sent back (`stop_hook_active`) it may stop
   - the same state is not checked twice: a fingerprint of the changed files (path, size, time) is kept per
     repository in `~/Library/Caches/stop-check`, so a turn that only answers a question costs nothing and
