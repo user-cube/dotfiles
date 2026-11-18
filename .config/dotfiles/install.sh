@@ -24,6 +24,7 @@ tools=(
   "$HOME/.claude/hooks/stop-check"               # Claude Code Stop hook: go vet / go test, shell and JSON checks on what Claude changed (without it Claude just stops)
   "$HOME/.claude/hooks/git-guard"                # Claude Code PreToolUse hook: commits and PRs (Bash is blocked until built)
   "$HOME/.claude/hooks/write-guard"              # Claude Code PreToolUse hook: writes to keys, git hooks and the guardrails (Edit, Write and Bash are blocked until built)
+  "$HOME/.claude/hooks/readonly-git"             # PreToolUse hook of the security-reviewer agent: only git commands that read (its Bash is blocked until built)
   "$HOME/.claude/statusline"                     # Claude Code status line: dir, branch, kube context (PROD in red), model, context, cost (blank until built)
 )
 for dir in "${tools[@]}"; do
