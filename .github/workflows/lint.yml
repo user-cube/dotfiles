@@ -138,5 +138,10 @@ jobs:
         working-directory: claude/hooks/write-guard
         run: go vet ./... && go test ./...
 
+      # Claude Code's status line
+      - name: statusline (go vet + test)
+        working-directory: claude/statusline
+        run: go vet ./... && go test ./...
+
       - name: gitleaks
         run: gitleaks git --redact --no-banner .

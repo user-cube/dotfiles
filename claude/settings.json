@@ -26,6 +26,11 @@
     "commit": "",
     "pr": ""
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline/statusline",
+    "refreshInterval": 15
+  },
   "hooks": {
     "PreToolUse": [
       {

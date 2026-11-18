@@ -16,6 +16,26 @@ project settings. Change these here, not with `/config`: a sync overwrites
 | `hooks/stop-check/` | a Go Stop hook, below |
 | `hooks/git-guard/` | a Go PreToolUse hook, below |
 | `hooks/write-guard/` | a Go PreToolUse hook, below |
+| `statusline/` | the status line (a Go binary), below |
+
+## Status line
+
+One line under the prompt, what a session needs to know at a glance:
+
+```
+dotfiles  main*  ⎈ prod-eu/api PROD │ Opus · ctx 42% · $1.23 · 5h 18% · PR #7
+```
+
+- the directory, the git branch (`*` when tracked files are modified; untracked files are not looked for)
+- the Kubernetes context and namespace from [kube-guard](../.config/zsh/kube-guard.zsh) (`kube-guard context`),
+  so **PROD** in red means what kube-guard and its Claude hook mean by production
+- the model, the context used (yellow from 70 %, red from 90 %), the cost, the 5-hour rate limit and the open PR
+- what is not there is left out: no repository, no kube context, no cost yet, a field Claude Code did not send;
+  git and kube-guard get 400 ms each and are left out when slower, so the line never holds the session up
+- `refreshInterval` is 15 s so a context switched in another terminal shows up without a new message;
+  `NO_COLOR=1` turns the colors off
+- built by `install.sh`; until it is, the line is blank
+- `go test ./...` in its folder
 
 ## Hooks (PreToolUse)
 
