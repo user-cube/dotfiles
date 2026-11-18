@@ -32,6 +32,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -121,6 +122,10 @@ func (r program) check(words []string) string {
 	prog, rest := words[0], words[1:]
 	where := prog
 	if r.subs != nil {
+		// the options a program may take before its subcommand (terraform -chdir=dir)
+		for len(rest) > 0 && startsWithAny(rest[0], r.leading) {
+			rest = rest[1:]
+		}
 		if len(rest) == 0 {
 			return prog + " alone: give it one of " + keys(r.subs) + " (" + rule + ")."
 		}
@@ -137,6 +142,10 @@ func (r program) check(words []string) string {
 			}
 		}
 		where = prog + " " + sub
+		// a subcommand that only reads when run in a certain mode (terraform fmt -check)
+		if n, has := r.needs[sub]; has && !slices.ContainsFunc(rest[1:], func(w string) bool { return startsWithAny(w, n.anyOf) }) {
+			return where + " " + n.why + " (" + rule + ")."
+		}
 		rest = rest[1:]
 	}
 	for i, w := range rest {
@@ -160,6 +169,15 @@ func (r program) check(words []string) string {
 		}
 	}
 	return ""
+}
+
+func startsWithAny(w string, prefixes []string) bool {
+	for _, p := range prefixes {
+		if strings.HasPrefix(w, p) {
+			return true
+		}
+	}
+	return false
 }
 
 func keys(m map[string]bool) string {

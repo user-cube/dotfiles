@@ -340,6 +340,11 @@ def test_write_guard_hook(install, tool, tool_input, denied):
     ("git helm", "helm lint ./chart", False),
     ("git helm", "helm template r ./chart --dry-run=server", True),
     ("git helm", "helm install r ./chart", True),
+    ("git terraform", "terraform validate", False),
+    ("git terraform", "terraform fmt -check -recursive", False),
+    ("git terraform", "terraform fmt", True),
+    ("git terraform", "terraform apply", True),
+    ("git terraform", "tflint --init", True),
     ("git", "helm lint ./chart", True),
     ("typo", "git diff", True),
 ])

@@ -146,8 +146,9 @@ tool list plus, where a tool is too wide, a hook in the agent's own header.
 |---|---|
 | `security-reviewer` | read-only review of a change (`git diff HEAD`, then the branch against `main`) for secrets, injection, trust, dependencies and CI, and for anything that weakens a guardrail. Reports findings ranked by severity with `file:line`, and what it did not check; it fixes nothing. Bash narrowed by `readonly git` |
 | `helm-reviewer` | read-only review of a Helm chart or a change to one: `helm lint --strict`, `helm template` with the defaults and each environment's values (production first), then pod security, reliability, access, values and secrets, template and chart hygiene problems, with the rendered snippet as evidence. Never talks to a cluster or the network. Bash narrowed by `readonly git helm` |
+| `terraform-reviewer` | read-only review of Terraform or OpenTofu code or a change to it: `fmt -check`, `validate`, `tflint` and `trivy config`, then security, blast radius and lifecycle (replacements, renames with no `moved` block, `count` over a list), state and backend, version pinning and hygiene. It says what a change would create, replace or destroy from reading it, since it cannot plan. Never touches an account, a backend or the state. Bash narrowed by `readonly git terraform` |
 
-Both are delegated to by Claude (their descriptions say "use proactively"), or `@agent-<name>`. Tools: `Read`,
+They are delegated to by Claude (their descriptions say "use proactively"), or `@agent-<name>`. Tools: `Read`,
 `Grep`, `Glob` and `Bash`, which the header's hook narrows.
 
 ### readonly (the review agents' Bash)
@@ -172,6 +173,7 @@ its tests.
 |---|---|---|
 | `git` | `diff`, `log`, `show`, `status`, `ls-files`, `ls-tree`, `blame`, `rev-parse`, `merge-base`, `shortlog`, `describe` | every other subcommand; `--output` (writes a file), `--ext-diff`, `--textconv`, `-O` (run a program) |
 | `helm` | `lint`, `template`, `version`, `dependency list` | `install`, `upgrade`, `get`, `repo`, `pull`, `dependency build` and the rest; `--validate` and `--dry-run` (ask the cluster), `--kube*` (point at one), `--output-dir`, `--post-renderer`, `--set-file`, `--repo`, key and credential flags; a remote chart or URL; a path to an env file, a key, an age key, an ssh or AWS directory, or a cleartext file under `secrets/` or `credentials/` (an `.enc.` / `.sops.` one is fine) |
+| `terraform` | `terraform` and `tofu`: `fmt` (only with `-check` or `-write=false`, else it rewrites the files), `validate`, `version`, with `-chdir=<dir>` as the one option before the subcommand; `tflint`; `trivy config` | `plan`, `apply`, `destroy`, `init`, `get`, `import`, `state`, `show`, `output`, `console`, `test`, `workspace`, `providers` and the rest; `tflint --init`, `--fix`, `--langserver`; `trivy` other than `config`, `-o` / `--output`, `--server`; the same argument rules as `helm` |
 
 For every profile:
 
