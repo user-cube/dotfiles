@@ -77,6 +77,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/stop-check/stop-check",
+            "timeout": 120
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {

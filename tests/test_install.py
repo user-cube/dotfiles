@@ -30,6 +30,7 @@ TOOLS = [
     ".config/kube-guard/kube-guard",
     ".config/sketchybar/plugins/check/check",
     ".claude/hooks/deny-sensitive-reads/deny-sensitive-reads",
+    ".claude/hooks/stop-check/stop-check",
     ".claude/hooks/git-guard/git-guard",
     ".claude/hooks/write-guard/write-guard",
 ]
@@ -294,6 +295,26 @@ def test_claude_hook(install, command, denied):
 def test_git_guard_hook(install, command, decision):
     out = hook_output(install, ".claude/hooks/git-guard/git-guard", command)
     assert (decision in out) if decision else out == "", out
+
+
+def test_stop_check_hook(install, tmp_path):
+    # not a git repository, and a repository with nothing changed: Claude may stop
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    env = dict(install.env, HOME=str(install.home), GIT_CONFIG_GLOBAL="/dev/null", GIT_CONFIG_NOSYSTEM="1")
+    for cwd in (tmp_path, repo):
+        if cwd == repo:
+            subprocess.run(["git", "init", "-q"], cwd=repo, env=env, check=True)
+        event = json.dumps({"cwd": str(cwd), "stop_hook_active": False})
+        out = subprocess.run([install.home / ".claude/hooks/stop-check/stop-check"], input=event,
+                             capture_output=True, text=True, env=env)
+        assert out.returncode == 0 and out.stdout == "", out
+    # a JSON file that does not parse: Claude is sent back
+    (repo / "settings.json").write_text("{,}")
+    event = json.dumps({"cwd": str(repo), "stop_hook_active": False})
+    out = subprocess.run([install.home / ".claude/hooks/stop-check/stop-check"], input=event,
+                         capture_output=True, text=True, env=env).stdout
+    assert '"block"' in out and "JSON settings.json" in out, out
 
 
 @pytest.mark.parametrize("tool,tool_input,denied", [
