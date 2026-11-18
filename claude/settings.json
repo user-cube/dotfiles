@@ -12,6 +12,25 @@
       "Read(//**/.ssh/id_*)",
       "Read(//**/config/database.yml)"
     ],
+    "allow": [
+      "Bash(go vet ./...)",
+      "Bash(gofmt -l *)",
+      "Bash(shellcheck *)",
+      "mcp__grafana__query_loki_logs",
+      "mcp__grafana__query_prometheus",
+      "mcp__ccd_pr__get_status",
+      "mcp__bookstack__bookstack_pages_read",
+      "mcp__bookstack__bookstack_books_read",
+      "mcp__bookstack__bookstack_search",
+      "mcp__superlogical__search_docs",
+      "mcp__superlogical__read_doc",
+      "mcp__superlogical__get_feedback",
+      "mcp__superlogical__search_feedback",
+      "mcp__superlogical__search_changelog",
+      "mcp__kubernetes-mcp-server__pods_list",
+      "mcp__Claude_Browser__find",
+      "mcp__Claude_Browser__get_page_text"
+    ],
     "ask": [
       "Bash(git commit:*)",
       "Bash(rtk git commit:*)",
